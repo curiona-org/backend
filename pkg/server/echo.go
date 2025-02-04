@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"reflect"
 	"strings"
 
@@ -36,9 +35,4 @@ func NewEchoInstance() *echo.Echo {
 
 	instance.Validator = &CustomValidator{validator: validator}
 	return instance
-}
-
-func InjectEchoCtx(c echo.Context, key, val any) {
-	ctx := context.WithValue(c.Request().Context(), key, val)
-	c.SetRequest(c.Request().WithContext(ctx))
 }

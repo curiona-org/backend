@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/roadmap-thesis/backend/pkg/llm"
@@ -12,12 +13,20 @@ import (
 )
 
 type Clients struct {
-	LLM llm.Client
-	DB  database.Connection
+	LLM    llm.Client
+	DB     database.Connection
+	Google oauth.Client
 }
 
 func New(ctx context.Context) (*Clients, error) {
-	c := &Clients{}
+	googleProvider, err := oauth.NewProvider(oauth.Google)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Clients{
+		Google: googleProvider,
+	}
 
 	switch llm.Provider(config.LLMProvider()) {
 	case llm.OpenAI:

@@ -122,6 +122,7 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 	defer span.End()
 
 	var account domain.Account
+	var profile domain.Profile
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		saveAccountQuery, saveAccountArgs := psql.Insert(
 			im.Into(domain.AccountTable, "email", "password", "created_at", "updated_at"),
@@ -143,9 +144,13 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 		saveProfileQuery, saveProfileArgs := psql.Insert(
 			im.Into(domain.ProfileTable, "id", "name", "avatar", "created_at", "updated_at"),
 			im.Values(psql.Arg(account.ID, input.Profile.Name, input.Profile.Avatar, input.CreatedAt, input.UpdatedAt)),
+			im.Returning("name", "avatar"),
 		).MustBuild(ctx)
 
-		_, err = tx.Exec(ctx, saveProfileQuery, saveProfileArgs...)
+		err = tx.QueryRow(ctx, saveProfileQuery, saveProfileArgs...).Scan(
+			&profile.Name,
+			&profile.Avatar,
+		)
 		if err != nil {
 			span.RecordError(err)
 			return err
@@ -158,5 +163,6 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 		return domain.Account{}, err
 	}
 
+	account.SetProfile(&profile)
 	return account, nil
 }

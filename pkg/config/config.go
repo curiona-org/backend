@@ -31,6 +31,9 @@ type Config struct {
 	DeepSeekAPIKey string
 	DeepSeekModel  string
 
+	GoogleClientID     string
+	GoogleClientSecret string
+
 	OTLPExporterEndpoint string
 }
 
@@ -62,6 +65,9 @@ func Init() {
 		DeepSeekAPIKey: LookupEnv("DEEPSEEK_API_KEY", ""),
 		DeepSeekModel:  LookupEnv("DEEPSEEK_MODEL", deepseek.DeepSeekChat),
 
+		GoogleClientID:     LookupEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret: LookupEnv("GOOGLE_CLIENT_SECRET", ""),
+
 		OTLPExporterEndpoint: LookupEnv("OTLP_EXPORTER_ENDPOINT", "localhost:4317"),
 	}
 }
@@ -92,13 +98,10 @@ func LLMProvider() string { return config.LLMProvider }
 func OpenAiAPIKey() string { return config.OpenAiAPIKey }
 func OpenAiModel() string  { return config.OpenAiModel }
 
-func SetOpenAiAPIKey(key string)  { config.OpenAiAPIKey = key }
-func SetOpenAiModel(model string) { config.OpenAiModel = model }
-
 func DeepSeekAPIKey() string { return config.DeepSeekAPIKey }
 func DeepSeekModel() string  { return config.DeepSeekModel }
 
-func SetDeepSeekAPIKey(key string)  { config.DeepSeekAPIKey = key }
-func SetDeepSeekModel(model string) { config.DeepSeekModel = model }
+func GoogleClientID() string     { return config.GoogleClientID }
+func GoogleClientSecret() string { return config.GoogleClientSecret }
 
 func OTLPExporterEndpoint() string { return config.OTLPExporterEndpoint }
