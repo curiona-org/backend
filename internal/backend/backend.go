@@ -5,6 +5,7 @@ import (
 
 	"github.com/roadmap-thesis/backend/internal/io"
 	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"go.opentelemetry.io/otel"
 )
@@ -30,13 +31,15 @@ type Backend interface {
 }
 
 type backend struct {
-	repository *repository.Repository
-	llm        llm.Client
+	repository  *repository.Repository
+	llm         llm.Client
+	googleOAuth oauth.Client
 }
 
-func New(repository *repository.Repository, llm llm.Client) Backend {
+func New(repository *repository.Repository, llm llm.Client, googleOAuth oauth.Client) Backend {
 	return &backend{
-		repository: repository,
-		llm:        llm,
+		repository:  repository,
+		llm:         llm,
+		googleOAuth: googleOAuth,
 	}
 }

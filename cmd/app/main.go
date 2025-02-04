@@ -39,7 +39,13 @@ func main() {
 
 	log.Info().Msg("Bootstrapping application...")
 	repository := repository.New(clients.DB)
-	backend := backend.New(repository, clients.LLM)
+
+	backend := backend.New(
+		repository,
+		clients.LLM,
+		clients.Google,
+	)
+
 	api := api.New(config.Port(), backend)
 
 	log.Info().Msg("Starting Application Server...")

@@ -1,12 +1,12 @@
 package middleware
 
 import (
+	"context"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/auth"
-	"github.com/roadmap-thesis/backend/pkg/server"
 )
 
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
@@ -27,7 +27,8 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 			return apperrors.Unauthorized()
 		}
 
-		server.InjectEchoCtx(c, auth.AuthCtxKey, payload)
+		ctx := context.WithValue(c.Request().Context(), auth.AuthCtxKey, payload)
+		c.SetRequest(c.Request().WithContext(ctx))
 		return next(c)
 	}
 }

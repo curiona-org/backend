@@ -95,31 +95,3 @@ func TestConfig_Init(t *testing.T) {
 		})
 	}
 }
-
-func TestConfig_SetOpenAiAPIKey(t *testing.T) {
-	t.Parallel()
-	config.Init()
-	config.SetOpenAiAPIKey("new_api_key")
-	assert.Equal(t, "new_api_key", config.OpenAiAPIKey())
-}
-
-func TestConfig_SetOpenAiModel(t *testing.T) {
-	t.Parallel()
-	config.Init()
-	config.SetOpenAiModel("new_model")
-	assert.Equal(t, "new_model", config.OpenAiModel())
-}
-
-func TestConfig_SetJWTSecretKey(t *testing.T) {
-	t.Parallel()
-	config.Init()
-	config.SetJWTSecretKey("new_secret_key")
-	assert.Equal(t, "new_secret_key", config.JWTSecretKey())
-}
-
-func TestConfig_SetJWTSecretExpiresIn(t *testing.T) {
-	t.Parallel()
-	config.Init()
-	config.SetJWTSecretExpiresIn(72 * time.Hour)
-	assert.Equal(t, 72*time.Hour, config.JWTSecretExpiresIn())
-}

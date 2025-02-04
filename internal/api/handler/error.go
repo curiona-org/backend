@@ -60,12 +60,13 @@ func getValidationErrMsg(err validator.FieldError) validationErrMsg {
 	}
 
 	errMsg.Message = map[string]string{
-		"required": err.Field() + " is required.",
-		"email":    "Must be a valid email address.",
-		"min":      err.Field() + " must be at least " + err.Param() + " characters long.",
-		"max":      err.Field() + " must not exceed " + err.Param() + " characters.",
-		"url":      "Must be a valid URL.",
-		"oneof":    err.Field() + " must be one of the following: " + err.Param() + ".",
+		"required":         err.Field() + " is required.",
+		"required_without": err.Field() + " is required.",
+		"email":            "Must be a valid email address.",
+		"min":              err.Field() + " must be at least " + err.Param() + " characters long.",
+		"max":              err.Field() + " must not exceed " + err.Param() + " characters.",
+		"url":              "Must be a valid URL.",
+		"oneof":            err.Field() + " must be one of the following: " + err.Param() + ".",
 	}[err.Tag()]
 
 	return errMsg
