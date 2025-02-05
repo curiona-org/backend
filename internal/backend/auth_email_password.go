@@ -71,5 +71,5 @@ func (b *backend) authEmailPassword(ctx context.Context, input io.AuthInput) (re
 		name:     createdAccount.Profile.Name,
 		avatar:   createdAccount.Profile.Avatar,
 		joinedAt: createdAccount.CreatedAt,
-	}, err
+	}, nil
 }
