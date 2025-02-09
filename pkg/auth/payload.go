@@ -49,9 +49,5 @@ func (p *Payload) Claims() jwt.Claims {
 }
 
 func (p *Payload) Valid() bool {
-	if time.Now().After(p.ExpiresAt) {
-		return false
-	}
-
-	return true
+	return time.Now().Before(p.ExpiresAt)
 }
