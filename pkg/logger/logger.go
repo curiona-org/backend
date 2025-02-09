@@ -16,9 +16,21 @@ func Init() {
 
 	if config.AppEnv() != "production" {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Caller().Stack().Logger()
+		log.Logger = log.
+			Output(zerolog.ConsoleWriter{Out: os.Stderr}).
+			With().
+			Caller().
+			Stack().
+			Logger()
 	} else {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		log.Logger = log.With().Caller().Stack().Logger()
+		log.Logger = log.
+			With().
+			Caller().
+			Stack().
+			Logger().
+			Sample(&zerolog.BasicSampler{
+				N: 2,
+			})
 	}
 }
