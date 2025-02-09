@@ -3,7 +3,6 @@ package tracing
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -13,10 +12,16 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
-func NewProvider(ctx context.Context) (*trace.TracerProvider, error) {
+type ProviderConfig struct {
+	OTLPExporterEndpoint string
+	AppName              string
+	AppEnv               string
+}
+
+func NewProvider(ctx context.Context, cfg ProviderConfig) (*trace.TracerProvider, error) {
 	exporter, err := otlptracegrpc.New(
 		ctx,
-		otlptracegrpc.WithEndpoint(config.OTLPExporterEndpoint()),
+		otlptracegrpc.WithEndpoint(cfg.OTLPExporterEndpoint),
 		otlptracegrpc.WithInsecure(),
 	)
 	if err != nil {
@@ -27,8 +32,8 @@ func NewProvider(ctx context.Context) (*trace.TracerProvider, error) {
 		trace.WithBatcher(exporter),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(config.AppName()), // Service Name
-			attribute.String("environment", config.AppEnv()),
+			semconv.ServiceNameKey.String(cfg.AppName), // Service Name
+			attribute.String("environment", cfg.AppEnv),
 		)),
 		trace.WithSampler(trace.AlwaysSample()),
 	)

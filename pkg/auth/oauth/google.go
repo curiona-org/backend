@@ -3,7 +3,6 @@ package oauth
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"golang.org/x/oauth2"
 	googleOauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/idtoken"
@@ -13,10 +12,10 @@ type google struct {
 	cfg *oauth2.Config
 }
 
-func NewGoogleProvider() Client {
+func NewGoogleProvider(clientID, clientSecret string) Client {
 	oauthConfig := &oauth2.Config{
-		ClientID:     config.GoogleClientID(),
-		ClientSecret: config.GoogleClientSecret(),
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint:     googleOauth.Endpoint,
 	}

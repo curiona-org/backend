@@ -24,7 +24,7 @@ func (s *Server) setupMiddlewares() {
 					Int("status", v.Status).
 					Send()
 			} else {
-				if config.AppEnv() != "production" || v.Status >= 500 {
+				if config.IsProduction() || v.Status >= 500 {
 					log.Error().
 						Err(v.Error).
 						Str("uri", v.URI).

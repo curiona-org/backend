@@ -59,12 +59,12 @@ func TestAuth_Payload(t *testing.T) {
 
 		payload := auth.NewPayload(id, expiresIn)
 		err := payload.Valid()
-		assert.NoError(t, err)
+		assert.True(t, err)
 
 		// Test expired payload
 		expiredPayload := auth.NewPayload(id, -time.Hour)
 		err = expiredPayload.Valid()
-		assert.Error(t, err)
+		assert.False(t, err)
 	})
 
 	t.Run("FromContext", func(t *testing.T) {

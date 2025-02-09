@@ -6,7 +6,6 @@ import (
 
 	"github.com/cohesion-org/deepseek-go"
 	"github.com/cohesion-org/deepseek-go/constants"
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -14,13 +13,15 @@ import (
 
 type deepSeekClient struct {
 	client *deepseek.Client
+	model  string
 }
 
-func NewDeepSeekClient() Client {
-	client := deepseek.NewClient(config.DeepSeekAPIKey())
+func NewDeepSeekClient(authToken, model string) Client {
+	client := deepseek.NewClient(authToken)
 
 	return &deepSeekClient{
 		client: client,
+		model:  model,
 	}
 }
 
@@ -29,7 +30,7 @@ func (d *deepSeekClient) Chat(ctx context.Context, prompt ChatPrompt) (string, e
 	defer span.End()
 
 	response, err := d.client.CreateChatCompletion(ctx, &deepseek.ChatCompletionRequest{
-		Model: config.DeepSeekModel(),
+		Model: d.model,
 		Messages: []deepseek.ChatCompletionMessage{
 			{
 				Role:    constants.ChatMessageRoleSystem,

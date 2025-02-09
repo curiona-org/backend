@@ -2,7 +2,6 @@ package oauth
 
 import (
 	"context"
-	"errors"
 )
 
 type User struct {
@@ -14,19 +13,4 @@ type User struct {
 
 type Client interface {
 	Verify(ctx context.Context, token string) (User, error)
-}
-
-type Provider string
-
-const (
-	Google Provider = "google"
-)
-
-func NewProvider(provider Provider) (Client, error) {
-	switch provider {
-	case Google:
-		return NewGoogleProvider(), nil
-	default:
-		return nil, errors.New("unknown oauth provider")
-	}
 }

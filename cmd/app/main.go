@@ -8,9 +8,9 @@ import (
 	"github.com/roadmap-thesis/backend/internal/backend"
 	"github.com/roadmap-thesis/backend/internal/clients"
 	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/logger"
-	"github.com/roadmap-thesis/backend/pkg/tracing"
 	"github.com/rs/zerolog/log"
 )
 
@@ -19,23 +19,13 @@ func main() {
 	defer cancel()
 
 	config.Init()
-	logger.Init()
+	logger.Init(config.IsDevelopment())
 
 	clients, err := clients.New(ctx)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize clients")
 	}
-	defer clients.Close()
-
-	trace, err := tracing.NewProvider(ctx)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize tracer provider")
-	}
-	defer func() {
-		if err := trace.Shutdown(ctx); err != nil {
-			log.Fatal().Err(err).Msg("Failed shutting down tracer provider")
-		}
-	}()
+	defer clients.Close(ctx)
 
 	log.Info().Msg("Bootstrapping application...")
 	repository := repository.New(clients.DB)
@@ -43,6 +33,9 @@ func main() {
 	backend := backend.New(
 		repository,
 		clients.LLM,
+		auth.NewJWT(
+			config.JWTSecretKey(),
+			config.JWTExpiresIn()),
 		clients.Google,
 	)
 

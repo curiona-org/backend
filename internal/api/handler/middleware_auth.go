@@ -1,4 +1,4 @@
-package middleware
+package handler
 
 import (
 	"context"
@@ -9,8 +9,9 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/auth"
 )
 
-func Auth(next echo.HandlerFunc) echo.HandlerFunc {
+func (h *Handler) MiddlewareAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		reqCtx := c.Request().Context()
 		authorization, ok := c.Request().Header["Authorization"]
 		if !ok {
 			return apperrors.Unauthorized()
@@ -22,12 +23,12 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		token := bearer[1]
-		payload, err := auth.VerifyToken(token)
+		payload, err := h.backend.AuthVerify(reqCtx, token)
 		if err != nil {
 			return apperrors.Unauthorized()
 		}
 
-		ctx := context.WithValue(c.Request().Context(), auth.AuthCtxKey, payload)
+		ctx := context.WithValue(reqCtx, auth.AuthCtxKey, payload)
 		c.SetRequest(c.Request().WithContext(ctx))
 		return next(c)
 	}

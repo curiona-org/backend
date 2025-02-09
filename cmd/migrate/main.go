@@ -1,12 +1,14 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"flag"
 
+	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
+	"github.com/roadmap-thesis/backend/internal/clients"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
@@ -17,21 +19,25 @@ func main() {
 
 	flag.Parse()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	config.Init()
-	logger.Init()
+	logger.Init(config.IsDevelopment())
 
-	log.Info().Msg("Initialized config and clients")
-
-	err := goose.SetDialect("pgx")
+	clients, err := clients.New(ctx)
 	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize clients")
+	}
+	defer clients.Close(ctx)
+
+	if err := goose.SetDialect("pgx"); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize goose")
 	}
 
 	goose.SetTableName("schema_migrations")
-	db, err := sql.Open("pgx", config.DatabaseURL())
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize clients")
-	}
+
+	db := stdlib.OpenDBFromPool(clients.DB.Pool())
 	defer db.Close()
 
 	dir := "./migrations"

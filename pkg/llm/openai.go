@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/sashabaranov/go-openai"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -13,13 +12,15 @@ import (
 
 type openAiClient struct {
 	client *openai.Client
+	model  string
 }
 
-func NewOpenAiClient() Client {
-	client := openai.NewClient(config.OpenAiAPIKey())
+func NewOpenAiClient(authToken, model string) Client {
+	client := openai.NewClient(authToken)
 
 	return &openAiClient{
 		client: client,
+		model:  model,
 	}
 }
 
@@ -28,7 +29,7 @@ func (o *openAiClient) Chat(ctx context.Context, prompt ChatPrompt) (string, err
 	defer span.End()
 
 	response, err := o.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model: config.OpenAiModel(),
+		Model: o.model,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,

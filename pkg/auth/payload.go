@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 )
 
 const (
@@ -49,10 +48,10 @@ func (p *Payload) Claims() jwt.Claims {
 	}
 }
 
-func (p *Payload) Valid() error {
+func (p *Payload) Valid() bool {
 	if time.Now().After(p.ExpiresAt) {
-		return apperrors.Unauthorized()
+		return false
 	}
 
-	return nil
+	return true
 }

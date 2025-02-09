@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/auth"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -26,7 +25,7 @@ func (b *backend) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, 
 		return io.AuthOutput{}, err
 	}
 
-	token, err := auth.CreateToken(result.id)
+	token, err := b.auth.Generate(result.id)
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
