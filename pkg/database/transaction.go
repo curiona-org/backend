@@ -19,7 +19,7 @@ func (db *DB) InTx(ctx context.Context, fn TransactionFunc) error {
 	defer conn.Release()
 
 	log.Debug().Msg("starting transaction")
-	tx, err := db.Pool.Begin(ctx)
+	tx, err := conn.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("starting transaction: %w", err)
 	}
