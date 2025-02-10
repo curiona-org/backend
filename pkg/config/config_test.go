@@ -35,8 +35,12 @@ func TestConfig_Init(t *testing.T) {
 	setEnv("DB_POOL_HEALTH_CHECK_PERIOD", "1m")
 	setEnv("JWT_SECRET_KEY", "test_secret")
 	setEnv("JWT_EXPIRES_IN", "48h")
-	setEnv("OPENAI_API_KEY", "test_api_key")
-	setEnv("OPENAI_MODEL", "gpt-4")
+	setEnv("LLM_API_KEY", "test_api_key")
+	setEnv("LLM_MODEL", "gpt-4")
+	// Added missing configurations
+	setEnv("GOOGLE_CLIENT_ID", "test_google_id")
+	setEnv("GOOGLE_CLIENT_SECRET", "test_google_secret")
+	setEnv("OTLP_EXPORTER_ENDPOINT", "http://localhost:4317")
 
 	defer unsetEnv("APP_NAME")
 	defer unsetEnv("APP_ENV")
@@ -54,59 +58,45 @@ func TestConfig_Init(t *testing.T) {
 	defer unsetEnv("DB_POOL_HEALTH_CHECK_PERIOD")
 	defer unsetEnv("JWT_SECRET_KEY")
 	defer unsetEnv("JWT_EXPIRES_IN")
-	defer unsetEnv("OPENAI_API_KEY")
-	defer unsetEnv("OPENAI_MODEL")
+	defer unsetEnv("LLM_API_KEY")
+	defer unsetEnv("LLM_MODEL")
+	defer unsetEnv("GOOGLE_CLIENT_ID")
+	defer unsetEnv("GOOGLE_CLIENT_SECRET")
+	defer unsetEnv("OTLP_EXPORTER_ENDPOINT")
 
 	config.Init()
 
-	cfg := config.GetConfig()
 	testCases := []struct {
 		name     string
 		expected interface{}
 		actual   interface{}
 	}{
-		{"AppName", "test_app", cfg.AppName},
-		{"AppNameFunc", "test_app", config.AppName()},
-		{"AppEnv", "test", cfg.AppEnv},
-		{"AppEnvFunc", "test", config.AppEnv()},
-		{"Port", "8080", cfg.Port},
-		{"PortFunc", "8080", config.Port()},
-		{"DBName", "roadmap", cfg.DBName},
-		{"DBNameFunc", "roadmap", config.DBName()},
-		{"DBHost", "localhost", cfg.DBHost},
-		{"DBHostFunc", "localhost", config.DBHost()},
-		{"DBPort", 5432, cfg.DBPort},
-		{"DBPortFunc", 5432, config.DBPort()},
-		{"DBUser", "postgres", cfg.DBUser},
-		{"DBUserFunc", "postgres", config.DBUser()},
-		{"DBPassword", "", cfg.DBPassword},
-		{"DBPasswordFunc", "", config.DBPassword()},
-		{"DBConnectionTimeout", 5, cfg.DBConnectionTimeout},
-		{"DBConnectionTimeoutFunc", 5, config.DBConnectionTimeout()},
-		{"DBPoolMinConnections", 0, cfg.DBPoolMinConnections},
-		{"DBPoolMinConnectionsFunc", 0, config.DBPoolMinConnections()},
-		{"DBPoolMaxConnections", 4, cfg.DBPoolMaxConnections},
-		{"DBPoolMaxConnectionsFunc", 4, config.DBPoolMaxConnections()},
-		{"DBPoolMaxConnLifetime", time.Hour, cfg.DBPoolMaxConnLifetime},
-		{"DBPoolMaxConnLifetimeFunc", time.Hour, config.DBPoolMaxConnLifetime()},
-		{"DBPoolMaxConnIdleTime", 30 * time.Minute, cfg.DBPoolMaxConnIdleTime},
-		{"DBPoolMaxConnIdleTimeFunc", 30 * time.Minute, config.DBPoolMaxConnIdleTime()},
-		{"DBPoolHealthCheckPeriod", time.Minute, cfg.DBPoolHealthCheckPeriod},
-		{"DBPoolHealthCheckPeriodFunc", time.Minute, config.DBPoolHealthCheckPeriod()},
-		{"JWTSecretKey", "test_secret", cfg.JWTSecretKey},
-		{"JWTSecretKeyFunc", "test_secret", config.JWTSecretKey()},
-		{"JWTExpiresIn", 48 * time.Hour, cfg.JWTExpiresIn},
-		{"JWTExpiresInFunc", 48 * time.Hour, config.JWTExpiresIn()},
-		{"LLMAPIKey", "test_api_key", cfg.LLMAPIKey},
-		{"LLMAPIKeyFunc", "test_api_key", config.LLMAPIKey()},
-		{"LLMModel", "gpt-4", cfg.LLMModel},
-		{"LLMModelFunc", "gpt-4", config.LLMModel()},
+		{"AppName", "test_app", config.AppName()},
+		{"AppEnv", "test", config.AppEnv()},
+		{"Port", "8080", config.Port()},
+		{"DBName", "roadmap", config.DBName()},
+		{"DBHost", "localhost", config.DBHost()},
+		{"DBPort", 5432, config.DBPort()},
+		{"DBUser", "postgres", config.DBUser()},
+		{"DBPassword", "", config.DBPassword()},
+		{"DBConnectionTimeout", 5, config.DBConnectionTimeout()},
+		{"DBPoolMinConnections", 0, config.DBPoolMinConnections()},
+		{"DBPoolMaxConnections", 4, config.DBPoolMaxConnections()},
+		{"DBPoolMaxConnLifetime", time.Hour, config.DBPoolMaxConnLifetime()},
+		{"DBPoolMaxConnIdleTime", 30 * time.Minute, config.DBPoolMaxConnIdleTime()},
+		{"DBPoolHealthCheckPeriod", time.Minute, config.DBPoolHealthCheckPeriod()},
+		{"JWTSecretKey", "test_secret", config.JWTSecretKey()},
+		{"JWTExpiresIn", 48 * time.Hour, config.JWTExpiresIn()},
+		{"LLMAPIKey", "test_api_key", config.LLMAPIKey()},
+		{"LLMModel", "gpt-4", config.LLMModel()},
+		{"GoogleClientID", "test_google_id", config.GoogleClientID()},
+		{"GoogleClientSecret", "test_google_secret", config.GoogleClientSecret()},
+		{"OTLPExporterEndpoint", "http://localhost:4317", config.OTLPExporterEndpoint()},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			assert.Equal(t, tc.expected, tc.actual)
 		})
 	}
