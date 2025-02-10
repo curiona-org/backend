@@ -34,7 +34,7 @@ func New(ctx context.Context) (*Clients, error) {
 	group.Go(func() error {
 		var err error
 		c.LLM, err = llm.NewClient(
-			llm.Provider(config.LLMProvider()),
+			config.LLMProvider(),
 			config.LLMAPIKey(),
 			config.LLMModel())
 		if err != nil {

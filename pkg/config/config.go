@@ -2,6 +2,8 @@ package config
 
 import (
 	"time"
+
+	"github.com/roadmap-thesis/backend/pkg/llm"
 )
 
 // Config is the global config for the application
@@ -25,7 +27,7 @@ type Config struct {
 	JWTSecretKey string
 	JWTExpiresIn time.Duration
 
-	LLMProvider string
+	LLMProvider llm.Provider
 	LLMAPIKey   string
 	LLMModel    string
 
@@ -59,10 +61,10 @@ func Init() {
 		JWTSecretKey: LookupEnv("JWT_SECRET_KEY", "secret"),
 		JWTExpiresIn: LookupEnv("JWT_EXPIRES_IN", time.Hour*24),
 
-		LLMProvider: LookupEnv("LLM_PROVIDER", "deepseek"),
+		LLMProvider: LookupEnv[llm.Provider]("LLM_PROVIDER", "deepseek"),
+		LLMAPIKey:   LookupEnv("OPENAI_API_KEY", ""),
+		LLMModel:    LookupEnv("OPENAI_MODEL", "gpt-4o-mini"),
 
-		LLMAPIKey:          LookupEnv("OPENAI_API_KEY", ""),
-		LLMModel:           LookupEnv("OPENAI_MODEL", "gpt-4o-mini"),
 		GoogleClientID:     LookupEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleClientSecret: LookupEnv("GOOGLE_CLIENT_SECRET", ""),
 
@@ -97,7 +99,7 @@ func JWTExpiresIn() time.Duration { return config.JWTExpiresIn }
 func SetJWTSecretKey(key string)             { config.JWTSecretKey = key }
 func SetJWTExpiresIn(duration time.Duration) { config.JWTExpiresIn = duration }
 
-func LLMProvider() string { return config.LLMProvider }
+func LLMProvider() llm.Provider { return config.LLMProvider }
 
 func LLMAPIKey() string { return config.LLMAPIKey }
 func LLMModel() string  { return config.LLMModel }
