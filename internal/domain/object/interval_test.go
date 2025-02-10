@@ -40,7 +40,7 @@ func TestNewIntervalFromDuration(t *testing.T) {
 	}
 }
 
-func TestInterval_ToDuration(t *testing.T) {
+func TestInterval_Duration(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -59,7 +59,7 @@ func TestInterval_ToDuration(t *testing.T) {
 		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			duration := tc.interval.ToDuration()
+			duration := tc.interval.Duration()
 			assert.Equal(t, tc.expected, duration)
 		})
 	}

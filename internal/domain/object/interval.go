@@ -41,7 +41,7 @@ func NewIntervalFromDuration(duration time.Duration) Interval {
 	}
 }
 
-func (t Interval) ToDuration() time.Duration {
+func (t Interval) Duration() time.Duration {
 	switch t.Unit {
 	case IntervalUnitMinutes:
 		return time.Duration(t.Value) * time.Minute

@@ -58,11 +58,11 @@ func (b *backend) GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapI
 		object.NewInterval(
 			input.PersonalizationOptions.DailyTimeAvailability.Value,
 			input.PersonalizationOptions.DailyTimeAvailability.Unit,
-		).ToDuration(),
+		).Duration(),
 		object.NewInterval(
 			input.PersonalizationOptions.TotalDuration.Value,
 			input.PersonalizationOptions.TotalDuration.Unit,
-		).ToDuration(),
+		).Duration(),
 		input.PersonalizationOptions.SkillLevel,
 		input.PersonalizationOptions.AdditionalInfo,
 	)
