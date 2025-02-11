@@ -23,7 +23,7 @@ func (h *Handler) ErrorHandler(err error, c echo.Context) {
 		code = appErr.Code()
 	case errors.As(err, &httpErr):
 		if httpErr.Code == http.StatusNotFound {
-			err = apperrors.ResourceNotFound("Path")
+			err = apperrors.NotFound()
 		}
 		code = httpErr.Code
 	}
