@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode"
 
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/crypto"
 )
 

@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/str"
 	"go.opentelemetry.io/otel/codes"
 )

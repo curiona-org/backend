@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/render"
 )
 

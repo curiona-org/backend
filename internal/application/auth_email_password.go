@@ -3,9 +3,9 @@ package application
 import (
 	"context"
 
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
