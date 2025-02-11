@@ -3,17 +3,18 @@ package repository
 import (
 	"context"
 
+	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type Repository struct {
-	Account                *AccountRepository
-	Roadmap                *RoadmapRepository
-	Topic                  *TopicRepository
-	PersonalizationOptions *PersonalizationOptionsRepository
-	Session                *SessionRepository
+	Account                domain.AccountRepository
+	Roadmap                domain.RoadmapRepository
+	Topic                  domain.TopicRepository
+	PersonalizationOptions domain.PersonalizationOptionsRepository
+	Session                domain.SessionRepository
 }
 
 func New(db database.Connection) *Repository {
