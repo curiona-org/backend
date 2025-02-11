@@ -4,7 +4,7 @@ func (s *Server) setupRoutes() {
 	s.instance.GET("/health", s.handler.HealthCheck)
 
 	auth := s.instance.Group("/auth")
-	auth.POST("/", s.handler.Auth)
+	auth.POST("", s.handler.Auth)
 	auth.POST("/refresh", s.handler.AuthRefresh)
 
 	s.instance.GET("/profile", s.handler.GetProfile, s.handler.MiddlewareAuth)
