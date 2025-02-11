@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS topics(
   "description" TEXT NOT NULL,
   "order" INTEGER NOT NULL,
   "finished" BOOLEAN NOT NULL DEFAULT FALSE,
-  "completed_at" TIMESTAMPTZ NOT NULL,
+  "completed_at" TIMESTAMPTZ,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT (now()),
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT (now())
 );
