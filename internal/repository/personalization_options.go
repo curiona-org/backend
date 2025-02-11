@@ -7,40 +7,25 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
-	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type PersonalizationOptionsRepository struct {
-	db database.Connection
+	db     database.Connection
+	tracer trace.Tracer
 }
 
 func NewPersonalizationOptionsRepository(db database.Connection) *PersonalizationOptionsRepository {
+	tracer := otel.Tracer("db:postgres:personalization_options")
 	return &PersonalizationOptionsRepository{
-		db: db,
+		db:     db,
+		tracer: tracer,
 	}
 }
 
-func (r *PersonalizationOptionsRepository) GetByRoadmapID(ctx context.Context, filter int) (domain.PersonalizationOptions, error) {
-	ctx, span := tracer.Start(ctx, "(*PersonalizationOptionsRepository.GetByRoadmapID)", trace.WithAttributes(attribute.Int("roadmap_id", filter)))
-	defer span.End()
-
-	personalizationOpts, err := r.fetch(ctx, "roadmap_id", filter)
-	if err != nil {
-		return domain.PersonalizationOptions{}, err
-	}
-
-	if len(personalizationOpts) == 0 {
-		return domain.PersonalizationOptions{}, domain.ErrPersonalizationOptionsNotFound
-	}
-
-	return personalizationOpts[0], nil
-}
-
-func (r *PersonalizationOptionsRepository) fetch(ctx context.Context, col string, args ...any) ([]domain.PersonalizationOptions, error) {
-	ctx, span := tracer.Start(ctx, "(*PersonalizationOptionsRepository.fetch)", trace.WithAttributes(attribute.String("col", col)))
-	defer span.End()
-
+func (r *PersonalizationOptionsRepository) GetByRoadmapID(ctx context.Context, roadmapID int) (domain.PersonalizationOptions, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			"id",
@@ -54,11 +39,29 @@ func (r *PersonalizationOptionsRepository) fetch(ctx context.Context, col string
 			"updated_at",
 		),
 		sm.From(domain.PersonalizationOptionsTable),
-		sm.Where(psql.Quote(col).EQ(psql.Arg(args...))),
+		sm.Where(psql.Quote("roadmap_id").EQ(psql.Arg(roadmapID))),
 	).MustBuild(ctx)
+
+	personalizationOpts, err := r.fetch(ctx, query, args...)
+	if err != nil {
+		return domain.PersonalizationOptions{}, err
+	}
+
+	if len(personalizationOpts) == 0 {
+		return domain.PersonalizationOptions{}, domain.ErrPersonalizationOptionsNotFound
+	}
+
+	return personalizationOpts[0], nil
+}
+
+func (r *PersonalizationOptionsRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.PersonalizationOptions, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*PersonalizationOptionsRepository.fetch)", query)
+	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch personalization options")
+		span.RecordError(err)
 		return nil, err
 	}
 	defer rows.Close()

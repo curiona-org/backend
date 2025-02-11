@@ -9,56 +9,25 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
-	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type AccountRepository struct {
-	db database.Connection
+	db     database.Connection
+	tracer trace.Tracer
 }
 
 func NewAccountRepository(db database.Connection) *AccountRepository {
+	tracer := otel.Tracer("db:postgres:accounts")
 	return &AccountRepository{
-		db: db,
+		db:     db,
+		tracer: tracer,
 	}
 }
 
-func (r *AccountRepository) GetByID(ctx context.Context, filter int) (domain.Account, error) {
-	ctx, span := tracer.Start(ctx, "(*AccountRepository.GetByID)", trace.WithAttributes(attribute.Int("id", filter)))
-	defer span.End()
-
-	accounts, err := r.fetch(ctx, "id", filter)
-	if err != nil {
-		return domain.Account{}, err
-	}
-
-	if len(accounts) == 0 {
-		return domain.Account{}, domain.ErrAccountNotFound
-	}
-
-	return accounts[0], nil
-}
-
-func (r *AccountRepository) GetByEmail(ctx context.Context, filter string) (domain.Account, error) {
-	ctx, span := tracer.Start(ctx, "(*AccountRepository.GetByEmail)", trace.WithAttributes(attribute.String("email", filter)))
-	defer span.End()
-
-	accounts, err := r.fetch(ctx, "email", filter)
-	if err != nil {
-		return domain.Account{}, err
-	}
-
-	if len(accounts) == 0 {
-		return domain.Account{}, domain.ErrAccountNotFound
-	}
-
-	return accounts[0], nil
-}
-
-func (r *AccountRepository) fetch(ctx context.Context, col string, args ...any) ([]domain.Account, error) {
-	ctx, span := tracer.Start(ctx, "(*AccountRepository.fetch)", trace.WithAttributes(attribute.String("col", col)))
-	defer span.End()
-
+func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.AccountTable, "id"),
@@ -74,11 +43,59 @@ func (r *AccountRepository) fetch(ctx context.Context, col string, args ...any) 
 		),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
-		sm.Where(psql.Quote(col).EQ(psql.Arg(args...))),
+		sm.Where(psql.Quote("id").EQ(psql.Arg(id))),
 	).MustBuild(ctx)
+
+	accounts, err := r.fetch(ctx, query, args...)
+	if err != nil {
+		return domain.Account{}, err
+	}
+
+	if len(accounts) == 0 {
+		return domain.Account{}, domain.ErrAccountNotFound
+	}
+
+	return accounts[0], nil
+}
+
+func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domain.Account, error) {
+	query, args := psql.Select(
+		sm.Columns(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "email"),
+			psql.Quote(domain.AccountTable, "password"),
+			psql.Quote(domain.AccountTable, "created_at"),
+			psql.Quote(domain.AccountTable, "updated_at"),
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.ProfileTable, "name"),
+			psql.Quote(domain.ProfileTable, "avatar"),
+			psql.Quote(domain.ProfileTable, "created_at"),
+			psql.Quote(domain.ProfileTable, "updated_at"),
+		),
+		sm.From(domain.AccountTable),
+		sm.LeftJoin(domain.ProfileTable).Using("id"),
+		sm.Where(psql.Quote("email").EQ(psql.Arg(email))),
+	).MustBuild(ctx)
+
+	accounts, err := r.fetch(ctx, query, args...)
+	if err != nil {
+		return domain.Account{}, err
+	}
+
+	if len(accounts) == 0 {
+		return domain.Account{}, domain.ErrAccountNotFound
+	}
+
+	return accounts[0], nil
+}
+
+func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Account, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*AccountRepository.fetch)", query)
+	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch accounts")
 		span.RecordError(err)
 		return nil, err
 	}
@@ -101,7 +118,6 @@ func (r *AccountRepository) fetch(ctx context.Context, col string, args ...any) 
 			&profile.UpdatedAt,
 		)
 		if err != nil {
-			span.RecordError(err)
 			return nil, err
 		}
 
@@ -110,7 +126,6 @@ func (r *AccountRepository) fetch(ctx context.Context, col string, args ...any) 
 	}
 
 	if err := rows.Err(); err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 
@@ -118,9 +133,6 @@ func (r *AccountRepository) fetch(ctx context.Context, col string, args ...any) 
 }
 
 func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (domain.Account, error) {
-	ctx, span := tracer.Start(ctx, "(*AccountRepository.Save)")
-	defer span.End()
-
 	var account domain.Account
 	var profile domain.Profile
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -129,6 +141,9 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 			im.Values(psql.Arg(input.Email, input.Password, input.CreatedAt, input.UpdatedAt)),
 			im.Returning("id", "email", "created_at", "updated_at"),
 		).MustBuild(ctx)
+
+		ctx, span := spanWithQuery(ctx, r.tracer, "(*AccountRepository.Save)", saveAccountQuery)
+		defer span.End()
 
 		err := tx.QueryRow(ctx, saveAccountQuery, saveAccountArgs...).Scan(
 			&account.ID,
@@ -147,11 +162,15 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 			im.Returning("name", "avatar"),
 		).MustBuild(ctx)
 
+		ctx, span = spanWithQuery(ctx, r.tracer, "(*AccountRepository.Save)", saveProfileQuery)
+		defer span.End()
+
 		err = tx.QueryRow(ctx, saveProfileQuery, saveProfileArgs...).Scan(
 			&profile.Name,
 			&profile.Avatar,
 		)
 		if err != nil {
+			span.SetStatus(codes.Error, "failed to save account")
 			span.RecordError(err)
 			return err
 		}
@@ -159,7 +178,6 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 		return nil
 	})
 	if err != nil {
-		span.RecordError(err)
 		return domain.Account{}, err
 	}
 

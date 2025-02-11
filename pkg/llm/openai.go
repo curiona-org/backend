@@ -55,6 +55,7 @@ func (o *openAiClient) Chat(ctx context.Context, prompt ChatPrompt) (string, err
 		attribute.Int("completion_tokens", response.Usage.CompletionTokens),
 		attribute.Int("prompt_tokens", response.Usage.PromptTokens),
 		attribute.Int("total_tokens", response.Usage.TotalTokens),
+		attribute.String("content", response.Choices[0].Message.Content),
 	)
 
 	if len(response.Choices) == 0 {
