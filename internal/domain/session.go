@@ -27,10 +27,10 @@ type Session struct {
 }
 
 type SessionRepository interface {
-	Delete(ctx context.Context, id int) error
 	GetByAccountID(ctx context.Context, accountID int) (Session, error)
 	Save(ctx context.Context, input *Session) (Session, error)
 	UpdateByRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *Session) (bool, error)) error
+	Delete(ctx context.Context, id int) error
 }
 
 // NewSession creates a new session for the given account.
