@@ -33,8 +33,10 @@ func TestConfig_Init(t *testing.T) {
 	setEnv("DB_POOL_MAX_CONN_LIFETIME", "1h")
 	setEnv("DB_POOL_MAX_CONN_IDLETIME", "30m")
 	setEnv("DB_POOL_HEALTH_CHECK_PERIOD", "1m")
-	setEnv("JWT_SECRET_KEY", "test_secret")
-	setEnv("JWT_EXPIRES_IN", "48h")
+	setEnv("ACCESS_SECRET_KEY", "test_secret")
+	setEnv("ACCESS_EXPIRES_IN", "5m")
+	setEnv("REFRESH_SECRET_KEY", "test_secret")
+	setEnv("REFRESH_EXPIRES_IN", "5m")
 	setEnv("LLM_API_KEY", "test_api_key")
 	setEnv("LLM_MODEL", "gpt-4")
 	// Added missing configurations
@@ -56,8 +58,10 @@ func TestConfig_Init(t *testing.T) {
 	defer unsetEnv("DB_POOL_MAX_CONN_LIFETIME")
 	defer unsetEnv("DB_POOL_MAX_CONN_IDLETIME")
 	defer unsetEnv("DB_POOL_HEALTH_CHECK_PERIOD")
-	defer unsetEnv("JWT_SECRET_KEY")
-	defer unsetEnv("JWT_EXPIRES_IN")
+	defer unsetEnv("ACCESS_SECRET_KEY")
+	defer unsetEnv("ACCESS_EXPIRES_IN")
+	defer unsetEnv("REFRESH_SECRET_KEY")
+	defer unsetEnv("REFRESH_EXPIRES_IN")
 	defer unsetEnv("LLM_API_KEY")
 	defer unsetEnv("LLM_MODEL")
 	defer unsetEnv("GOOGLE_CLIENT_ID")
@@ -85,8 +89,10 @@ func TestConfig_Init(t *testing.T) {
 		{"DBPoolMaxConnLifetime", time.Hour, config.DBPoolMaxConnLifetime()},
 		{"DBPoolMaxConnIdleTime", 30 * time.Minute, config.DBPoolMaxConnIdleTime()},
 		{"DBPoolHealthCheckPeriod", time.Minute, config.DBPoolHealthCheckPeriod()},
-		{"JWTSecretKey", "test_secret", config.JWTSecretKey()},
-		{"JWTExpiresIn", 48 * time.Hour, config.JWTExpiresIn()},
+		{"AccessSecretKey", "test_secret", config.AccessSecretKey()},
+		{"AccessExpiresIn", 5 * time.Minute, config.AccessExpiresIn()},
+		{"RefreshSecretKey", "test_secret", config.RefreshSecretKey()},
+		{"RefreshExpiresIn", 24 * time.Hour * 30, config.RefreshExpiresIn()},
 		{"LLMAPIKey", "test_api_key", config.LLMAPIKey()},
 		{"LLMModel", "gpt-4", config.LLMModel()},
 		{"GoogleClientID", "test_google_id", config.GoogleClientID()},

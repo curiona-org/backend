@@ -24,8 +24,10 @@ type Config struct {
 	dbPoolMaxConnIdleTime   time.Duration
 	dbPoolHealthCheckPeriod time.Duration
 
-	jwtSecretKey string
-	jwtExpiresIn time.Duration
+	accessSecretKey  string
+	accessExpiresIn  time.Duration
+	refreshSecretKey string
+	refreshExpiresIn time.Duration
 
 	llmProvider string
 	llmAPIKey   string
@@ -58,8 +60,10 @@ func Init() {
 		dbPoolMaxConnIdleTime:   LookupEnv("DB_POOL_MAX_CONN_IDLE_TIME", 30*time.Minute),
 		dbPoolHealthCheckPeriod: LookupEnv("DB_POOL_HEALTH_CHECK_PERIOD", time.Minute),
 
-		jwtSecretKey: LookupEnv("JWT_SECRET_KEY", "secret"),
-		jwtExpiresIn: LookupEnv("JWT_EXPIRES_IN", time.Hour*24),
+		accessSecretKey:  LookupEnv("ACCESS_SECRET_KEY", "secret"),
+		accessExpiresIn:  LookupEnv("ACCESS_EXPIRES_IN", time.Minute*5),
+		refreshSecretKey: LookupEnv("REFRESH_SECRET_KEY", "secret"),
+		refreshExpiresIn: LookupEnv("REFRESH_EXPIRES_IN", time.Hour*24*30),
 
 		llmProvider: LookupEnv("LLM_PROVIDER", "openai"),
 		llmAPIKey:   LookupEnv("LLM_API_KEY", ""),
@@ -90,11 +94,15 @@ func DBPoolMaxConnLifetime() time.Duration   { return config.dbPoolMaxConnLifeti
 func DBPoolMaxConnIdleTime() time.Duration   { return config.dbPoolMaxConnIdleTime }
 func DBPoolHealthCheckPeriod() time.Duration { return config.dbPoolHealthCheckPeriod }
 
-func JWTSecretKey() string        { return config.jwtSecretKey }
-func JWTExpiresIn() time.Duration { return config.jwtExpiresIn }
+func AccessSecretKey() string         { return config.accessSecretKey }
+func AccessExpiresIn() time.Duration  { return config.accessExpiresIn }
+func RefreshSecretKey() string        { return config.refreshSecretKey }
+func RefreshExpiresIn() time.Duration { return config.refreshExpiresIn }
 
-func SetJWTSecretKey(key string)             { config.jwtSecretKey = key }
-func SetJWTExpiresIn(duration time.Duration) { config.jwtExpiresIn = duration }
+func SetAccessSecretKey(key string)              { config.accessSecretKey = key }
+func SetAccessExpiresIn(duration time.Duration)  { config.accessExpiresIn = duration }
+func SetRefreshSecretKey(key string)             { config.refreshSecretKey = key }
+func SetRefreshExpiresIn(duration time.Duration) { config.refreshExpiresIn = duration }
 
 func LLMProvider() llm.Provider { return llm.Provider(config.llmProvider) }
 

@@ -14,6 +14,7 @@ type Repository struct {
 	Roadmap                *RoadmapRepository
 	Topic                  *TopicRepository
 	PersonalizationOptions *PersonalizationOptionsRepository
+	Session                *SessionRepository
 }
 
 func New(db database.Connection) *Repository {
@@ -22,5 +23,6 @@ func New(db database.Connection) *Repository {
 		Roadmap:                NewRoadmapRepository(db),
 		Topic:                  NewTopicRepository(db),
 		PersonalizationOptions: NewPersonalizationOptionsRepository(db),
+		Session:                NewSessionRepository(db),
 	}
 }

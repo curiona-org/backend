@@ -22,12 +22,7 @@ type Clients struct {
 }
 
 func New(ctx context.Context) (*Clients, error) {
-	googleProvider := oauth.NewGoogleProvider(
-		config.GoogleClientID(),
-		config.GoogleClientSecret())
-	c := &Clients{
-		Google: googleProvider,
-	}
+	c := &Clients{}
 
 	var group errgroup.Group
 

@@ -12,7 +12,7 @@ type JWT struct {
 	expiresIn time.Duration
 }
 
-func NewJWT(secret string, expiresIn time.Duration) Authorizer {
+func NewJWT(secret string, expiresIn time.Duration) Token {
 	return JWT{secret: secret, expiresIn: expiresIn}
 }
 
@@ -36,4 +36,12 @@ func (j JWT) Parse(token string) (*Payload, error) {
 	claims := t.Claims.(jwt.MapClaims)
 
 	return NewPayloadFromClaims(claims), nil
+}
+
+func (j JWT) ExpiresAt() time.Time {
+	return time.Now().Add(j.expiresIn)
+}
+
+func (j JWT) ExpiresIn() time.Duration {
+	return j.expiresIn
 }

@@ -18,6 +18,7 @@ var (
 type Backend interface {
 	Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error)
 	AuthVerify(ctx context.Context, token string) (*auth.Payload, error)
+	AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error)
 	GetProfile(ctx context.Context) (io.GetProfileOutput, error)
 
 	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
@@ -35,11 +36,11 @@ type Backend interface {
 type backend struct {
 	repository  *repository.Repository
 	llm         llm.Client
-	auth        auth.Authorizer
+	auth        *auth.Auth
 	googleOAuth oauth.Client
 }
 
-func New(repository *repository.Repository, llm llm.Client, auth auth.Authorizer, googleOAuth oauth.Client) Backend {
+func New(repository *repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Backend {
 	return &backend{
 		repository:  repository,
 		llm:         llm,
