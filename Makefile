@@ -5,7 +5,7 @@ help: ## Displays all the available commands
 .PHONY: help
 
 run: ## Runs the application
-	@go run cmd/app/main.go
+	@go run cmd/application/main.go
 .PHONY: run
 
 docker-compose: ## Starts the docker-compose services

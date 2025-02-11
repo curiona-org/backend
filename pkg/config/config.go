@@ -44,7 +44,7 @@ var config *Config
 // Init initializes the config package
 func Init() {
 	config = &Config{
-		appName: LookupEnv("APP_NAME", "roadmap_backend"),
+		appName: LookupEnv("APP_NAME", "roadmap_application"),
 		appEnv:  LookupEnv("APP_ENV", "local"),
 		port:    LookupEnv("PORT", "5000"),
 

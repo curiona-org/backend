@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	tracer = otel.Tracer("backend-layer")
+	tracer = otel.Tracer("application-layer")
 )
 
-type Backend interface {
+type Application interface {
 	Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error)
 	AuthVerify(ctx context.Context, token string) (*auth.Payload, error)
 	AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error)
@@ -33,15 +33,15 @@ type Backend interface {
 	// MarkTopicAsIncomplete(ctx context.Context, input io.MarkTopicAsIncompleteInput) (io.TopicFinishOutput, error)
 }
 
-type backend struct {
+type application struct {
 	repository  *repository.Repository
 	llm         llm.Client
 	auth        *auth.Auth
 	googleOAuth oauth.Client
 }
 
-func New(repository *repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Backend {
-	return &backend{
+func New(repository *repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Application {
+	return &application{
 		repository:  repository,
 		llm:         llm,
 		auth:        auth,

@@ -12,7 +12,7 @@ func (h *Handler) GetTopicBySlug(c echo.Context) error {
 		return apperrors.NotFound()
 	}
 
-	output, err := h.backend.GetTopicBySlug(c.Request().Context(), slug)
+	output, err := h.application.GetTopicBySlug(c.Request().Context(), slug)
 	if err != nil {
 		return err
 	}

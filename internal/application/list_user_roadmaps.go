@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -9,14 +9,14 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func (b *backend) ListUserRoadmaps(ctx context.Context) (io.ListUserRoadmapsOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.ListUserRoadmaps)")
+func (app *application) ListUserRoadmaps(ctx context.Context) (io.ListUserRoadmapsOutput, error) {
+	ctx, span := tracer.Start(ctx, "(*application.ListUserRoadmaps)")
 	defer span.End()
 
 	auth := auth.FromContext(ctx)
 	span.SetAttributes(attribute.Int("account_id", auth.ID))
 
-	roadmaps, err := b.repository.Roadmap.ListByAccountID(ctx, auth.ID)
+	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, auth.ID)
 	if err != nil {
 		return io.ListUserRoadmapsOutput{}, err
 	}

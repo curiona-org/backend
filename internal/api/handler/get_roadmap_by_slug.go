@@ -12,7 +12,7 @@ func (h *Handler) GetRoadmapBySlug(c echo.Context) error {
 		return apperrors.NotFound()
 	}
 
-	output, err := h.backend.GetRoadmapBySlug(c.Request().Context(), slug)
+	output, err := h.application.GetRoadmapBySlug(c.Request().Context(), slug)
 	if err != nil {
 		return err
 	}

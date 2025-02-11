@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (b *backend) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error) {
+	ctx, span := tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
-	roadmap, err := b.repository.Roadmap.GetBySlug(ctx, slug)
+	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
 			return io.GetRoadmapOutput{}, apperrors.ResourceNotFound("roadmap")
@@ -24,7 +24,7 @@ func (b *backend) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoad
 		return io.GetRoadmapOutput{}, err
 	}
 
-	account, err := b.repository.Account.GetByID(ctx, roadmap.AccountID)
+	account, err := app.repository.Account.GetByID(ctx, roadmap.AccountID)
 	if err != nil {
 		return io.GetRoadmapOutput{}, err
 	}

@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
-    go build -v -a -installsuffix cgo -o /bin/server ./cmd/app/main.go
+    go build -v -a -installsuffix cgo -o /bin/server ./cmd/application/main.go
 
 FROM alpine:3.17.2 AS final
 

@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-func (b *backend) authEmailPassword(ctx context.Context, input io.AuthInput) (registrationResult, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.authEmailPassword)")
+func (app *application) authEmailPassword(ctx context.Context, input io.AuthInput) (registrationResult, error) {
+	ctx, span := tracer.Start(ctx, "(*application.authEmailPassword)")
 	defer span.End()
 
-	existingAccount, err := b.repository.Account.GetByEmail(ctx, input.Email)
+	existingAccount, err := app.repository.Account.GetByEmail(ctx, input.Email)
 	if err != nil && err != domain.ErrAccountNotFound {
 		return registrationResult{}, err
 	}
@@ -57,7 +57,7 @@ func (b *backend) authEmailPassword(ctx context.Context, input io.AuthInput) (re
 		return registrationResult{}, err
 	}
 
-	createdAccount, err := b.repository.Account.Save(ctx, account)
+	createdAccount, err := app.repository.Account.Save(ctx, account)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

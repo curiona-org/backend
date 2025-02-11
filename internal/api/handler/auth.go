@@ -22,7 +22,7 @@ func (h *Handler) Auth(c echo.Context) error {
 
 	input.ClientIP = c.RealIP()
 	input.UserAgent = c.Request().UserAgent()
-	output, err := h.backend.Auth(c.Request().Context(), input)
+	output, err := h.application.Auth(c.Request().Context(), input)
 	if err != nil {
 		return err
 	}

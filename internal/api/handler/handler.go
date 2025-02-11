@@ -1,11 +1,11 @@
 package handler
 
-import "github.com/roadmap-thesis/backend/internal/backend"
+import "github.com/roadmap-thesis/backend/internal/application"
 
 type Handler struct {
-	backend backend.Backend
+	application application.Application
 }
 
-func New(backend backend.Backend) *Handler {
-	return &Handler{backend: backend}
+func New(application application.Application) *Handler {
+	return &Handler{application: application}
 }

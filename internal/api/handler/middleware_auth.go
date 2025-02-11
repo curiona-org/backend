@@ -23,7 +23,7 @@ func (h *Handler) MiddlewareAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		token := bearer[1]
-		payload, err := h.backend.AuthVerify(reqCtx, token)
+		payload, err := h.application.AuthVerify(reqCtx, token)
 		if err != nil {
 			return apperrors.Unauthorized()
 		}

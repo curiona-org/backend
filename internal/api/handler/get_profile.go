@@ -6,7 +6,7 @@ import (
 )
 
 func (h *Handler) GetProfile(c echo.Context) error {
-	output, err := h.backend.GetProfile(c.Request().Context())
+	output, err := h.application.GetProfile(c.Request().Context())
 	if err != nil {
 		return err
 	}

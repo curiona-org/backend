@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (b *backend) GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error) {
-	traceCtx, span := tracer.Start(ctx, "(*backend.GenerateRoadmap)", trace.WithAttributes(
+func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error) {
+	traceCtx, span := tracer.Start(ctx, "(*application.GenerateRoadmap)", trace.WithAttributes(
 		attribute.String("topic", input.Topic),
 		attribute.Int("personalization_options.daily_time_availability.value", input.PersonalizationOptions.DailyTimeAvailability.Value),
 		attribute.String("personalization_options.daily_time_availability.unit", input.PersonalizationOptions.DailyTimeAvailability.Unit.String()),
@@ -30,9 +30,9 @@ func (b *backend) GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapI
 
 	var output io.GenerateRoadmapOutput
 
-	generated, err := b.chatGeneratePrompt(traceCtx, llm.ChatPrompt{
-		System: b.makeGenerateRoadmapSystemPrompt(),
-		User:   b.makeGenerateRoadmapUserPrompt(input),
+	generated, err := app.chatGeneratePrompt(traceCtx, llm.ChatPrompt{
+		System: app.makeGenerateRoadmapSystemPrompt(),
+		User:   app.makeGenerateRoadmapUserPrompt(input),
 	})
 	if err != nil {
 		return io.GenerateRoadmapOutput{}, err
@@ -68,7 +68,7 @@ func (b *backend) GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapI
 	)
 	roadmap.SetPersonalizationOptions(personalizationOpt)
 
-	createdRoadmap, err := b.repository.Roadmap.Save(traceCtx, roadmap)
+	createdRoadmap, err := app.repository.Roadmap.Save(traceCtx, roadmap)
 	if err != nil {
 		return io.GenerateRoadmapOutput{}, err
 	}
@@ -95,11 +95,11 @@ type chatGeneratePromptPromptResultSubtopic struct {
 	Description string `json:"description"`
 }
 
-func (b *backend) chatGeneratePrompt(ctx context.Context, prompt llm.ChatPrompt) (chatGeneratePromptPromptResult, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.chatGeneratePrompt)")
+func (app *application) chatGeneratePrompt(ctx context.Context, prompt llm.ChatPrompt) (chatGeneratePromptPromptResult, error) {
+	ctx, span := tracer.Start(ctx, "(*application.chatGeneratePrompt)")
 	defer span.End()
 
-	content, err := b.llm.Chat(ctx, prompt)
+	content, err := app.llm.Chat(ctx, prompt)
 	if err != nil {
 		span.RecordError(err)
 		return chatGeneratePromptPromptResult{}, err
@@ -115,7 +115,7 @@ func (b *backend) chatGeneratePrompt(ctx context.Context, prompt llm.ChatPrompt)
 	return result, nil
 }
 
-func (b *backend) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapInput) string {
+func (app *application) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapInput) string {
 	var sb strings.Builder
 	sb.WriteString(`I will give you a topic and you need to generate a learning roadmap for it. Just reply to the question without adding any other information about the prompt and use simple language.
 `)
@@ -150,7 +150,7 @@ func (b *backend) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapInput) s
 	return sb.String()
 }
 
-func (b *backend) makeGenerateRoadmapSystemPrompt() string {
+func (app *application) makeGenerateRoadmapSystemPrompt() string {
 	var sb strings.Builder
 
 	promptUserPersonalizationOptions := []string{

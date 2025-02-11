@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -10,33 +10,33 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (b *backend) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.Auth)", trace.WithAttributes(attribute.String("email", input.Email)))
+func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error) {
+	ctx, span := tracer.Start(ctx, "(*application.Auth)", trace.WithAttributes(attribute.String("email", input.Email)))
 	defer span.End()
 
 	var result registrationResult
 	var err error
 	if input.OAuthToken != "" {
-		result, err = b.authGoogle(ctx, input)
+		result, err = app.authGoogle(ctx, input)
 	} else {
-		result, err = b.authEmailPassword(ctx, input)
+		result, err = app.authEmailPassword(ctx, input)
 	}
 
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
 
-	accessToken, err := b.auth.Access.Generate(result.id)
+	accessToken, err := app.auth.Access.Generate(result.id)
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
 
-	refreshToken, err := b.auth.Refresh.Generate(result.id)
+	refreshToken, err := app.auth.Refresh.Generate(result.id)
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
 
-	refreshExpiresAt := b.auth.Refresh.ExpiresAt()
+	refreshExpiresAt := app.auth.Refresh.ExpiresAt()
 
 	newSession := domain.NewSession(
 		result.id,
@@ -46,7 +46,7 @@ func (b *backend) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, 
 		refreshExpiresAt,
 	)
 
-	_, err = b.repository.Session.Save(ctx, newSession)
+	_, err = app.repository.Session.Save(ctx, newSession)
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
@@ -54,7 +54,7 @@ func (b *backend) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, 
 	output := io.AuthOutput{
 		Created:               result.created,
 		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  b.auth.Access.ExpiresAt(),
+		AccessTokenExpiresAt:  app.auth.Access.ExpiresAt(),
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: refreshExpiresAt,
 		Account: io.AuthOutputAccount{

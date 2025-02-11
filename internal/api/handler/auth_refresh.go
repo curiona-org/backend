@@ -15,7 +15,7 @@ func (h *Handler) AuthRefresh(c echo.Context) error {
 		return apperrors.Unauthorized()
 	}
 
-	output, err := h.backend.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
+	output, err := h.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
 		Token: refreshToken.Value,
 	})
 	if err != nil {

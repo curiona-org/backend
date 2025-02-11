@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -13,20 +13,20 @@ import (
 // AuthRefresh refreshes the access token using the refresh token and returns a new access token and a rotated refresh token.
 // The old session will be blocked to prevent replay attacks while a new session is created.
 // Currently, it supports multiple sessions per user (e.g., multiple devices).
-func (b *backend) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.AuthRefresh)")
+func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error) {
+	ctx, span := tracer.Start(ctx, "(*application.AuthRefresh)")
 	defer span.End()
 
-	payload, err := b.auth.Refresh.Parse(input.Token)
+	payload, err := app.auth.Refresh.Parse(input.Token)
 	if err != nil {
 		return io.AuthRefreshOutput{}, err
 	}
 
 	var accessToken, refreshToken string
 	var refreshExpiresAt time.Time
-	err = b.repository.Session.UpdateByRefreshToken(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
+	err = app.repository.Session.UpdateByRefreshToken(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
 		if session.Blocked {
-			err := b.repository.Session.Delete(traceCtx, session.ID)
+			err := app.repository.Session.Delete(traceCtx, session.ID)
 			if err != nil {
 				return false, err
 			}
@@ -37,7 +37,7 @@ func (b *backend) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (i
 			return false, errors.Join(apperrors.Unauthorized(), errors.New("refresh token expired"))
 		}
 
-		accessToken, err = b.auth.Access.Generate(payload.ID)
+		accessToken, err = app.auth.Access.Generate(payload.ID)
 		if err != nil {
 			return false, err
 		}
@@ -46,7 +46,7 @@ func (b *backend) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (i
 		session.MarkAsBlocked()
 
 		// Rotate the refresh token
-		refreshToken, err = b.auth.Refresh.Generate(payload.ID)
+		refreshToken, err = app.auth.Refresh.Generate(payload.ID)
 		if err != nil {
 			return false, err
 		}
@@ -56,10 +56,10 @@ func (b *backend) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (i
 			refreshToken,
 			session.UserAgent,
 			session.ClientIP,
-			b.auth.Refresh.ExpiresAt(),
+			app.auth.Refresh.ExpiresAt(),
 		)
 
-		_, err = b.repository.Session.Save(traceCtx, newSession)
+		_, err = app.repository.Session.Save(traceCtx, newSession)
 		if err != nil {
 			return false, err
 		}
@@ -74,7 +74,7 @@ func (b *backend) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (i
 
 	return io.AuthRefreshOutput{
 		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  time.Now().Add(b.auth.Access.ExpiresIn()),
+		AccessTokenExpiresAt:  time.Now().Add(app.auth.Access.ExpiresIn()),
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: refreshExpiresAt,
 	}, nil

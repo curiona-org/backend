@@ -18,7 +18,7 @@ func (h *Handler) GenerateRoadmap(c echo.Context) error {
 		return err
 	}
 
-	output, err := h.backend.GenerateRoadmap(c.Request().Context(), input)
+	output, err := h.application.GenerateRoadmap(c.Request().Context(), input)
 	if err != nil {
 		return err
 	}
