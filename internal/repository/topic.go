@@ -7,40 +7,25 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
-	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type TopicRepository struct {
-	db database.Connection
+	db     database.Connection
+	tracer trace.Tracer
 }
 
 func NewTopicRepository(db database.Connection) *TopicRepository {
+	tracer := otel.Tracer("db:postgres:topics")
 	return &TopicRepository{
-		db: db,
+		db:     db,
+		tracer: tracer,
 	}
 }
 
 func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
-	ctx, span := tracer.Start(ctx, "(*TopicRepository.GetBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
-	defer span.End()
-
-	topics, err := r.fetch(ctx, "slug", slug)
-	if err != nil {
-		return domain.Topic{}, err
-	}
-
-	if len(topics) == 0 {
-		return domain.Topic{}, domain.ErrTopicNotFound
-	}
-
-	return topics[0], nil
-}
-
-func (r *TopicRepository) fetch(ctx context.Context, col string, args ...any) ([]domain.Topic, error) {
-	ctx, span := tracer.Start(ctx, "(*TopicRepository.fetch)", trace.WithAttributes(attribute.String("col", col)))
-	defer span.End()
-
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.TopicTable, "id"),
@@ -55,11 +40,29 @@ func (r *TopicRepository) fetch(ctx context.Context, col string, args ...any) ([
 			psql.Quote(domain.TopicTable, "updated_at"),
 		),
 		sm.From(domain.TopicTable),
-		sm.Where(psql.Quote(domain.TopicTable, col).EQ(psql.Arg(args...))),
+		sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
 	).MustBuild(ctx)
+
+	topics, err := r.fetch(ctx, query, args...)
+	if err != nil {
+		return domain.Topic{}, err
+	}
+
+	if len(topics) == 0 {
+		return domain.Topic{}, domain.ErrTopicNotFound
+	}
+
+	return topics[0], nil
+}
+
+func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*TopicRepository.fetch)", query)
+	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch topics")
+		span.RecordError(err)
 		return nil, err
 	}
 	defer rows.Close()
