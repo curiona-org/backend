@@ -3,7 +3,10 @@ package api
 func (s *Server) setupRoutes() {
 	s.instance.GET("/health", s.handler.HealthCheck)
 
-	s.instance.POST("/auth", s.handler.Auth)
+	auth := s.instance.Group("/auth")
+	auth.POST("/", s.handler.Auth)
+	auth.POST("/refresh", s.handler.AuthRefresh)
+
 	s.instance.GET("/profile", s.handler.GetProfile, s.handler.MiddlewareAuth)
 
 	s.instance.GET("/roadmaps", s.handler.ListUserRoadmaps, s.handler.MiddlewareAuth)

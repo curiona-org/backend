@@ -10,5 +10,5 @@ func (b *backend) AuthVerify(ctx context.Context, token string) (*auth.Payload, 
 	ctx, span := tracer.Start(ctx, "(*backend.AuthVerify)")
 	defer span.End()
 
-	return b.auth.Parse(token)
+	return b.auth.Access.Parse(token)
 }

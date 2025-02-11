@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/io"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -25,14 +26,37 @@ func (b *backend) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, 
 		return io.AuthOutput{}, err
 	}
 
-	token, err := b.auth.Generate(result.id)
+	accessToken, err := b.auth.Access.Generate(result.id)
+	if err != nil {
+		return io.AuthOutput{}, err
+	}
+
+	refreshToken, err := b.auth.Refresh.Generate(result.id)
+	if err != nil {
+		return io.AuthOutput{}, err
+	}
+
+	refreshExpiresAt := b.auth.Refresh.ExpiresAt()
+
+	newSession := domain.NewSession(
+		result.id,
+		refreshToken,
+		input.UserAgent,
+		input.ClientIP,
+		refreshExpiresAt,
+	)
+
+	_, err = b.repository.Session.Save(ctx, newSession)
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
 
 	output := io.AuthOutput{
-		Created: result.created,
-		Token:   token,
+		Created:               result.created,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  b.auth.Access.ExpiresAt(),
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshExpiresAt,
 		Account: io.AuthOutputAccount{
 			ID:       result.id,
 			Email:    result.email,

@@ -9,6 +9,7 @@ import (
 	"github.com/roadmap-thesis/backend/internal/clients"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
+	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
@@ -33,10 +34,19 @@ func main() {
 	backend := backend.New(
 		repository,
 		clients.LLM,
-		auth.NewJWT(
-			config.JWTSecretKey(),
-			config.JWTExpiresIn()),
-		clients.Google,
+		auth.New(
+			auth.StrategyJWT,
+			&auth.Config{
+				AccessSecretKey:  config.AccessSecretKey(),
+				AccessExpiresIn:  config.AccessExpiresIn(),
+				RefreshSecretKey: config.RefreshSecretKey(),
+				RefreshExpiresIn: config.RefreshExpiresIn(),
+			},
+		),
+		oauth.NewGoogleProvider(
+			config.GoogleClientID(),
+			config.GoogleClientSecret(),
+		),
 	)
 
 	api := api.New(config.Port(), backend)
