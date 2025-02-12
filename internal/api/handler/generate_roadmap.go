@@ -2,8 +2,8 @@ package handler
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/render"
 )
 
@@ -18,7 +18,7 @@ func (h *Handler) GenerateRoadmap(c echo.Context) error {
 		return err
 	}
 
-	output, err := h.backend.GenerateRoadmap(c.Request().Context(), input)
+	output, err := h.application.GenerateRoadmap(c.Request().Context(), input)
 	if err != nil {
 		return err
 	}

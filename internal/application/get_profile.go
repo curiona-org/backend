@@ -1,4 +1,4 @@
-package backend
+package application
 
 import (
 	"context"
@@ -8,15 +8,15 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func (b *backend) GetProfile(ctx context.Context) (io.GetProfileOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.GetProfile)")
+func (app *application) GetProfile(ctx context.Context) (io.GetProfileOutput, error) {
+	ctx, span := tracer.Start(ctx, "(*application.GetProfile)")
 	defer span.End()
 
 	auth := auth.FromContext(ctx)
 
 	span.SetAttributes(attribute.Int("account_id", auth.ID))
 
-	account, err := b.repository.Account.GetByID(ctx, auth.ID)
+	account, err := app.repository.Account.GetByID(ctx, auth.ID)
 	if err != nil {
 		return io.GetProfileOutput{}, err
 	}

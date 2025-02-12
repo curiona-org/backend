@@ -2,7 +2,7 @@ package apperrors
 
 import "net/http"
 
-func InvalidData() error {
+func InvalidData() *AppError {
 	return &AppError{
 		code:    http.StatusBadRequest,
 		message: "Invalid Data",

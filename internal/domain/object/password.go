@@ -1,19 +1,19 @@
 package object
 
 import (
-	"fmt"
+	"errors"
 	"unicode"
 
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/crypto"
 )
 
 var (
 	// ErrPasswordInvalidCharacters is returned when the password contains invalid characters
-	ErrPasswordInvalidCharacters = fmt.Errorf("%w: password invalid characters", apperrors.InvalidData())
+	ErrPasswordInvalidCharacters = apperrors.Wrap(apperrors.InvalidData(), errors.New("password invalid characters"))
 
 	// ErrPasswordEmpty is returned when the password is empty
-	ErrPasswordEmpty = fmt.Errorf("%w: password empty", apperrors.InvalidData())
+	ErrPasswordEmpty = apperrors.Wrap(apperrors.InvalidData(), errors.New("password empty"))
 )
 
 // Password can be plain/hashed

@@ -6,7 +6,7 @@ import (
 )
 
 func (h *Handler) ListUserRoadmaps(c echo.Context) error {
-	output, err := h.backend.ListUserRoadmaps(c.Request().Context())
+	output, err := h.application.ListUserRoadmaps(c.Request().Context())
 	if err != nil {
 		return err
 	}

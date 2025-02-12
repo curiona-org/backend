@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -25,6 +26,10 @@ type PersonalizationOptions struct {
 	AdditionalInfo        string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
+}
+
+type PersonalizationOptionsRepository interface {
+	GetByRoadmapID(ctx context.Context, roadmapID int) (PersonalizationOptions, error)
 }
 
 func NewPersonalizationOptions(accountID, roadmapID int, dailyTimeAvailability, totalDuration time.Duration, skillLevel object.SkillLevel, additionalInfo string) *PersonalizationOptions {

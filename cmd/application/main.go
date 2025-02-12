@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/roadmap-thesis/backend/internal/api"
-	"github.com/roadmap-thesis/backend/internal/backend"
+	"github.com/roadmap-thesis/backend/internal/application"
 	"github.com/roadmap-thesis/backend/internal/clients"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
@@ -31,7 +31,7 @@ func main() {
 	log.Info().Msg("Bootstrapping application...")
 	repository := repository.New(clients.DB)
 
-	backend := backend.New(
+	application := application.New(
 		repository,
 		clients.LLM,
 		auth.New(
@@ -49,7 +49,7 @@ func main() {
 		),
 	)
 
-	api := api.New(config.Port(), backend)
+	api := api.New(config.Port(), application)
 
 	log.Info().Msg("Starting Application Server...")
 	api.Start(ctx)

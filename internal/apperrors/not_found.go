@@ -2,9 +2,9 @@ package apperrors
 
 import "net/http"
 
-func ResourceNotFound(resource string) error {
+func NotFound() *AppError {
 	return &AppError{
 		code:    http.StatusNotFound,
-		message: resource + " not found",
+		message: "Not found",
 	}
 }

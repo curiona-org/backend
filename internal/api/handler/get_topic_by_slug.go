@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/render"
 )
 
@@ -12,7 +12,7 @@ func (h *Handler) GetTopicBySlug(c echo.Context) error {
 		return apperrors.NotFound()
 	}
 
-	output, err := h.backend.GetTopicBySlug(c.Request().Context(), slug)
+	output, err := h.application.GetTopicBySlug(c.Request().Context(), slug)
 	if err != nil {
 		return err
 	}

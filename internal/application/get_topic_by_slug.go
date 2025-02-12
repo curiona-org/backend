@@ -1,21 +1,21 @@
-package backend
+package application
 
 import (
 	"context"
 	"errors"
 
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (b *backend) GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*backend.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error) {
+	ctx, span := tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
-	topic, err := b.repository.Topic.GetBySlug(ctx, slug)
+	topic, err := app.repository.Topic.GetBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
 			return io.GetTopicOutput{}, apperrors.ResourceNotFound("topic")

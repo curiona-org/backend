@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -30,6 +31,10 @@ type Topic struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type TopicRepository interface {
+	GetBySlug(ctx context.Context, slug string) (Topic, error)
 }
 
 func NewTopic(title, description string) *Topic {

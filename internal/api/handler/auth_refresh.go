@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/apperrors"
 	"github.com/roadmap-thesis/backend/pkg/render"
 )
 
@@ -15,7 +15,7 @@ func (h *Handler) AuthRefresh(c echo.Context) error {
 		return apperrors.Unauthorized()
 	}
 
-	output, err := h.backend.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
+	output, err := h.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
 		Token: refreshToken.Value,
 	})
 	if err != nil {

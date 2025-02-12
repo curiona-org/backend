@@ -4,24 +4,24 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/api/handler"
-	"github.com/roadmap-thesis/backend/internal/backend"
+	"github.com/roadmap-thesis/backend/internal/application"
 	"github.com/roadmap-thesis/backend/pkg/server"
 )
 
 type Server struct {
-	instance *server.Server
-	backend  backend.Backend
-	handler  *handler.Handler
+	instance    *server.Server
+	application application.Application
+	handler     *handler.Handler
 }
 
-func New(port string, backend backend.Backend) *Server {
+func New(port string, application application.Application) *Server {
 	instance := server.New(port)
 
-	handler := handler.New(backend)
+	handler := handler.New(application)
 	api := &Server{
-		backend:  backend,
-		handler:  handler,
-		instance: instance,
+		application: application,
+		handler:     handler,
+		instance:    instance,
 	}
 
 	api.setupMiddlewares()
