@@ -29,7 +29,7 @@ type Session struct {
 type SessionRepository interface {
 	GetByAccountID(ctx context.Context, accountID int) (Session, error)
 	Save(ctx context.Context, input *Session) (Session, error)
-	UpdateByRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *Session) (bool, error)) error
+	RotateRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *Session) (bool, error)) error
 	Delete(ctx context.Context, id int) error
 }
 

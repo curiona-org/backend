@@ -24,7 +24,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 
 	var accessToken, refreshToken string
 	var refreshExpiresAt time.Time
-	err = app.repository.Session.UpdateByRefreshToken(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
+	err = app.repository.Session.RotateRefreshToken(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
 		if session.Blocked {
 			err := app.repository.Session.Delete(traceCtx, session.ID)
 			if err != nil {

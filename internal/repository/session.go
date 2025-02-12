@@ -135,8 +135,8 @@ func (r *SessionRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r *SessionRepository) UpdateByRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*SessionRepository.UpdateByRefreshToken)")
+func (r *SessionRepository) RotateRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*SessionRepository.RotateRefreshToken)")
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -185,7 +185,7 @@ func (r *SessionRepository) UpdateByRefreshToken(ctx context.Context, refreshTok
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
 
-		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*SessionRepository.UpdateByRefreshToken)", query)
+		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*SessionRepository.RotateRefreshToken)", query)
 		defer span.End()
 
 		if _, err := tx.Exec(ctx, query, args...); err != nil {
