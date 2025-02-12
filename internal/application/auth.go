@@ -46,7 +46,7 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 		refreshExpiresAt,
 	)
 
-	_, err = app.repository.Session.Save(ctx, newSession)
+	_, err = app.repository.Session().Save(ctx, newSession)
 	if err != nil {
 		return io.AuthOutput{}, err
 	}

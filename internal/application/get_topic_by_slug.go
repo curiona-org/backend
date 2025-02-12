@@ -15,7 +15,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 	ctx, span := tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
-	topic, err := app.repository.Topic.GetBySlug(ctx, slug)
+	topic, err := app.repository.Topic().GetBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
 			return io.GetTopicOutput{}, apperrors.ResourceNotFound("topic")

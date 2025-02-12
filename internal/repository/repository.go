@@ -9,22 +9,52 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Repository struct {
-	Account                domain.AccountRepository
-	Roadmap                domain.RoadmapRepository
-	Topic                  domain.TopicRepository
-	PersonalizationOptions domain.PersonalizationOptionsRepository
-	Session                domain.SessionRepository
+type Repository interface {
+	Account() domain.AccountRepository
+	Roadmap() domain.RoadmapRepository
+	Topic() domain.TopicRepository
+	PersonalizationOptions() domain.PersonalizationOptionsRepository
+	Session() domain.SessionRepository
 }
 
-func New(db database.Connection) *Repository {
-	return &Repository{
-		Account:                NewAccountRepository(db),
-		Roadmap:                NewRoadmapRepository(db),
-		Topic:                  NewTopicRepository(db),
-		PersonalizationOptions: NewPersonalizationOptionsRepository(db),
-		Session:                NewSessionRepository(db),
+type repository struct {
+	account                domain.AccountRepository
+	roadmap                domain.RoadmapRepository
+	topic                  domain.TopicRepository
+	personalizationOptions domain.PersonalizationOptionsRepository
+	session                domain.SessionRepository
+}
+
+var _ Repository = (*repository)(nil)
+
+func NewPostgresRepository(db database.Connection) Repository {
+	return &repository{
+		account:                NewAccountRepository(db),
+		roadmap:                NewRoadmapRepository(db),
+		topic:                  NewTopicRepository(db),
+		personalizationOptions: NewPersonalizationOptionsRepository(db),
+		session:                NewSessionRepository(db),
 	}
+}
+
+func (r *repository) Account() domain.AccountRepository {
+	return r.account
+}
+
+func (r *repository) Roadmap() domain.RoadmapRepository {
+	return r.roadmap
+}
+
+func (r *repository) Topic() domain.TopicRepository {
+	return r.topic
+}
+
+func (r *repository) PersonalizationOptions() domain.PersonalizationOptionsRepository {
+	return r.personalizationOptions
+}
+
+func (r *repository) Session() domain.SessionRepository {
+	return r.session
 }
 
 func spanWithQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {

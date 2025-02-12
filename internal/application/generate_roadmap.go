@@ -68,7 +68,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	)
 	roadmap.SetPersonalizationOptions(personalizationOpt)
 
-	createdRoadmap, err := app.repository.Roadmap.Save(traceCtx, roadmap)
+	createdRoadmap, err := app.repository.Roadmap().Save(traceCtx, roadmap)
 	if err != nil {
 		return io.GenerateRoadmapOutput{}, err
 	}

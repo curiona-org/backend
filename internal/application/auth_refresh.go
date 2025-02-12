@@ -24,7 +24,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 
 	var accessToken, refreshToken string
 	var refreshExpiresAt time.Time
-	err = app.repository.Session.RenewSession(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
+	err = app.repository.Session().RenewSession(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
 		if time.Now().After(session.ExpiresAt) {
 			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionExpired)
 		}
