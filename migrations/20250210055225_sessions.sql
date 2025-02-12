@@ -10,5 +10,7 @@ CREATE TABLE "sessions"(
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT (now())
 );
 
+CREATE UNIQUE INDEX "sessions_refresh_token_idx" ON "sessions"("refresh_token");
+
 -- +goose Down
 DROP TABLE IF EXISTS "sessions";

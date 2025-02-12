@@ -14,6 +14,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -135,8 +136,15 @@ func (r *SessionRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r *SessionRepository) RotateRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*SessionRepository.RotateRefreshToken)")
+// RenewSession renews a session by updating the existing session and creating a new one.
+// It performs the following steps:
+//  1. Starts a new transaction.
+//  2. Fetches the session associated with the given refresh token.
+//  3. If the session is blocked, deletes the session and returns domain.ErrSessionIsBlocked.
+//  4. Calls updateFn() to update the session details.
+//  5. If the session was updated, marks the old session as blocked and creates a new session with the updated details.
+func (r *SessionRepository) RenewSession(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*SessionRepository.RenewSession)")
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -166,6 +174,28 @@ func (r *SessionRepository) RotateRefreshToken(ctx context.Context, refreshToken
 
 		session := sessions[0]
 
+		if session.Blocked {
+			query, args := psql.Delete(
+				dm.From(domain.SessionTable),
+				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
+			).MustBuild(ctx)
+
+			ctx, span := spanWithQuery(ctx, r.tracer, "(*SessionRepository.RenewSession)", query)
+			defer span.End()
+			span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
+
+			commandTag, err := r.db.Exec(ctx, query, args...)
+			if err != nil {
+				span.SetStatus(codes.Error, "failed to delete session")
+				span.RecordError(err)
+				return err
+			}
+			if commandTag.RowsAffected() == 0 {
+				return domain.ErrSessionNotFound
+			}
+			return domain.ErrSessionIsBlocked
+		}
+
 		updated, err := updateFn(traceCtx, &session)
 		if err != nil {
 			return err
@@ -175,20 +205,30 @@ func (r *SessionRepository) RotateRefreshToken(ctx context.Context, refreshToken
 			return nil
 		}
 
-		query, args := psql.Update(
+		updateOldSessionQuery, updateOldSessionArgs := psql.Update(
 			um.Table(domain.SessionTable),
-			um.SetCol("account_id").ToArg(session.AccountID),
-			um.SetCol("user_agent").ToArg(session.UserAgent),
-			um.SetCol("client_ip").ToArg(session.ClientIP),
-			um.SetCol("blocked").ToArg(session.Blocked),
-			um.SetCol("expires_at").ToArg(session.ExpiresAt),
+			um.SetCol("blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
-
-		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*SessionRepository.RotateRefreshToken)", query)
+		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*SessionRepository.RenewSession)", updateOldSessionQuery)
 		defer span.End()
+		span.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
 
-		if _, err := tx.Exec(ctx, query, args...); err != nil {
+		if _, err := tx.Exec(ctx, updateOldSessionQuery, updateOldSessionArgs...); err != nil {
+			span.SetStatus(codes.Error, "failed to update session")
+			span.RecordError(err)
+			return err
+		}
+
+		newSessionQuery, newSessionArgs := psql.Insert(
+			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
+			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.Blocked, session.ExpiresAt)),
+		).MustBuild(ctx)
+		ctx, span = spanWithQuery(traceCtx, r.tracer, "(*SessionRepository.RenewSession)", newSessionQuery)
+		defer span.End()
+		span.SetAttributes(semconv.DBOperationKey.String("INSERT"))
+
+		if _, err := tx.Exec(ctx, newSessionQuery, newSessionArgs...); err != nil {
 			span.SetStatus(codes.Error, "failed to update session")
 			span.RecordError(err)
 			return err

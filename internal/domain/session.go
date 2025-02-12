@@ -31,7 +31,7 @@ type Session struct {
 type SessionRepository interface {
 	GetByAccountID(ctx context.Context, accountID int) (Session, error)
 	Save(ctx context.Context, input *Session) (Session, error)
-	RotateRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *Session) (bool, error)) error
+	RenewSession(ctx context.Context, refreshToken string, updateFn func(context.Context, *Session) (bool, error)) error
 	Delete(ctx context.Context, id int) error
 }
 
@@ -51,4 +51,11 @@ func NewSession(accountID int, refreshToken, userAgent, clientIP string, expires
 // MarkAsBlocked marks the session as blocked.
 func (s *Session) MarkAsBlocked() {
 	s.Blocked = true
+}
+
+// Renew renews the session with a new refresh token and expiration time.
+func (s *Session) Renew(refreshToken string, expiresAt time.Time) {
+	s.RefreshToken = refreshToken
+	s.Blocked = false
+	s.ExpiresAt = expiresAt
 }
