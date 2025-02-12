@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -32,8 +31,8 @@ func NewProvider(ctx context.Context, cfg ProviderConfig) (*trace.TracerProvider
 		trace.WithBatcher(exporter),
 		trace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(cfg.AppName), // Service Name
-			attribute.String("environment", cfg.AppEnv),
+			semconv.ServiceNameKey.String(cfg.AppName),          // Service Name
+			semconv.DeploymentEnvironmentKey.String(cfg.AppEnv), // Deployment Environment
 		)),
 		trace.WithSampler(trace.AlwaysSample()),
 	)
