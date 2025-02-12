@@ -11,7 +11,9 @@ const (
 )
 
 var (
-	ErrSessionNotFound = errors.New("session not found")
+	ErrSessionNotFound  = errors.New("session not found")
+	ErrSessionIsBlocked = errors.New("session is blocked")
+	ErrSessionExpired   = errors.New("session expired")
 )
 
 // Session represents a user session.

@@ -30,11 +30,11 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 			if err != nil {
 				return false, err
 			}
-			return false, apperrors.Wrap(apperrors.Unauthorized(), errors.New("session is blocked"))
+			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionIsBlocked)
 		}
 
 		if time.Now().After(session.ExpiresAt) {
-			return false, apperrors.Wrap(apperrors.Unauthorized(), errors.New("refresh token expired"))
+			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionExpired)
 		}
 
 		accessToken, err = app.auth.Access.Generate(payload.ID)
@@ -67,7 +67,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
-			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), errors.New("session not found"))
+			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), err)
 		}
 		return io.AuthRefreshOutput{}, err
 	}

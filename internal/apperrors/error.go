@@ -15,7 +15,7 @@ func (e AppError) Error() string {
 	return e.message
 }
 
-func Wrap(appError error, err error) *AppError {
+func Wrap(appError error, err error) error {
 	var ae *AppError
 	if e, ok := appError.(*AppError); ok {
 		ae = e
