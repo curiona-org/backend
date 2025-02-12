@@ -12,20 +12,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type TopicRepository struct {
+type topicRepository struct {
 	db     database.Connection
 	tracer trace.Tracer
 }
 
-func NewTopicRepository(db database.Connection) *TopicRepository {
+var _ domain.TopicRepository = (*topicRepository)(nil)
+
+func NewTopicRepository(db database.Connection) domain.TopicRepository {
 	tracer := otel.Tracer("db:postgres:topics")
-	return &TopicRepository{
+	return &topicRepository{
 		db:     db,
 		tracer: tracer,
 	}
 }
 
-func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
+func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.TopicTable, "id"),
@@ -55,8 +57,8 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	return topics[0], nil
 }
 
-func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*TopicRepository.fetch)", query)
+func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*topicRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)

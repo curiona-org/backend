@@ -17,20 +17,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type RoadmapRepository struct {
+type roadmapRepository struct {
 	db     database.Connection
 	tracer trace.Tracer
 }
 
-func NewRoadmapRepository(db database.Connection) *RoadmapRepository {
+var _ domain.RoadmapRepository = (*roadmapRepository)(nil)
+
+func NewRoadmapRepository(db database.Connection) domain.RoadmapRepository {
 	tracer := otel.Tracer("db:postgres:roadmaps")
-	return &RoadmapRepository{
+	return &roadmapRepository{
 		db:     db,
 		tracer: tracer,
 	}
 }
 
-func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
+func (r *roadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.RoadmapTable, "id"),
@@ -76,7 +78,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 	return roadmap, nil
 }
 
-func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) ([]domain.Roadmap, error) {
+func (r *roadmapRepository) ListByAccountID(ctx context.Context, accountID int) ([]domain.Roadmap, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.RoadmapTable, "id"),
@@ -114,8 +116,8 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 	return roadmaps, nil
 }
 
-func (r *RoadmapRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*RoadmapRepository.fetch)", query)
+func (r *roadmapRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -163,7 +165,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, query string, args ...any
 	return roadmaps, nil
 }
 
-func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {
+func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {
 	query, args := psql.Select(
 		sm.Columns("id", "roadmap_id", psql.F("COALESCE", "parent_id", 0), "title", "slug", "description", psql.Quote("order"), "finished", "created_at", "updated_at"),
 		sm.From(domain.TopicTable),
@@ -171,7 +173,7 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 		sm.OrderBy(psql.Quote("order")),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*RoadmapRepository.fetchTopicsByRoadmapID)", query)
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.fetchTopicsByRoadmapID)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -211,14 +213,14 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 	return topics, nil
 }
 
-func (r *RoadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (domain.Roadmap, error) {
+func (r *roadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (domain.Roadmap, error) {
 	query, args := psql.Insert(
 		im.Into(domain.RoadmapTable, "account_id", "title", "slug", "description", "created_at", "updated_at"),
 		im.Values(psql.Arg(input.AccountID, input.Title, input.Slug, input.Description, input.CreatedAt, input.UpdatedAt)),
 		im.Returning("id", "slug"),
 	).MustBuild(ctx)
 
-	traceCtx, span := spanWithQuery(ctx, r.tracer, "(*RoadmapRepository.Save)", query)
+	traceCtx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.Save)", query)
 	defer span.End()
 
 	var roadmap domain.Roadmap
@@ -248,7 +250,7 @@ func (r *RoadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (do
 	return roadmap, nil
 }
 
-func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.Tx, roadmapID int, topics []*domain.Topic) error {
+func (r *roadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.Tx, roadmapID int, topics []*domain.Topic) error {
 	// subTopicMap with topic's slug as the key to its subtopics
 	subTopicMap := make(map[string][]*domain.Topic)
 
@@ -267,7 +269,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 		mods...,
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*RoadmapRepository.saveTopicsAndSubtopics)", query)
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.saveTopicsAndSubtopics)", query)
 	defer span.End()
 
 	rows, err := tx.Query(ctx, query, args...)
@@ -326,7 +328,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	return err
 }
 
-func (r *RoadmapRepository) savePersonalizationOptions(ctx context.Context, tx pgx.Tx, roadmapID int, input *domain.PersonalizationOptions) error {
+func (r *roadmapRepository) savePersonalizationOptions(ctx context.Context, tx pgx.Tx, roadmapID int, input *domain.PersonalizationOptions) error {
 	query, args := psql.Insert(
 		im.Into(domain.PersonalizationOptionsTable,
 			"account_id",
@@ -350,7 +352,7 @@ func (r *RoadmapRepository) savePersonalizationOptions(ctx context.Context, tx p
 		)),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*RoadmapRepository.savePersonalizationOptions)", query)
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.savePersonalizationOptions)", query)
 	defer span.End()
 
 	_, err := tx.Exec(ctx, query, args...)
@@ -361,6 +363,6 @@ func (r *RoadmapRepository) savePersonalizationOptions(ctx context.Context, tx p
 	return nil
 }
 
-func (r *RoadmapRepository) Delete(ctx context.Context, id int) (domain.Roadmap, error) {
+func (r *roadmapRepository) Delete(ctx context.Context, id int) (domain.Roadmap, error) {
 	return domain.Roadmap{}, nil
 }

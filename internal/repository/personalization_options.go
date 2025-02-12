@@ -12,20 +12,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type PersonalizationOptionsRepository struct {
+type personalizationOptionsRepository struct {
 	db     database.Connection
 	tracer trace.Tracer
 }
 
-func NewPersonalizationOptionsRepository(db database.Connection) *PersonalizationOptionsRepository {
+var _ domain.PersonalizationOptionsRepository = (*personalizationOptionsRepository)(nil)
+
+func NewPersonalizationOptionsRepository(db database.Connection) domain.PersonalizationOptionsRepository {
 	tracer := otel.Tracer("db:postgres:personalization_options")
-	return &PersonalizationOptionsRepository{
+	return &personalizationOptionsRepository{
 		db:     db,
 		tracer: tracer,
 	}
 }
 
-func (r *PersonalizationOptionsRepository) GetByRoadmapID(ctx context.Context, roadmapID int) (domain.PersonalizationOptions, error) {
+func (r *personalizationOptionsRepository) GetByRoadmapID(ctx context.Context, roadmapID int) (domain.PersonalizationOptions, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			"id",
@@ -54,8 +56,8 @@ func (r *PersonalizationOptionsRepository) GetByRoadmapID(ctx context.Context, r
 	return personalizationOpts[0], nil
 }
 
-func (r *PersonalizationOptionsRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.PersonalizationOptions, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*PersonalizationOptionsRepository.fetch)", query)
+func (r *personalizationOptionsRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.PersonalizationOptions, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*personalizationOptionsRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
