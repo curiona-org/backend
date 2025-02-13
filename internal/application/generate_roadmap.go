@@ -172,6 +172,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt() string {
 		"Use only English language for the roadmap.",
 		"Use plain and neutral language suitable for learners of all backgrounds.",
 		fmt.Sprintf("Must have a minimum of %d topics and %d (or more) subtopics per topic.", domain.RoadmapMinimumTopics, domain.RoadmapMinimumSubtopics),
+		fmt.Sprintf("Must have a maximum of %d topics and %d (or less) subtopics per topic.", domain.RoadmapMaximumTopics, domain.RoadmapMaximumSubtopics),
 	}
 
 	exampleFormat := chatGeneratePromptPromptResult{
