@@ -11,6 +11,11 @@ import (
 
 const (
 	RoadmapTable = "roadmaps"
+
+	RoadmapMinimumTopics    = 5
+	RoadmapMaximumTopics    = 10
+	RoadmapMinimumSubtopics = 3
+	RoadmapMaximumSubtopics = 5
 )
 
 var (
