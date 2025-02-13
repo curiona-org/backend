@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -170,6 +171,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt() string {
 		"Ensure the roadmap is concise, user-friendly, and structured for easy navigation.",
 		"Use only English language for the roadmap.",
 		"Use plain and neutral language suitable for learners of all backgrounds.",
+		fmt.Sprintf("Must have a minimum of %d topics and %d (or more) subtopics per topic.", domain.RoadmapMinimumTopics, domain.RoadmapMinimumSubtopics),
 	}
 
 	exampleFormat := chatGeneratePromptPromptResult{

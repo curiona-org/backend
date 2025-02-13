@@ -11,6 +11,11 @@ import (
 
 const (
 	RoadmapTable = "roadmaps"
+
+	// RoadmapMinimumTopics the minimum number of parent topics a roadmap should have
+	RoadmapMinimumTopics = 5
+	// RoadmapMinimumSubtopics the minimum number of subtopics a roadmap should have
+	RoadmapMinimumSubtopics = 3
 )
 
 var (
