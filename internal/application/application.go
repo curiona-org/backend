@@ -9,10 +9,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"go.opentelemetry.io/otel"
-)
-
-var (
-	tracer = otel.Tracer("application-layer")
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Application interface {
@@ -38,13 +35,16 @@ type application struct {
 	llm         llm.Client
 	auth        *auth.Auth
 	googleOAuth oauth.Client
+	tracer      trace.Tracer
 }
 
 func New(repository repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Application {
+	tracer := otel.Tracer("application")
 	return &application{
 		repository:  repository,
 		llm:         llm,
 		auth:        auth,
 		googleOAuth: googleOAuth,
+		tracer:      tracer,
 	}
 }

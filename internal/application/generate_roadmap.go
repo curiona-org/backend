@@ -17,7 +17,7 @@ import (
 )
 
 func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error) {
-	traceCtx, span := tracer.Start(ctx, "(*application.GenerateRoadmap)", trace.WithAttributes(
+	traceCtx, span := app.tracer.Start(ctx, "(*application.GenerateRoadmap)", trace.WithAttributes(
 		attribute.String("topic", input.Topic),
 		attribute.Int("personalization_options.daily_time_availability.value", input.PersonalizationOptions.DailyTimeAvailability.Value),
 		attribute.String("personalization_options.daily_time_availability.unit", input.PersonalizationOptions.DailyTimeAvailability.Unit.String()),
@@ -96,7 +96,7 @@ type chatGeneratePromptPromptResultSubtopic struct {
 }
 
 func (app *application) chatGeneratePrompt(ctx context.Context, prompt llm.ChatPrompt) (chatGeneratePromptPromptResult, error) {
-	ctx, span := tracer.Start(ctx, "(*application.chatGeneratePrompt)")
+	ctx, span := app.tracer.Start(ctx, "(*application.chatGeneratePrompt)")
 	defer span.End()
 
 	content, err := app.llm.Chat(ctx, prompt)

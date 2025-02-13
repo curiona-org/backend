@@ -12,7 +12,7 @@ import (
 )
 
 func (app *application) ListUserRoadmaps(ctx context.Context) (io.ListUserRoadmapsOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*application.ListUserRoadmaps)")
+	ctx, span := app.tracer.Start(ctx, "(*application.ListUserRoadmaps)")
 	defer span.End()
 
 	auth := auth.FromContext(ctx)

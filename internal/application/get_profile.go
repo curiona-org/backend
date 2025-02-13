@@ -9,7 +9,7 @@ import (
 )
 
 func (app *application) GetProfile(ctx context.Context) (io.GetProfileOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*application.GetProfile)")
+	ctx, span := app.tracer.Start(ctx, "(*application.GetProfile)")
 	defer span.End()
 
 	auth := auth.FromContext(ctx)
