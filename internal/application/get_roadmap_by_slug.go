@@ -13,7 +13,7 @@ import (
 )
 
 func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
 	roadmap, err := app.repository.Roadmap().GetBySlug(ctx, slug)
@@ -73,7 +73,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 
 	var buildTopics func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopics
 	buildTopics = func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopics {
-		traceCtx, span := tracer.Start(ctx, "buildTopics", trace.WithAttributes(attribute.Int("parentID", parentID)))
+		traceCtx, span := app.tracer.Start(ctx, "buildTopics", trace.WithAttributes(attribute.Int("parentID", parentID)))
 		defer span.End()
 
 		outputTopics := topicMap[parentID]

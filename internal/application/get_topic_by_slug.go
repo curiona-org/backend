@@ -12,7 +12,7 @@ import (
 )
 
 func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+	ctx, span := app.tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
 	topic, err := app.repository.Topic().GetBySlug(ctx, slug)

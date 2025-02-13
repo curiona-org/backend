@@ -11,7 +11,7 @@ import (
 )
 
 func (app *application) authEmailPassword(ctx context.Context, input io.AuthInput) (registrationResult, error) {
-	ctx, span := tracer.Start(ctx, "(*application.authEmailPassword)")
+	ctx, span := app.tracer.Start(ctx, "(*application.authEmailPassword)")
 	defer span.End()
 
 	existingAccount, err := app.repository.Account().GetByEmail(ctx, input.Email)

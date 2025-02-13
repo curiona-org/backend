@@ -11,7 +11,7 @@ import (
 )
 
 func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*application.Auth)", trace.WithAttributes(attribute.String("email", input.Email)))
+	ctx, span := app.tracer.Start(ctx, "(*application.Auth)", trace.WithAttributes(attribute.String("email", input.Email)))
 	defer span.End()
 
 	var result registrationResult

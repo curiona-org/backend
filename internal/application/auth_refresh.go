@@ -14,7 +14,7 @@ import (
 // The old session will be blocked to prevent replay attacks while a new session is created.
 // Currently, it supports multiple sessions per user (e.g., multiple devices).
 func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error) {
-	ctx, span := tracer.Start(ctx, "(*application.AuthRefresh)")
+	ctx, span := app.tracer.Start(ctx, "(*application.AuthRefresh)")
 	defer span.End()
 
 	payload, err := app.auth.Refresh.Parse(input.Token)

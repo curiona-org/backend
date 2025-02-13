@@ -10,7 +10,7 @@ import (
 )
 
 func (app *application) authGoogle(ctx context.Context, input io.AuthInput) (registrationResult, error) {
-	ctx, span := tracer.Start(ctx, "(*application.authGoogle)")
+	ctx, span := app.tracer.Start(ctx, "(*application.authGoogle)")
 	defer span.End()
 
 	user, err := app.googleOAuth.Verify(ctx, input.OAuthToken)
