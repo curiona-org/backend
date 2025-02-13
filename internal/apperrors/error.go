@@ -5,6 +5,7 @@ import "net/http"
 type AppError struct {
 	code    int
 	message string
+	err     error
 }
 
 func (e AppError) Code() int {
@@ -33,5 +34,14 @@ func Wrap(appError error, err error) error {
 		ae.message = ae.message + ": " + err.Error()
 	}
 
+	ae.err = err
+
 	return ae
+}
+
+func Unwrap(err error) error {
+	if e, ok := err.(*AppError); ok {
+		return e.err
+	}
+	return err
 }

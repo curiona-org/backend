@@ -23,7 +23,11 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	}
 
 	var accessToken, refreshToken string
-	err = app.repository.Session().RenewSession(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
+	err = app.repository.Session().Renew(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
+		if session.Blocked {
+			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionIsBlocked)
+		}
+
 		if time.Now().After(session.ExpiresAt) {
 			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionExpired)
 		}
@@ -46,9 +50,6 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 		return true, nil
 	})
 	if err != nil {
-		if errors.Is(err, domain.ErrSessionIsBlocked) {
-			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), err)
-		}
 		if errors.Is(err, domain.ErrSessionNotFound) {
 			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), err)
 		}

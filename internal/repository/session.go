@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -138,15 +139,15 @@ func (r *sessionRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-// RenewSession renews a session by updating the existing session and creating a new one.
+// Renew renews a session by updating the existing session and creating a new one.
 // It performs the following steps:
 //  1. Starts a new transaction.
 //  2. Fetches the session associated with the given refresh token.
-//  3. If the session is blocked, deletes the session and returns domain.ErrSessionIsBlocked.
-//  4. Calls updateFn() to update the session details.
+//  3. Calls updateFn() to update the session details.
+//  4. If the session is blocked, deletes the session.
 //  5. If the session was updated, marks the old session as blocked and creates a new session with the updated details.
-func (r *sessionRepository) RenewSession(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*sessionRepository.RenewSession)")
+func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*sessionRepository.Renew)")
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -176,30 +177,28 @@ func (r *sessionRepository) RenewSession(ctx context.Context, refreshToken strin
 
 		session := sessions[0]
 
-		if session.Blocked {
-			query, args := psql.Delete(
-				dm.From(domain.SessionTable),
-				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
-			).MustBuild(ctx)
-
-			ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.RenewSession)", query)
-			defer span.End()
-			span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
-
-			commandTag, err := r.db.Exec(ctx, query, args...)
-			if err != nil {
-				span.SetStatus(codes.Error, "failed to delete session")
-				span.RecordError(err)
-				return err
-			}
-			if commandTag.RowsAffected() == 0 {
-				return domain.ErrSessionNotFound
-			}
-			return domain.ErrSessionIsBlocked
-		}
-
 		updated, err := updateFn(traceCtx, &session)
 		if err != nil {
+			if apperrors.Unwrap(err) == domain.ErrSessionIsBlocked {
+				query, args := psql.Delete(
+					dm.From(domain.SessionTable),
+					dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
+				).MustBuild(ctx)
+
+				ctx, span := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", query)
+				defer span.End()
+				span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
+
+				commandTag, err := r.db.Exec(ctx, query, args...)
+				if err != nil {
+					span.SetStatus(codes.Error, "failed to delete session")
+					span.RecordError(err)
+					return err
+				}
+				if commandTag.RowsAffected() == 0 {
+					return err
+				}
+			}
 			return err
 		}
 
@@ -212,7 +211,7 @@ func (r *sessionRepository) RenewSession(ctx context.Context, refreshToken strin
 			um.SetCol("blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
-		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.RenewSession)", updateOldSessionQuery)
+		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", updateOldSessionQuery)
 		defer span.End()
 		span.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
 
@@ -226,7 +225,7 @@ func (r *sessionRepository) RenewSession(ctx context.Context, refreshToken strin
 			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
 			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.Blocked, session.ExpiresAt)),
 		).MustBuild(ctx)
-		ctx, span = spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.RenewSession)", newSessionQuery)
+		ctx, span = spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", newSessionQuery)
 		defer span.End()
 		span.SetAttributes(semconv.DBOperationKey.String("INSERT"))
 
