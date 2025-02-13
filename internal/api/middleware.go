@@ -36,6 +36,5 @@ func (s *Server) setupMiddlewares() {
 		},
 	}))
 	s.instance.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(20))))
-	s.instance.Use(otelecho.Middleware("api-layer"))
-
+	s.instance.Use(otelecho.Middleware("api"))
 }
