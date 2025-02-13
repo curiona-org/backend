@@ -56,7 +56,8 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 		AccessToken:           accessToken,
 		AccessTokenExpiresAt:  app.auth.Access.ExpiresAt(),
 		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: refreshExpiresAt,
+		RefreshTokenExpiresIn: int(app.auth.Refresh.ExpiresIn().Seconds()),
+		RefreshTokenExpiresAt: app.auth.Refresh.ExpiresAt(),
 		Account: io.AuthOutputAccount{
 			ID:       result.id,
 			Email:    result.email,

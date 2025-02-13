@@ -31,6 +31,7 @@ func (h *Handler) Auth(c echo.Context) error {
 		Name:     "refresh_token",
 		Value:    output.RefreshToken,
 		Path:     "/",
+		MaxAge:   output.RefreshTokenExpiresIn,
 		Expires:  output.RefreshTokenExpiresAt,
 		HttpOnly: true,
 		Secure:   true,

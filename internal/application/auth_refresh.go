@@ -23,7 +23,6 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	}
 
 	var accessToken, refreshToken string
-	var refreshExpiresAt time.Time
 	err = app.repository.Session().RenewSession(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
 		if time.Now().After(session.ExpiresAt) {
 			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionExpired)
@@ -58,8 +57,9 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 
 	return io.AuthRefreshOutput{
 		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  time.Now().Add(app.auth.Access.ExpiresIn()),
+		AccessTokenExpiresAt:  app.auth.Access.ExpiresAt(),
 		RefreshToken:          refreshToken,
-		RefreshTokenExpiresAt: refreshExpiresAt,
+		RefreshTokenExpiresIn: int(app.auth.Refresh.ExpiresIn().Seconds()),
+		RefreshTokenExpiresAt: app.auth.Refresh.ExpiresAt(),
 	}, nil
 }
