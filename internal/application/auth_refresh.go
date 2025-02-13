@@ -24,17 +24,9 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 
 	var accessToken, refreshToken string
 	var refreshExpiresAt time.Time
-	err = app.repository.Session.UpdateByRefreshToken(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
-		if session.Blocked {
-			err := app.repository.Session.Delete(traceCtx, session.ID)
-			if err != nil {
-				return false, err
-			}
-			return false, apperrors.Wrap(apperrors.Unauthorized(), errors.New("session is blocked"))
-		}
-
+	err = app.repository.Session().RenewSession(ctx, input.Token, func(traceCtx context.Context, session *domain.Session) (bool, error) {
 		if time.Now().After(session.ExpiresAt) {
-			return false, apperrors.Wrap(apperrors.Unauthorized(), errors.New("refresh token expired"))
+			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionExpired)
 		}
 
 		accessToken, err = app.auth.Access.Generate(payload.ID)
@@ -42,32 +34,24 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 			return false, err
 		}
 
-		// Block the old session to prevent replay attacks
-		session.MarkAsBlocked()
-
 		// Rotate the refresh token
 		refreshToken, err = app.auth.Refresh.Generate(payload.ID)
 		if err != nil {
 			return false, err
 		}
 
-		newSession := domain.NewSession(
-			payload.ID,
+		session.Renew(
 			refreshToken,
-			session.UserAgent,
-			session.ClientIP,
 			app.auth.Refresh.ExpiresAt(),
 		)
-
-		_, err = app.repository.Session.Save(traceCtx, newSession)
-		if err != nil {
-			return false, err
-		}
 		return true, nil
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrSessionIsBlocked) {
+			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), err)
+		}
 		if errors.Is(err, domain.ErrSessionNotFound) {
-			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), errors.New("session not found"))
+			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), err)
 		}
 		return io.AuthRefreshOutput{}, err
 	}

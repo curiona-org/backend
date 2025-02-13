@@ -14,23 +14,26 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
-type SessionRepository struct {
+type sessionRepository struct {
 	db     database.Connection
 	tracer trace.Tracer
 }
 
-func NewSessionRepository(db database.Connection) *SessionRepository {
+var _ domain.SessionRepository = (*sessionRepository)(nil)
+
+func NewSessionRepository(db database.Connection) domain.SessionRepository {
 	tracer := otel.Tracer("db:postgres:sessions")
-	return &SessionRepository{
+	return &sessionRepository{
 		db:     db,
 		tracer: tracer,
 	}
 }
 
-func (r *SessionRepository) GetByAccountID(ctx context.Context, accountID int) (domain.Session, error) {
+func (r *sessionRepository) GetByAccountID(ctx context.Context, accountID int) (domain.Session, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.SessionTable, "id"),
@@ -58,8 +61,8 @@ func (r *SessionRepository) GetByAccountID(ctx context.Context, accountID int) (
 	return accounts[0], nil
 }
 
-func (r *SessionRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Session, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*SessionRepository.fetch)", query)
+func (r *sessionRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Session, error) {
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -91,14 +94,14 @@ func (r *SessionRepository) fetch(ctx context.Context, query string, args ...any
 	return sessions, nil
 }
 
-func (r *SessionRepository) Save(ctx context.Context, input *domain.Session) (domain.Session, error) {
+func (r *sessionRepository) Save(ctx context.Context, input *domain.Session) (domain.Session, error) {
 	query, args := psql.Insert(
 		im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
 		im.Values(psql.Arg(input.AccountID, input.RefreshToken, input.UserAgent, input.ClientIP, input.Blocked, input.ExpiresAt)),
 		im.Returning("id", "created_at"),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*SessionRepository.Save)", query)
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.Save)", query)
 	defer span.End()
 
 	var id int
@@ -114,13 +117,13 @@ func (r *SessionRepository) Save(ctx context.Context, input *domain.Session) (do
 	return *input, nil
 }
 
-func (r *SessionRepository) Delete(ctx context.Context, id int) error {
+func (r *sessionRepository) Delete(ctx context.Context, id int) error {
 	query, args := psql.Delete(
 		dm.From(domain.SessionTable),
 		dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(id))),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*SessionRepository.Delete)", query)
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.Delete)", query)
 	defer span.End()
 
 	commandTag, err := r.db.Exec(ctx, query, args...)
@@ -135,8 +138,15 @@ func (r *SessionRepository) Delete(ctx context.Context, id int) error {
 	return nil
 }
 
-func (r *SessionRepository) UpdateByRefreshToken(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*SessionRepository.UpdateByRefreshToken)")
+// RenewSession renews a session by updating the existing session and creating a new one.
+// It performs the following steps:
+//  1. Starts a new transaction.
+//  2. Fetches the session associated with the given refresh token.
+//  3. If the session is blocked, deletes the session and returns domain.ErrSessionIsBlocked.
+//  4. Calls updateFn() to update the session details.
+//  5. If the session was updated, marks the old session as blocked and creates a new session with the updated details.
+func (r *sessionRepository) RenewSession(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*sessionRepository.RenewSession)")
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -166,6 +176,28 @@ func (r *SessionRepository) UpdateByRefreshToken(ctx context.Context, refreshTok
 
 		session := sessions[0]
 
+		if session.Blocked {
+			query, args := psql.Delete(
+				dm.From(domain.SessionTable),
+				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
+			).MustBuild(ctx)
+
+			ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.RenewSession)", query)
+			defer span.End()
+			span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
+
+			commandTag, err := r.db.Exec(ctx, query, args...)
+			if err != nil {
+				span.SetStatus(codes.Error, "failed to delete session")
+				span.RecordError(err)
+				return err
+			}
+			if commandTag.RowsAffected() == 0 {
+				return domain.ErrSessionNotFound
+			}
+			return domain.ErrSessionIsBlocked
+		}
+
 		updated, err := updateFn(traceCtx, &session)
 		if err != nil {
 			return err
@@ -175,20 +207,30 @@ func (r *SessionRepository) UpdateByRefreshToken(ctx context.Context, refreshTok
 			return nil
 		}
 
-		query, args := psql.Update(
+		updateOldSessionQuery, updateOldSessionArgs := psql.Update(
 			um.Table(domain.SessionTable),
-			um.SetCol("account_id").ToArg(session.AccountID),
-			um.SetCol("user_agent").ToArg(session.UserAgent),
-			um.SetCol("client_ip").ToArg(session.ClientIP),
-			um.SetCol("blocked").ToArg(session.Blocked),
-			um.SetCol("expires_at").ToArg(session.ExpiresAt),
+			um.SetCol("blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
-
-		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*SessionRepository.UpdateByRefreshToken)", query)
+		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.RenewSession)", updateOldSessionQuery)
 		defer span.End()
+		span.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
 
-		if _, err := tx.Exec(ctx, query, args...); err != nil {
+		if _, err := tx.Exec(ctx, updateOldSessionQuery, updateOldSessionArgs...); err != nil {
+			span.SetStatus(codes.Error, "failed to update session")
+			span.RecordError(err)
+			return err
+		}
+
+		newSessionQuery, newSessionArgs := psql.Insert(
+			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
+			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.Blocked, session.ExpiresAt)),
+		).MustBuild(ctx)
+		ctx, span = spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.RenewSession)", newSessionQuery)
+		defer span.End()
+		span.SetAttributes(semconv.DBOperationKey.String("INSERT"))
+
+		if _, err := tx.Exec(ctx, newSessionQuery, newSessionArgs...); err != nil {
 			span.SetStatus(codes.Error, "failed to update session")
 			span.RecordError(err)
 			return err

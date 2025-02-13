@@ -36,10 +36,9 @@ func TestConfig_Init(t *testing.T) {
 	setEnv("ACCESS_SECRET_KEY", "test_secret")
 	setEnv("ACCESS_EXPIRES_IN", "5m")
 	setEnv("REFRESH_SECRET_KEY", "test_secret")
-	setEnv("REFRESH_EXPIRES_IN", "5m")
+	setEnv("REFRESH_EXPIRES_IN", "720h")
 	setEnv("LLM_API_KEY", "test_api_key")
 	setEnv("LLM_MODEL", "gpt-4")
-	// Added missing configurations
 	setEnv("GOOGLE_CLIENT_ID", "test_google_id")
 	setEnv("GOOGLE_CLIENT_SECRET", "test_google_secret")
 	setEnv("OTLP_EXPORTER_ENDPOINT", "http://localhost:4317")

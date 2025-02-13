@@ -34,13 +34,13 @@ type Application interface {
 }
 
 type application struct {
-	repository  *repository.Repository
+	repository  repository.Repository
 	llm         llm.Client
 	auth        *auth.Auth
 	googleOAuth oauth.Client
 }
 
-func New(repository *repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Application {
+func New(repository repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Application {
 	return &application{
 		repository:  repository,
 		llm:         llm,
