@@ -2,7 +2,9 @@ package application
 
 import (
 	"context"
+	"errors"
 
+	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/internal/io"
 	"github.com/roadmap-thesis/backend/pkg/auth"
@@ -17,12 +19,17 @@ func (app *application) ListUserRoadmaps(ctx context.Context) (io.ListUserRoadma
 	span.SetAttributes(attribute.Int("account_id", auth.ID))
 
 	roadmaps, err := app.repository.Roadmap().ListByAccountID(ctx, auth.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
 		return io.ListUserRoadmapsOutput{}, err
 	}
 
 	output := io.ListUserRoadmapsOutput{
 		TotalRoadmaps: len(roadmaps),
+		Roadmaps:      []io.ListUserRoadmapsOutputRoadmap{},
+	}
+
+	if len(roadmaps) == 0 {
+		return output, nil
 	}
 
 	for _, roadmap := range roadmaps {
