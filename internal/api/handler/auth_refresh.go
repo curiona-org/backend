@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/io"
-	"github.com/roadmap-thesis/backend/pkg/render"
+	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 func (h *Handler) AuthRefresh(c echo.Context) error {

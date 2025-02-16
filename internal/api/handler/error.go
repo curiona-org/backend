@@ -7,7 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/pkg/render"
+	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 func (h *Handler) ErrorHandler(err error, c echo.Context) {
