@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (h *Handler) Auth(c echo.Context) error {
+func (a *api) Auth(c echo.Context) error {
 	var input io.AuthInput
 
 	if err := c.Bind(&input); err != nil {
@@ -22,7 +22,7 @@ func (h *Handler) Auth(c echo.Context) error {
 
 	input.ClientIP = c.RealIP()
 	input.UserAgent = c.Request().UserAgent()
-	output, err := h.application.Auth(c.Request().Context(), input)
+	output, err := a.application.Auth(c.Request().Context(), input)
 	if err != nil {
 		return err
 	}

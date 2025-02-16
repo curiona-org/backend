@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"net/http"
@@ -9,13 +9,13 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (h *Handler) AuthRefresh(c echo.Context) error {
+func (a *api) AuthRefresh(c echo.Context) error {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
 		return apperrors.Unauthorized()
 	}
 
-	output, err := h.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
+	output, err := a.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
 		Token: refreshToken.Value,
 	})
 	if err != nil {

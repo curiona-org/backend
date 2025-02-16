@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"github.com/labstack/echo/v4"
@@ -6,13 +6,13 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (h *Handler) GetTopicBySlug(c echo.Context) error {
+func (a *api) GetTopicBySlug(c echo.Context) error {
 	slug := c.Param("slug")
 	if slug == "" {
 		return apperrors.NotFound()
 	}
 
-	output, err := h.application.GetTopicBySlug(c.Request().Context(), slug)
+	output, err := a.application.GetTopicBySlug(c.Request().Context(), slug)
 	if err != nil {
 		return err
 	}

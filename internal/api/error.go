@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (h *Handler) ErrorHandler(err error, c echo.Context) {
+func (a *api) ErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {
 		return
 	}

@@ -1,4 +1,4 @@
-package handler
+package api
 
 import (
 	"github.com/labstack/echo/v4"
@@ -7,7 +7,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (h *Handler) GenerateRoadmap(c echo.Context) error {
+func (a *api) GenerateRoadmap(c echo.Context) error {
 	var input io.GenerateRoadmapInput
 
 	if err := c.Bind(&input); err != nil {
@@ -18,7 +18,7 @@ func (h *Handler) GenerateRoadmap(c echo.Context) error {
 		return err
 	}
 
-	output, err := h.application.GenerateRoadmap(c.Request().Context(), input)
+	output, err := a.application.GenerateRoadmap(c.Request().Context(), input)
 	if err != nil {
 		return err
 	}
