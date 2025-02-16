@@ -23,14 +23,14 @@ type Provider struct {
 }
 
 func New(ctx context.Context) (*Provider, error) {
-	c := &Provider{}
+	p := &Provider{}
 
 	var group errgroup.Group
 
 	group.Go(func() error {
 		log.Info().Msg("initializing llm client")
 		var err error
-		c.LLM, err = llm.NewClient(
+		p.LLM, err = llm.NewClient(
 			config.LLMProvider(),
 			config.LLMAPIKey(),
 			config.LLMModel())
@@ -43,7 +43,7 @@ func New(ctx context.Context) (*Provider, error) {
 	group.Go(func() error {
 		log.Info().Msg("initializing postgresql")
 		var err error
-		c.DB, err = database.New(ctx, &database.Config{
+		p.DB, err = database.New(ctx, &database.Config{
 			Name:                  config.DBName(),
 			Host:                  config.DBHost(),
 			Port:                  config.DBPort(),
@@ -65,7 +65,7 @@ func New(ctx context.Context) (*Provider, error) {
 	group.Go(func() error {
 		log.Info().Msg("initializing redis client")
 		var err error
-		c.Redis, err = cache.NewRedisConnection(ctx, &cache.RedisConfig{
+		p.Redis, err = cache.NewRedisConnection(ctx, &cache.RedisConfig{
 			DB:       config.RedisDB(),
 			Network:  config.RedisNetwork(),
 			Addr:     config.RedisAddr(),
@@ -81,7 +81,7 @@ func New(ctx context.Context) (*Provider, error) {
 	group.Go(func() error {
 		log.Info().Msg("initializing otel tracing provider")
 		var err error
-		c.Tracing, err = tracing.NewProvider(ctx, tracing.ProviderConfig{
+		p.Tracing, err = tracing.NewProvider(ctx, tracing.ProviderConfig{
 			OTLPExporterEndpoint: config.OTLPExporterEndpoint(),
 			AppName:              config.AppName(),
 			AppEnv:               config.AppEnv(),
@@ -96,12 +96,12 @@ func New(ctx context.Context) (*Provider, error) {
 		return nil, err
 	}
 
-	return c, nil
+	return p, nil
 }
 
-func (c *Provider) Close(ctx context.Context) {
-	c.DB.Close()
-	if err := c.Tracing.Shutdown(ctx); err != nil {
+func (p *Provider) Close(ctx context.Context) {
+	p.DB.Close()
+	if err := p.Tracing.Shutdown(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed shutting down tracer provider")
 	}
 	log.Info().Msg("clients shutdown complete")
