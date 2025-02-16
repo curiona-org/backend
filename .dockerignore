@@ -12,8 +12,11 @@
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
-**/bin
-**/charts
+**/scripts
+**/e2e
+**/docs
+**/coverage
+**/.local
 **/docker-compose*
 **/compose.y*ml
 **/Dockerfile*

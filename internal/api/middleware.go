@@ -6,7 +6,6 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
-	"golang.org/x/time/rate"
 )
 
 func (s *Server) setupMiddlewares() {
@@ -35,6 +34,8 @@ func (s *Server) setupMiddlewares() {
 			return nil
 		},
 	}))
-	s.instance.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(20))))
+	// if config.IsProduction() {
+	// s.instance.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(20))))
+	// }
 	s.instance.Use(otelecho.Middleware("api"))
 }

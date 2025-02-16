@@ -17,3 +17,5 @@ coverage/*
 *.out
 
 go.work
+
+node_modules
