@@ -108,7 +108,7 @@ func (app *application) chatGeneratePrompt(ctx context.Context, prompt llm.ChatP
 
 	var result chatGeneratePromptPromptResult
 
-	if err := json.Unmarshal([]byte(content), &result); err != nil {
+	if err = json.Unmarshal([]byte(content), &result); err != nil {
 		span.RecordError(err)
 		return chatGeneratePromptPromptResult{}, err
 	}
@@ -151,6 +151,7 @@ func (app *application) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapIn
 	return sb.String()
 }
 
+//nolint:funlen
 func (app *application) makeGenerateRoadmapSystemPrompt() string {
 	var sb strings.Builder
 
@@ -273,13 +274,13 @@ func (app *application) makeGenerateRoadmapSystemPrompt() string {
 
 	sb.WriteString("# Example Format:\n")
 
-	exampleFormatJson, err := json.MarshalIndent(exampleFormat, "", "    ")
+	exampleFormatJSON, err := json.MarshalIndent(exampleFormat, "", "    ")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal example format")
 		return ""
 	}
 
-	sb.Write(exampleFormatJson)
+	sb.Write(exampleFormatJSON)
 
 	sb.WriteString("\n")
 	sb.WriteString("The roadmap must adhere to this format while reflecting the user's provided topic and personalization preferences. Do not use markdown symbols such as the triple backticks or quotes, you must only respond with the raw json itself.")
@@ -295,13 +296,13 @@ func (app *application) makeGenerateRoadmapSystemPrompt() string {
 
 	sb.WriteString("\n### Output:\n\n")
 
-	exampleResultJson, err := json.MarshalIndent(exampleResult, "", "    ")
+	exampleResultJSON, err := json.MarshalIndent(exampleResult, "", "    ")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal example format")
 		return ""
 	}
 
-	sb.Write(exampleResultJson)
+	sb.Write(exampleResultJSON)
 
 	return sb.String()
 }

@@ -59,3 +59,7 @@ coverage: ## Shows the coverage of the tests
 coverage-serve: coverage ## Serves the coverage report
 	@serve ./coverage
 .PHONY: coverage-serve
+
+lint: ## Runs golangci-lint
+	@golangci-lint run
+.PHONY: lint

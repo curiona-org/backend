@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -33,7 +34,10 @@ func (j JWT) Parse(token string) (*Payload, error) {
 		return nil, err
 	}
 
-	claims := t.Claims.(jwt.MapClaims)
+	claims, ok := t.Claims.(jwt.MapClaims)
+	if !ok || !t.Valid {
+		return nil, errors.New("invalid token")
+	}
 
 	return NewPayloadFromClaims(claims), nil
 }

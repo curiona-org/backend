@@ -5,7 +5,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) ListUserRoadmaps(c echo.Context) error {
+func (a *API) ListUserRoadmaps(c echo.Context) error {
 	output, err := a.application.ListUserRoadmaps(c.Request().Context())
 	if err != nil {
 		return err

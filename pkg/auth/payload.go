@@ -7,16 +7,25 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+type authContextKey string
+
 const (
-	AuthCtxKey = "identity"
+	// AuthCtxKey is the key used to store the auth payload in a context.
+	AuthCtxKey authContextKey = "identity"
 )
 
+func (k authContextKey) String() string {
+	return string(k)
+}
+
+// Payload represents a token payload.
 type Payload struct {
 	ID        int       `json:"id"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+// NewPayload creates a new payload.
 func NewPayload(id int, expiresIn time.Duration) *Payload {
 	return &Payload{
 		ID:        id,
@@ -25,21 +34,41 @@ func NewPayload(id int, expiresIn time.Duration) *Payload {
 	}
 }
 
+// NewPayloadFromClaims creates a new payload from jwt claims.
 func NewPayloadFromClaims(claims jwt.MapClaims) *Payload {
-	iat := int64(claims["iat"].(float64))
-	exp := int64(claims["exp"].(float64))
+	iat, ok := claims["iat"].(float64)
+	if !ok {
+		return nil
+	}
+
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return nil
+	}
+
+	id, ok := claims["id"].(float64)
+	if !ok {
+		return nil
+	}
+
 	return &Payload{
-		ID:        int(claims["id"].(float64)),
-		IssuedAt:  time.Unix(iat, 0),
-		ExpiresAt: time.Unix(exp, 0),
+		ID:        int(id),
+		IssuedAt:  time.Unix(int64(iat), 0),
+		ExpiresAt: time.Unix(int64(exp), 0),
 	}
 }
 
-// FromContext extracts the auth payload
+// FromContext extracts the auth payload.
 func FromContext(ctx context.Context) *Payload {
-	return ctx.Value(AuthCtxKey).(*Payload)
+	payload, ok := ctx.Value(AuthCtxKey).(*Payload)
+	if !ok {
+		return nil
+	}
+
+	return payload
 }
 
+// Claims returns the jwt token claims.
 func (p *Payload) Claims() jwt.Claims {
 	return jwt.MapClaims{
 		"id":  p.ID,
@@ -48,6 +77,7 @@ func (p *Payload) Claims() jwt.Claims {
 	}
 }
 
+// Valid checks if the payload is valid.
 func (p *Payload) Valid() bool {
 	return time.Now().Before(p.ExpiresAt)
 }

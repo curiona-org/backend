@@ -18,12 +18,13 @@ type redisCache[V any] struct {
 
 func NewRedisCache[V any](conn Connection) Cache[V] {
 	tracer := otel.Tracer("cache:redis")
-	if _, ok := conn.(*redis.Client); !ok {
+	cacheConn, ok := conn.(*redis.Client)
+	if !ok {
 		return NewNoopCache[V]() // temporary
 	}
 
 	return &redisCache[V]{
-		conn:   conn.(*redis.Client),
+		conn:   cacheConn,
 		tracer: tracer,
 	}
 }
@@ -40,7 +41,7 @@ func (c *redisCache[V]) Get(ctx context.Context, key string) (V, bool) {
 		return value, false
 	}
 
-	if err := msgpack.Unmarshal([]byte(data), &value); err != nil {
+	if err = msgpack.Unmarshal([]byte(data), &value); err != nil {
 		return value, false
 	}
 
@@ -55,7 +56,7 @@ func (c *redisCache[V]) Set(ctx context.Context, key string, value V) {
 		return
 	}
 
-	if err := c.conn.Set(ctx, key, data, 0).Err(); err != nil {
+	if err = c.conn.Set(ctx, key, data, 0).Err(); err != nil {
 		span.SetStatus(codes.Error, "failed to set key: "+key)
 		span.RecordError(err)
 	}

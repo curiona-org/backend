@@ -5,7 +5,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) GetProfile(c echo.Context) error {
+func (a *API) GetProfile(c echo.Context) error {
 	output, err := a.application.GetProfile(c.Request().Context())
 	if err != nil {
 		return err

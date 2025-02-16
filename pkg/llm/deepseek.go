@@ -2,10 +2,11 @@ package llm
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/cohesion-org/deepseek-go"
 	"github.com/cohesion-org/deepseek-go/constants"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -14,19 +15,22 @@ import (
 type deepSeekClient struct {
 	client *deepseek.Client
 	model  string
+	tracer trace.Tracer
 }
 
 func NewDeepSeekClient(authToken, model string) Client {
 	client := deepseek.NewClient(authToken)
+	tracer := otel.Tracer("llm:deepseek")
 
 	return &deepSeekClient{
 		client: client,
 		model:  model,
+		tracer: tracer,
 	}
 }
 
 func (d *deepSeekClient) Chat(ctx context.Context, prompt ChatPrompt) (string, error) {
-	ctx, span := tracer.Start(ctx, "(*deepSeekClient.Chat)")
+	ctx, span := d.tracer.Start(ctx, "(*deepSeekClient.Chat)")
 	defer span.End()
 
 	response, err := d.client.CreateChatCompletion(ctx, &deepseek.ChatCompletionRequest{
@@ -60,7 +64,7 @@ func (d *deepSeekClient) Chat(ctx context.Context, prompt ChatPrompt) (string, e
 	)
 
 	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("deepseek: no choices in response")
+		return "", errors.New("deepseek: no choices in response")
 	}
 
 	return response.Choices[0].Message.Content, nil

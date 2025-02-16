@@ -7,7 +7,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) GenerateRoadmap(c echo.Context) error {
+func (a *API) GenerateRoadmap(c echo.Context) error {
 	var input io.GenerateRoadmapInput
 
 	if err := c.Bind(&input); err != nil {

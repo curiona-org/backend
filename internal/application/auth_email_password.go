@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 
 	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
@@ -15,7 +16,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	defer span.End()
 
 	existingAccount, err := app.repository.Account().GetByEmail(ctx, input.Email)
-	if err != nil && err != domain.ErrAccountNotFound {
+	if err != nil && !errors.Is(err, domain.ErrAccountNotFound) {
 		return registrationResult{}, err
 	}
 
@@ -52,7 +53,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 
 	span.SetAttributes(attribute.Bool("create_account", true))
 	profile := domain.NewProfile(input.Name, input.Avatar)
-	account, err := domain.NewAccount(input.Email, input.Password, domain.AccountProvider(input.Provider), profile)
+	account, err := domain.NewAccount(input.Email, input.Password, input.Provider, profile)
 	if err != nil {
 		return registrationResult{}, err
 	}

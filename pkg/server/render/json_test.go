@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRender_OK(t *testing.T) {
@@ -21,7 +22,7 @@ func TestRender_OK(t *testing.T) {
 	data := map[string]string{"key": "value"}
 
 	err := render.OK(c, message, data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.JSONEq(t, `{"success":true,"message":"Operation successful","data":{"key":"value"}}`, rec.Body.String())
 }
@@ -37,7 +38,7 @@ func TestRender_Created(t *testing.T) {
 	data := map[string]string{"id": "123"}
 
 	err := render.Created(c, message, data)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusCreated, rec.Code)
 	assert.JSONEq(t, `{"success":true,"message":"Resource created","data":{"id":"123"}}`, rec.Body.String())
 }
@@ -54,7 +55,7 @@ func TestRender_Error(t *testing.T) {
 	errData := map[string]string{"error": "invalid_input"}
 
 	err := render.Error(c, code, message, errData)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.JSONEq(t, `{"success":false,"message":"Invalid request","error":{"error":"invalid_input"}}`, rec.Body.String())
 }

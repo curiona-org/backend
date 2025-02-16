@@ -11,6 +11,7 @@ import (
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
+	"github.com/stephenafamo/bob/dialect/psql/dm"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"go.opentelemetry.io/otel"
@@ -141,7 +142,7 @@ func (r *roadmapRepository) fetch(ctx context.Context, query string, args ...any
 	for rows.Next() {
 		var roadmap domain.Roadmap
 		var personalizationOptions domain.PersonalizationOptions
-		err := rows.Scan(
+		err = rows.Scan(
 			&roadmap.ID,
 			&roadmap.AccountID,
 			&roadmap.Title,
@@ -167,7 +168,7 @@ func (r *roadmapRepository) fetch(ctx context.Context, query string, args ...any
 		roadmaps = append(roadmaps, roadmap)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -196,7 +197,7 @@ func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 	var topics []*domain.Topic
 	for rows.Next() {
 		var topic domain.Topic
-		err := rows.Scan(
+		err = rows.Scan(
 			&topic.ID,
 			&topic.RoadmapID,
 			&topic.ParentID,
@@ -215,7 +216,7 @@ func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 		topics = append(topics, &topic)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
@@ -242,11 +243,11 @@ func (r *roadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (do
 			return err
 		}
 
-		if err := r.saveTopicsAndSubtopics(traceCtx, tx, roadmap.ID, input.Topics); err != nil {
+		if err = r.saveTopicsAndSubtopics(traceCtx, tx, roadmap.ID, input.Topics); err != nil {
 			return err
 		}
 
-		if err := r.savePersonalizationOptions(traceCtx, tx, roadmap.ID, input.PersonalizationOptions); err != nil {
+		if err = r.savePersonalizationOptions(traceCtx, tx, roadmap.ID, input.PersonalizationOptions); err != nil {
 			return err
 		}
 
@@ -290,7 +291,7 @@ func (r *roadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	var mergedTopicAndSubtopic []*domain.Topic
 	for rows.Next() {
 		var savedTopic domain.Topic
-		err := rows.Scan(
+		err = rows.Scan(
 			&savedTopic.ID,
 			&savedTopic.Slug,
 		)
@@ -302,7 +303,7 @@ func (r *roadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 		mergedTopicAndSubtopic = append(mergedTopicAndSubtopic, subTopicMap[savedTopic.Slug]...)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return err
 	}
 
@@ -373,5 +374,36 @@ func (r *roadmapRepository) savePersonalizationOptions(ctx context.Context, tx p
 }
 
 func (r *roadmapRepository) Delete(ctx context.Context, id int) (domain.Roadmap, error) {
-	return domain.Roadmap{}, nil
+	query, args := psql.Delete(
+		dm.From(domain.RoadmapTable),
+		dm.Where(psql.Quote("id").EQ(psql.Arg(id))),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.Delete)", query)
+	defer span.End()
+
+	var roadmap domain.Roadmap
+	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
+		err := tx.QueryRow(ctx, query, args...).Scan(
+			&roadmap.ID,
+			&roadmap.AccountID,
+			&roadmap.Title,
+			&roadmap.Slug,
+			&roadmap.Description,
+			&roadmap.CreatedAt,
+			&roadmap.UpdatedAt,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, "failed to delete roadmap")
+			span.RecordError(err)
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return domain.Roadmap{}, err
+	}
+
+	return roadmap, nil
 }

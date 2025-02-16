@@ -5,6 +5,6 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) HealthCheck(c echo.Context) error {
+func (a *API) HealthCheck(c echo.Context) error {
 	return render.OK(c, "OK", nil)
 }

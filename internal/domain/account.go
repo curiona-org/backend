@@ -70,8 +70,8 @@ func (e *Account) IsZero() bool {
 	return e.ID == 0 &&
 		e.Email == "" &&
 		e.Password == "" &&
-		(e.Profile == nil || e.Profile.IsZero()) &&
-		(e.Roadmaps == nil || len(e.Roadmaps) == 0) &&
+		e.Profile.IsZero() &&
+		len(e.Roadmaps) == 0 &&
 		e.CreatedAt.IsZero() &&
 		e.UpdatedAt.IsZero()
 }
@@ -84,7 +84,7 @@ func (e *Account) SetProfile(profile *Profile) {
 	e.Profile = profile
 }
 
-func (e *Account) Update(name, email string) {
+func (e *Account) UpdateEmail(email string) {
 	e.Email = email
 	e.UpdateChangelog()
 }

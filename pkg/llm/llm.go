@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
 )
 
 type Client interface {
@@ -17,10 +16,6 @@ type Provider string
 const (
 	OpenAI   Provider = "openai"
 	DeepSeek Provider = "deepseek"
-)
-
-var (
-	tracer = otel.Tracer("LLM")
 )
 
 func NewClient(provider Provider, authToken, model string) (Client, error) {

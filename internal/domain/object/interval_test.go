@@ -31,7 +31,6 @@ func TestNewIntervalFromDuration(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			interval := object.NewIntervalFromDuration(tc.duration)
@@ -56,7 +55,6 @@ func TestInterval_Duration(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			duration := tc.interval.Duration()
@@ -78,7 +76,6 @@ func TestInterval_IsZero(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc // capture range variable
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			isZero := tc.interval.IsZero()

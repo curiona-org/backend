@@ -10,7 +10,7 @@ import (
 
 type TransactionFunc func(tx pgx.Tx) error
 
-// InTx starts a new transaction then calls fn()
+// InTx starts a new transaction then calls fn().
 func (db *DB) InTx(ctx context.Context, fn TransactionFunc) error {
 	conn, err := db.pool.Acquire(ctx)
 	if err != nil {
@@ -24,15 +24,15 @@ func (db *DB) InTx(ctx context.Context, fn TransactionFunc) error {
 		return fmt.Errorf("starting transaction: %w", err)
 	}
 
-	if err := fn(tx); err != nil {
+	if err = fn(tx); err != nil {
 		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			log.Debug().Msg("rollback transaction")
-			return fmt.Errorf("rolling back transaction: %v (original error: %w)", rbErr, err)
+			return fmt.Errorf("rolling back transaction: %w (original error: %w)", rbErr, err)
 		}
 		return err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
+	if err = tx.Commit(ctx); err != nil {
 		return fmt.Errorf("committing transaction: %w", err)
 	}
 

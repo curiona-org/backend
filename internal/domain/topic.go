@@ -56,8 +56,8 @@ func (e *Topic) IsZero() bool {
 		e.Slug == "" &&
 		e.Description == "" &&
 		e.Order == 0 &&
-		e.Finished == false &&
-		(e.Subtopics == nil || len(e.Subtopics) == 0) &&
+		!e.Finished &&
+		len(e.Subtopics) == 0 &&
 		e.CreatedAt.IsZero() &&
 		e.UpdatedAt.IsZero()
 }

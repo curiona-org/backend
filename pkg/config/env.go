@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-// EnvTypes is a generic type for environment variables
+// EnvTypes is a generic type for environment variables.
 type EnvTypes interface {
 	~string | ~[]string | ~int | int32 | int64 | time.Duration
 }
 
-// LookupEnv is a generic type implementation to search env keys
+// LookupEnv is a generic type implementation to search env keys.
 func LookupEnv[T EnvTypes](name string, defaultValue T) T {
 	value, ok := os.LookupEnv(name)
 	if !ok {
@@ -35,7 +35,7 @@ func LookupEnv[T EnvTypes](name string, defaultValue T) T {
 		result = int32(i)
 	case int64:
 		i, _ := strconv.ParseInt(value, 10, 64)
-		result = int64(i)
+		result = i
 	case time.Duration:
 		var err error
 		if result, err = time.ParseDuration(value); err != nil {
@@ -43,5 +43,9 @@ func LookupEnv[T EnvTypes](name string, defaultValue T) T {
 		}
 	}
 
-	return result.(T)
+	if r, rOk := result.(T); rOk {
+		return r
+	}
+
+	return defaultValue
 }

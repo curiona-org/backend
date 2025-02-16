@@ -6,7 +6,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/llm"
 )
 
-// Config is the global config for the application
+// Config is the global config for the application.
 type Config struct {
 	appName string
 	appEnv  string
@@ -47,7 +47,7 @@ type Config struct {
 
 var config *Config
 
-// Init initializes the config package
+// Init initializes the config package.
 func Init() {
 	config = &Config{
 		appName: LookupEnv("APP_NAME", "roadmap_application"),

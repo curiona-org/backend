@@ -2,9 +2,10 @@ package llm
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/sashabaranov/go-openai"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -13,19 +14,22 @@ import (
 type openAiClient struct {
 	client *openai.Client
 	model  string
+	tracer trace.Tracer
 }
 
 func NewOpenAiClient(authToken, model string) Client {
 	client := openai.NewClient(authToken)
 
+	tracer := otel.Tracer("llm:openai")
 	return &openAiClient{
 		client: client,
 		model:  model,
+		tracer: tracer,
 	}
 }
 
 func (o *openAiClient) Chat(ctx context.Context, prompt ChatPrompt) (string, error) {
-	ctx, span := tracer.Start(ctx, "(*openAiClient.Chat)")
+	ctx, span := o.tracer.Start(ctx, "(*openAiClient.Chat)")
 	defer span.End()
 
 	response, err := o.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
@@ -59,7 +63,7 @@ func (o *openAiClient) Chat(ctx context.Context, prompt ChatPrompt) (string, err
 	)
 
 	if len(response.Choices) == 0 {
-		return "", fmt.Errorf("openai: no choices in response")
+		return "", errors.New("openai: no choices in response")
 	}
 
 	return response.Choices[0].Message.Content, nil

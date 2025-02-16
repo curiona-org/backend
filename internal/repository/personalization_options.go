@@ -71,7 +71,7 @@ func (r *personalizationOptionsRepository) fetch(ctx context.Context, query stri
 	var personalizationOpts []domain.PersonalizationOptions
 	for rows.Next() {
 		var personalizationOpt domain.PersonalizationOptions
-		err := rows.Scan(
+		err = rows.Scan(
 			&personalizationOpt.ID,
 			&personalizationOpt.AccountID,
 			&personalizationOpt.RoadmapID,
@@ -89,7 +89,7 @@ func (r *personalizationOptionsRepository) fetch(ctx context.Context, query stri
 		personalizationOpts = append(personalizationOpts, personalizationOpt)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

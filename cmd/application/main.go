@@ -24,6 +24,7 @@ func main() {
 
 	clients, err := clients.New(ctx)
 	if err != nil {
+		//nolint:gocritic
 		log.Fatal().Err(err).Msg("Failed to initialize clients")
 	}
 	defer clients.Close(ctx)

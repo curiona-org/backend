@@ -6,7 +6,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) GetRoadmapBySlug(c echo.Context) error {
+func (a *API) GetRoadmapBySlug(c echo.Context) error {
 	slug := c.Param("slug")
 	if slug == "" {
 		return apperrors.NotFound()

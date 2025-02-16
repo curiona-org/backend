@@ -9,18 +9,18 @@ import (
 )
 
 var (
-	// ErrPasswordInvalidCharacters is returned when the password contains invalid characters
+	// ErrPasswordInvalidCharacters is returned when the password contains invalid characters.
 	ErrPasswordInvalidCharacters = apperrors.Wrap(apperrors.InvalidData(), errors.New("password invalid characters"))
 
-	// ErrPasswordEmpty is returned when the password is empty
+	// ErrPasswordEmpty is returned when the password is empty.
 	ErrPasswordEmpty = apperrors.Wrap(apperrors.InvalidData(), errors.New("password empty"))
 )
 
-// Password can be plain/hashed
+// Password can be plain/hashed.
 type Password string
 
-// Validate validates a plain password
-func (p *Password) Validate(plain string) error {
+// Validate validates a plain password.
+func (p Password) Validate(plain string) error {
 	if plain == "" {
 		return ErrPasswordEmpty
 	}
@@ -32,7 +32,7 @@ func (p *Password) Validate(plain string) error {
 	return nil
 }
 
-func (p *Password) validateCharacters(plain string) bool {
+func (p Password) validateCharacters(plain string) bool {
 	for _, char := range plain {
 		if char > unicode.MaxASCII {
 			return false
@@ -42,7 +42,7 @@ func (p *Password) validateCharacters(plain string) bool {
 	return true
 }
 
-// Hash generates a hash for the password
+// Hash generates a hash for the password.
 func (p Password) Hash(plain string) (Password, error) {
 	if err := p.Validate(plain); err != nil {
 		return "", err
@@ -56,7 +56,7 @@ func (p Password) Hash(plain string) (Password, error) {
 	return Password(hash), nil
 }
 
-// Compare compares the password with the hash
+// Compare compares the password with the hash.
 func (p Password) Compare(plain string) bool {
 	return crypto.BcryptCompare(string(p), plain)
 }

@@ -9,10 +9,12 @@ func NewNoop() Token {
 }
 
 func (n Noop) Generate(id int) (string, error) {
+	_ = id
 	return "", nil
 }
 
 func (n Noop) Parse(token string) (*Payload, error) {
+	_ = token
 	return nil, nil
 }
 

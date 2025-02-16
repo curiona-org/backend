@@ -6,6 +6,7 @@ import (
 
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAuth_Token(t *testing.T) {
@@ -16,7 +17,7 @@ func TestAuth_Token(t *testing.T) {
 
 		jwt := auth.NewJWT("secret", time.Hour)
 		token, err := jwt.Generate(id)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, token)
 	})
 
@@ -26,11 +27,11 @@ func TestAuth_Token(t *testing.T) {
 
 		jwt := auth.NewJWT("secret", time.Hour)
 		token, err := jwt.Generate(id)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, token)
 
 		payload, err := jwt.Parse(token)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, payload)
 		assert.Equal(t, id, payload.ID)
 	})
@@ -42,14 +43,14 @@ func TestAuth_Token(t *testing.T) {
 		// Create a token with a short expiration time
 		jwt := auth.NewJWT("secret", time.Second*1)
 		token, err := jwt.Generate(id)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotEmpty(t, token)
 
 		// Wait for the token to expire
 		time.Sleep(time.Second * 2)
 
 		payload, err := jwt.Parse(token)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, payload)
 	})
 }

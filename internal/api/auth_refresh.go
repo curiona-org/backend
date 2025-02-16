@@ -9,7 +9,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) AuthRefresh(c echo.Context) error {
+func (a *API) AuthRefresh(c echo.Context) error {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
 		return apperrors.Unauthorized()

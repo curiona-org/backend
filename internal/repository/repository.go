@@ -58,6 +58,7 @@ func (r *repository) Session() domain.SessionRepository {
 	return r.session
 }
 
+//nolint:spancheck
 func spanWithQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(semconv.DBStatementKey.String(query))

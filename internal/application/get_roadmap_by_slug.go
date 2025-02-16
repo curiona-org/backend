@@ -73,8 +73,8 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 
 	var buildTopics func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopics
 	buildTopics = func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopics {
-		traceCtx, span := app.tracer.Start(ctx, "buildTopics", trace.WithAttributes(attribute.Int("parentID", parentID)))
-		defer span.End()
+		traceCtx, buildTopicsSpan := app.tracer.Start(ctx, "buildTopics", trace.WithAttributes(attribute.Int("parentID", parentID)))
+		defer buildTopicsSpan.End()
 
 		outputTopics := topicMap[parentID]
 		for i := range outputTopics {

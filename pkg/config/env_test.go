@@ -15,7 +15,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("String", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_STRING", "test_value")
+		t.Setenv("TEST_STRING", "test_value")
 		defer os.Unsetenv("TEST_STRING")
 
 		result := config.LookupEnv("TEST_STRING", "default_value")
@@ -32,7 +32,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("Int", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_INT", "42")
+		t.Setenv("TEST_INT", "42")
 		defer os.Unsetenv("TEST_INT")
 
 		result := config.LookupEnv("TEST_INT", 0)
@@ -49,7 +49,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("Int32", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_INT32", "32")
+		t.Setenv("TEST_INT32", "32")
 		defer os.Unsetenv("TEST_INT32")
 
 		result := config.LookupEnv("TEST_INT32", int32(0))
@@ -66,7 +66,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("Int64", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_INT64", "64")
+		t.Setenv("TEST_INT64", "64")
 		defer os.Unsetenv("TEST_INT64")
 
 		result := config.LookupEnv("TEST_INT64", int64(0))
@@ -83,7 +83,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("Duration", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_DURATION", "1h")
+		t.Setenv("TEST_DURATION", "1h")
 		defer os.Unsetenv("TEST_DURATION")
 
 		result := config.LookupEnv("TEST_DURATION", time.Minute)
@@ -100,7 +100,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("DurationInvalid", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_DURATION_INVALID", "invalid")
+		t.Setenv("TEST_DURATION_INVALID", "invalid")
 		defer os.Unsetenv("TEST_DURATION_INVALID")
 
 		result := config.LookupEnv("TEST_DURATION_INVALID", time.Minute)
@@ -110,7 +110,7 @@ func TestConfig_LookupEnv(t *testing.T) {
 	t.Run("StringSlice", func(t *testing.T) {
 		t.Parallel()
 
-		os.Setenv("TEST_STRING_SLICE", "a,b,c")
+		t.Setenv("TEST_STRING_SLICE", "a,b,c")
 		defer os.Unsetenv("TEST_STRING_SLICE")
 
 		result := config.LookupEnv("TEST_STRING_SLICE", []string{"default"})

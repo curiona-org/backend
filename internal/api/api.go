@@ -16,15 +16,15 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type api struct {
+type API struct {
 	instance    *server.Server
 	application application.Application
 }
 
-func New(port string, application application.Application) *api {
+func New(port string, application application.Application) *API {
 	instance := server.New(port)
 
-	api := &api{
+	api := &API{
 		application: application,
 		instance:    instance,
 	}
@@ -36,14 +36,14 @@ func New(port string, application application.Application) *api {
 	return api
 }
 
-func (a *api) Start(ctx context.Context) {
+func (a *API) Start(ctx context.Context) {
 	exit := a.instance.Listen()
 
 	signal := <-exit
 	a.instance.Shutdown(ctx, signal)
 }
 
-func (a *api) setupRoutes() {
+func (a *API) setupRoutes() {
 	a.instance.GET("/health", a.HealthCheck)
 
 	a.instance.POST("/auth", a.Auth)
@@ -57,7 +57,7 @@ func (a *api) setupRoutes() {
 	a.instance.GET("/roadmaps/topic/:slug", a.GetTopicBySlug, a.authMiddleware)
 }
 
-func (a *api) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func (a *API) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		reqCtx := c.Request().Context()
 		authorization, ok := c.Request().Header["Authorization"]
@@ -82,7 +82,7 @@ func (a *api) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func (a *api) setupMiddlewares() {
+func (a *API) setupMiddlewares() {
 	a.instance.Use(middleware.CORS())
 	a.instance.Use(middleware.Recover())
 	a.instance.Use(middleware.RequestID())
@@ -91,21 +91,21 @@ func (a *api) setupMiddlewares() {
 		LogStatus:   true,
 		LogError:    true,
 		HandleError: true,
+		//nolint:revive
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
 				log.Debug().
 					Str("uri", v.URI).
 					Int("status", v.Status).
 					Send()
-			} else {
-				if config.IsProduction() || v.Status >= 500 {
-					log.Error().
-						Err(v.Error).
-						Str("uri", v.URI).
-						Int("status", v.Status).
-						Send()
-				}
+			} else if config.IsProduction() || v.Status >= 500 {
+				log.Error().
+					Err(v.Error).
+					Str("uri", v.URI).
+					Int("status", v.Status).
+					Send()
 			}
+
 			return nil
 		},
 	}))

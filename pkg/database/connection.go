@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ type Connection interface {
 	Close()
 }
 
-// New creates a new PostgreSQL pgxpool client
+// New creates a new PostgreSQL pgxpool client.
 func New(ctx context.Context, cfg *Config) (Connection, error) {
 	pgxConfig, err := pgxpool.ParseConfig(dbDSN(cfg))
 	if err != nil {
@@ -65,7 +66,7 @@ func setIfNotEmpty(m map[string]string, key string, val string) {
 
 func setIfPositive(m map[string]string, key string, val int) {
 	if val > 0 {
-		m[key] = fmt.Sprintf("%d", val)
+		m[key] = strconv.Itoa(val)
 	}
 }
 

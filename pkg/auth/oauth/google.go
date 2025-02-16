@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/oauth2"
 	googleOauth "golang.org/x/oauth2/google"
@@ -33,11 +34,31 @@ func (o *google) Verify(ctx context.Context, token string) (User, error) {
 
 	claims := payload.Claims
 
+	sub, ok := claims["sub"].(string)
+	if !ok {
+		return User{}, errors.New("missing sub claim")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return User{}, errors.New("missing email claim")
+	}
+
+	name, ok := claims["name"].(string)
+	if !ok {
+		return User{}, errors.New("missing name claim")
+	}
+
+	picture, ok := claims["picture"].(string)
+	if !ok {
+		return User{}, errors.New("missing picture claim")
+	}
+
 	user := User{
-		Sub:    claims["sub"].(string),
-		Email:  claims["email"].(string),
-		Name:   claims["name"].(string),
-		Avatar: claims["picture"].(string),
+		Sub:    sub,
+		Email:  email,
+		Name:   name,
+		Avatar: picture,
 	}
 
 	return user, nil

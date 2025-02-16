@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -77,7 +78,7 @@ func (r *sessionRepository) fetch(ctx context.Context, query string, args ...any
 	var sessions []domain.Session
 	for rows.Next() {
 		var s domain.Session
-		if err := rows.Scan(
+		if err = rows.Scan(
 			&s.ID,
 			&s.AccountID,
 			&s.RefreshToken,
@@ -146,7 +147,7 @@ func (r *sessionRepository) Delete(ctx context.Context, id int) error {
 //  3. Calls updateFn() to update the session details.
 //  4. If the session is blocked, deletes the session.
 //  5. If the session was updated, marks the old session as blocked and creates a new session with the updated details.
-func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, updateFn func(context.Context, *domain.Session) (bool, error)) error {
+func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, updateFn func(*domain.Session) (bool, error)) error {
 	traceCtx, span := r.tracer.Start(ctx, "(*sessionRepository.Renew)")
 	defer span.End()
 
@@ -177,28 +178,29 @@ func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, upda
 
 		session := sessions[0]
 
-		updated, err := updateFn(traceCtx, &session)
-		if err != nil {
-			if apperrors.Unwrap(err) == domain.ErrSessionIsBlocked {
-				query, args := psql.Delete(
-					dm.From(domain.SessionTable),
-					dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
-				).MustBuild(ctx)
+		updated, err := updateFn(&session)
+		if err != nil && errors.Is(apperrors.Unwrap(err), domain.ErrSessionIsBlocked) {
+			query, args := psql.Delete(
+				dm.From(domain.SessionTable),
+				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
+			).MustBuild(ctx)
 
-				ctx, span := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", query)
-				defer span.End()
-				span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
+			_, span = spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", query)
+			defer span.End()
+			span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
 
-				commandTag, err := r.db.Exec(ctx, query, args...)
-				if err != nil {
-					span.SetStatus(codes.Error, "failed to delete session")
-					span.RecordError(err)
-					return err
-				}
-				if commandTag.RowsAffected() == 0 {
-					return err
-				}
+			commandTag, execErr := r.db.Exec(ctx, query, args...)
+			if execErr != nil {
+				span.SetStatus(codes.Error, "failed to delete session")
+				span.RecordError(execErr)
+				return execErr
 			}
+			if commandTag.RowsAffected() == 0 {
+				return err
+			}
+
+			return err
+		} else if err != nil {
 			return err
 		}
 
@@ -211,13 +213,13 @@ func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, upda
 			um.SetCol("blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
-		ctx, span := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", updateOldSessionQuery)
-		defer span.End()
-		span.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
+		updateTraceCtx, updateSpan := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", updateOldSessionQuery)
+		defer updateSpan.End()
+		updateSpan.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
 
-		if _, err := tx.Exec(ctx, updateOldSessionQuery, updateOldSessionArgs...); err != nil {
-			span.SetStatus(codes.Error, "failed to update session")
-			span.RecordError(err)
+		if _, err = tx.Exec(ctx, updateOldSessionQuery, updateOldSessionArgs...); err != nil {
+			updateSpan.SetStatus(codes.Error, "failed to update session")
+			updateSpan.RecordError(err)
 			return err
 		}
 
@@ -225,13 +227,13 @@ func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, upda
 			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
 			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.Blocked, session.ExpiresAt)),
 		).MustBuild(ctx)
-		ctx, span = spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", newSessionQuery)
-		defer span.End()
-		span.SetAttributes(semconv.DBOperationKey.String("INSERT"))
+		_, insertSpan := spanWithQuery(updateTraceCtx, r.tracer, "(*sessionRepository.Renew)", newSessionQuery)
+		defer insertSpan.End()
+		insertSpan.SetAttributes(semconv.DBOperationKey.String("INSERT"))
 
-		if _, err := tx.Exec(ctx, newSessionQuery, newSessionArgs...); err != nil {
-			span.SetStatus(codes.Error, "failed to update session")
-			span.RecordError(err)
+		if _, err = tx.Exec(ctx, newSessionQuery, newSessionArgs...); err != nil {
+			insertSpan.SetStatus(codes.Error, "failed to update session")
+			insertSpan.RecordError(err)
 			return err
 		}
 

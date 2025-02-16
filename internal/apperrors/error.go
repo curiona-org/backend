@@ -1,6 +1,9 @@
 package apperrors
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
 
 type AppError struct {
 	code    int
@@ -18,9 +21,7 @@ func (e AppError) Error() string {
 
 func Wrap(appError error, err error) error {
 	var ae *AppError
-	if e, ok := appError.(*AppError); ok {
-		ae = e
-	} else {
+	if !errors.As(appError, &ae) {
 		ae = &AppError{code: http.StatusInternalServerError, message: appError.Error()}
 	}
 
@@ -40,8 +41,9 @@ func Wrap(appError error, err error) error {
 }
 
 func Unwrap(err error) error {
-	if e, ok := err.(*AppError); ok {
-		return e.err
+	var ae *AppError
+	if errors.As(err, &ae) {
+		return ae.err
 	}
 	return err
 }

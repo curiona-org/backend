@@ -11,11 +11,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Server a http server using echo as the underlying framework.
 type Server struct {
 	*echo.Echo
 	port string
 }
 
+// New creates a new server instance.
 func New(port string) *Server {
 	instance := NewEchoInstance()
 
@@ -27,22 +29,26 @@ func New(port string) *Server {
 	return srv
 }
 
+// Port returns the server port.
 func (s *Server) Port() string {
 	return s.port
 }
 
+// Listen starts the API server.
 func (s *Server) Listen() chan os.Signal {
 	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		log.Info().Msgf("Listening on %s", s.port)
-		s.Echo.Start(":" + s.port)
+		if err := s.Echo.Start(":" + s.port); err != nil {
+			log.Fatal().Err(err).Msg("server failed to start")
+		}
 	}()
 
 	return exitSignal
 }
 
-// Shutdown gracefully shuts down the API server
+// Shutdown gracefully shuts down the API server.
 func (s *Server) Shutdown(ctx context.Context, signal os.Signal) {
 	timeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -57,6 +63,7 @@ func (s *Server) Shutdown(ctx context.Context, signal os.Signal) {
 	select {
 	case <-timeout.Done():
 		log.Warn().Msg("shutdown timed out, forcing exit")
+		//nolint:gocritic
 		os.Exit(1)
 	case err := <-shutdownChan:
 		if err != nil {

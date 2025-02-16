@@ -72,7 +72,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 	var topics []domain.Topic
 	for rows.Next() {
 		var topic domain.Topic
-		err := rows.Scan(
+		err = rows.Scan(
 			&topic.ID,
 			&topic.RoadmapID,
 			&topic.ParentID,
@@ -91,7 +91,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 		topics = append(topics, topic)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

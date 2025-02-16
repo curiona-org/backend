@@ -42,7 +42,7 @@ func TestServer_Listen(t *testing.T) {
 
 func TestServer_Shutdown(t *testing.T) {
 	t.Parallel()
-	port := "8080"
+	port := "8081"
 	srv := server.New(port)
 
 	ctx := context.Background()

@@ -5,7 +5,6 @@ import (
 	"flag"
 
 	"github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
 	"github.com/roadmap-thesis/backend/internal/clients"
@@ -15,7 +14,7 @@ import (
 )
 
 func main() {
-	var command *string = flag.String("command", "up", "migration command (up/down/reset)")
+	command := flag.String("command", "up", "migration command (up/down/reset)")
 
 	flag.Parse()
 
@@ -27,11 +26,12 @@ func main() {
 
 	clients, err := clients.New(ctx)
 	if err != nil {
+		//nolint:gocritic
 		log.Fatal().Err(err).Msg("Failed to initialize clients")
 	}
 	defer clients.Close(ctx)
 
-	if err := goose.SetDialect("pgx"); err != nil {
+	if err = goose.SetDialect("pgx"); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize goose")
 	}
 

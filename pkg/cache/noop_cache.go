@@ -16,25 +16,28 @@ func NewNoopCache[V any]() Cache[V] {
 	return &noopCache[V]{tracer: tracer}
 }
 
-func (c *noopCache[V]) Get(ctx context.Context, key string) (value V, ok bool) {
-	ctx, span := c.tracer.Start(ctx, "(*noopCache[V]).Get")
+func (c *noopCache[V]) Get(ctx context.Context, key string) (V, bool) {
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Get")
 	defer span.End()
-	return
+	_ = key
+	return *new(V), false
 }
 
 func (c *noopCache[V]) Set(ctx context.Context, key string, value V) {
-	ctx, span := c.tracer.Start(ctx, "(*noopCache[V]).Set")
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Set")
 	defer span.End()
-	return
+	_ = key
+	_ = value
 }
 
 func (c *noopCache[V]) Delete(ctx context.Context, key ...string) error {
-	ctx, span := c.tracer.Start(ctx, "(*noopCache[V]).Delete")
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Delete")
 	defer span.End()
+	_ = key
 	return nil
 }
 func (c *noopCache[V]) Truncate(ctx context.Context) error {
-	ctx, span := c.tracer.Start(ctx, "(*noopCache[V]).Truncate")
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Truncate")
 	defer span.End()
 	return nil
 }

@@ -10,7 +10,8 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) ErrorHandler(err error, c echo.Context) {
+//nolint:staticcheck,errorlint,wastedassign
+func (a *API) ErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {
 		return
 	}

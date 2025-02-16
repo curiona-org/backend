@@ -9,7 +9,7 @@ import (
 	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
-func (a *api) Auth(c echo.Context) error {
+func (a *API) Auth(c echo.Context) error {
 	var input io.AuthInput
 
 	if err := c.Bind(&input); err != nil {
@@ -40,7 +40,7 @@ func (a *api) Auth(c echo.Context) error {
 
 	if output.Created {
 		return render.Created(c, "Successfully registered.", output)
-	} else {
-		return render.OK(c, "Successfully logged in.", output)
 	}
+
+	return render.OK(c, "Successfully logged in.", output)
 }
