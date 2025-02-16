@@ -33,6 +33,11 @@ func TestConfig_Init(t *testing.T) {
 	setEnv("DB_POOL_MAX_CONN_LIFETIME", "1h")
 	setEnv("DB_POOL_MAX_CONN_IDLETIME", "30m")
 	setEnv("DB_POOL_HEALTH_CHECK_PERIOD", "1m")
+	setEnv("REDIS_DB", "0")
+	setEnv("REDIS_NETWORK", "tcp")
+	setEnv("REDIS_ADDR", "localhost:6379")
+	setEnv("REDIS_USERNAME", "")
+	setEnv("REDIS_PASSWORD", "")
 	setEnv("ACCESS_SECRET_KEY", "test_secret")
 	setEnv("ACCESS_EXPIRES_IN", "5m")
 	setEnv("REFRESH_SECRET_KEY", "test_secret")
@@ -57,6 +62,12 @@ func TestConfig_Init(t *testing.T) {
 	defer unsetEnv("DB_POOL_MAX_CONN_LIFETIME")
 	defer unsetEnv("DB_POOL_MAX_CONN_IDLETIME")
 	defer unsetEnv("DB_POOL_HEALTH_CHECK_PERIOD")
+	defer unsetEnv("REDIS_DB")
+	defer unsetEnv("REDIS_NETWORK")
+	defer unsetEnv("REDIS_ADDR")
+	defer unsetEnv("REDIS_USERNAME")
+	defer unsetEnv("REDIS_PASSWORD")
+	defer unsetEnv("ACCESS_SECRET_KEY")
 	defer unsetEnv("ACCESS_SECRET_KEY")
 	defer unsetEnv("ACCESS_EXPIRES_IN")
 	defer unsetEnv("REFRESH_SECRET_KEY")
@@ -88,6 +99,11 @@ func TestConfig_Init(t *testing.T) {
 		{"DBPoolMaxConnLifetime", time.Hour, config.DBPoolMaxConnLifetime()},
 		{"DBPoolMaxConnIdleTime", 30 * time.Minute, config.DBPoolMaxConnIdleTime()},
 		{"DBPoolHealthCheckPeriod", time.Minute, config.DBPoolHealthCheckPeriod()},
+		{"RedisDB", 0, config.RedisDB()},
+		{"RedisNetwork", "tcp", config.RedisNetwork()},
+		{"RedisAddr", "localhost:6379", config.RedisAddr()},
+		{"RedisUsername", "", config.RedisUsername()},
+		{"RedisPassword", "", config.RedisPassword()},
 		{"AccessSecretKey", "test_secret", config.AccessSecretKey()},
 		{"AccessExpiresIn", 5 * time.Minute, config.AccessExpiresIn()},
 		{"RefreshSecretKey", "test_secret", config.RefreshSecretKey()},

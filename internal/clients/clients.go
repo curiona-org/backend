@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/redis/go-redis/v9"
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
+	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/roadmap-thesis/backend/pkg/llm"
@@ -17,6 +19,7 @@ import (
 type Clients struct {
 	LLM     llm.Client
 	DB      database.Connection
+	Redis   *redis.Client
 	Google  oauth.Client
 	Tracing *trace.TracerProvider
 }
@@ -55,6 +58,21 @@ func New(ctx context.Context) (*Clients, error) {
 		})
 		if err != nil {
 			return errors.Wrap(err, "initializing postgresql")
+		}
+		return nil
+	})
+
+	group.Go(func() error {
+		var err error
+		c.Redis, err = cache.NewRedisConnection(ctx, &cache.RedisConfig{
+			DB:       config.RedisDB(),
+			Network:  config.RedisNetwork(),
+			Addr:     config.RedisAddr(),
+			Username: config.RedisUsername(),
+			Password: config.RedisPassword(),
+		})
+		if err != nil {
+			return errors.Wrap(err, "initializing redis client")
 		}
 		return nil
 	})

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
@@ -27,10 +28,10 @@ type repository struct {
 
 var _ Repository = (*repository)(nil)
 
-func NewPostgresRepository(db database.Connection) Repository {
+func NewPostgresRepository(db database.Connection, cacheConn cache.Connection) Repository {
 	return &repository{
 		account:                NewAccountRepository(db),
-		roadmap:                NewRoadmapRepository(db),
+		roadmap:                NewRoadmapRepository(db, cacheConn),
 		topic:                  NewTopicRepository(db),
 		personalizationOptions: NewPersonalizationOptionsRepository(db),
 		session:                NewSessionRepository(db),

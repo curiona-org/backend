@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/rs/zerolog/log"
 	"github.com/stephenafamo/bob"
@@ -19,20 +20,26 @@ import (
 
 type roadmapRepository struct {
 	db     database.Connection
+	cache  cache.Cache[domain.Roadmap]
 	tracer trace.Tracer
 }
 
 var _ domain.RoadmapRepository = (*roadmapRepository)(nil)
 
-func NewRoadmapRepository(db database.Connection) domain.RoadmapRepository {
+func NewRoadmapRepository(db database.Connection, cacheConn cache.Connection) domain.RoadmapRepository {
 	tracer := otel.Tracer("db:postgres:roadmaps")
 	return &roadmapRepository{
 		db:     db,
+		cache:  cache.NewRedisCache[domain.Roadmap](cacheConn),
 		tracer: tracer,
 	}
 }
 
 func (r *roadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
+	if roadmap, ok := r.cache.Get(ctx, "roadmap:"+slug); ok {
+		return roadmap, nil
+	}
+
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.RoadmapTable, "id"),
@@ -74,6 +81,8 @@ func (r *roadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 	}
 
 	roadmap.SetTopics(topics)
+
+	r.cache.Set(ctx, "roadmap:"+slug, roadmap)
 
 	return roadmap, nil
 }

@@ -24,6 +24,12 @@ type Config struct {
 	dbPoolMaxConnIdleTime   time.Duration
 	dbPoolHealthCheckPeriod time.Duration
 
+	redisDB       int
+	redisNetwork  string
+	redisAddr     string
+	redisUsername string
+	redisPassword string
+
 	accessSecretKey  string
 	accessExpiresIn  time.Duration
 	refreshSecretKey string
@@ -60,6 +66,12 @@ func Init() {
 		dbPoolMaxConnIdleTime:   LookupEnv("DB_POOL_MAX_CONN_IDLE_TIME", 30*time.Minute),
 		dbPoolHealthCheckPeriod: LookupEnv("DB_POOL_HEALTH_CHECK_PERIOD", time.Minute),
 
+		redisDB:       LookupEnv("REDIS_DB", 0),
+		redisNetwork:  LookupEnv("REDIS_NETWORK", "tcp"),
+		redisAddr:     LookupEnv("REDIS_ADDR", "localhost:6379"),
+		redisUsername: LookupEnv("REDIS_USERNAME", ""),
+		redisPassword: LookupEnv("REDIS_PASSWORD", ""),
+
 		accessSecretKey:  LookupEnv("ACCESS_SECRET_KEY", "secret"),
 		accessExpiresIn:  LookupEnv("ACCESS_EXPIRES_IN", time.Minute*5),
 		refreshSecretKey: LookupEnv("REFRESH_SECRET_KEY", "secret"),
@@ -93,6 +105,12 @@ func DBPoolMinConnections() int              { return config.dbPoolMinConnection
 func DBPoolMaxConnLifetime() time.Duration   { return config.dbPoolMaxConnLifetime }
 func DBPoolMaxConnIdleTime() time.Duration   { return config.dbPoolMaxConnIdleTime }
 func DBPoolHealthCheckPeriod() time.Duration { return config.dbPoolHealthCheckPeriod }
+
+func RedisDB() int          { return config.redisDB }
+func RedisNetwork() string  { return config.redisNetwork }
+func RedisAddr() string     { return config.redisAddr }
+func RedisUsername() string { return config.redisUsername }
+func RedisPassword() string { return config.redisPassword }
 
 func AccessSecretKey() string         { return config.accessSecretKey }
 func AccessExpiresIn() time.Duration  { return config.accessExpiresIn }
