@@ -21,7 +21,7 @@ type accountRepository struct {
 
 var _ domain.AccountRepository = (*accountRepository)(nil)
 
-func NewAccountRepository(db database.Connection) domain.AccountRepository {
+func NewPostgresAccountRepository(db database.Connection) domain.AccountRepository {
 	tracer := otel.Tracer("db:postgres:accounts")
 	return &accountRepository{
 		db:     db,

@@ -70,7 +70,7 @@ func (e *Account) IsZero() bool {
 	return e.ID == 0 &&
 		e.Email == "" &&
 		e.Password == "" &&
-		e.Profile.IsZero() &&
+		(e.Profile == nil || e.Profile.IsZero()) &&
 		len(e.Roadmaps) == 0 &&
 		e.CreatedAt.IsZero() &&
 		e.UpdatedAt.IsZero()

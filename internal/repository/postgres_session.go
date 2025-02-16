@@ -27,7 +27,7 @@ type sessionRepository struct {
 
 var _ domain.SessionRepository = (*sessionRepository)(nil)
 
-func NewSessionRepository(db database.Connection) domain.SessionRepository {
+func NewPostgresSessionRepository(db database.Connection) domain.SessionRepository {
 	tracer := otel.Tracer("db:postgres:sessions")
 	return &sessionRepository{
 		db:     db,

@@ -27,7 +27,7 @@ type roadmapRepository struct {
 
 var _ domain.RoadmapRepository = (*roadmapRepository)(nil)
 
-func NewRoadmapRepository(db database.Connection, cacheConn cache.Connection) domain.RoadmapRepository {
+func NewPostgresRoadmapRepository(db database.Connection, cacheConn cache.Connection) domain.RoadmapRepository {
 	tracer := otel.Tracer("db:postgres:roadmaps")
 	return &roadmapRepository{
 		db:     db,

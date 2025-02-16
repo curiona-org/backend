@@ -19,7 +19,7 @@ type personalizationOptionsRepository struct {
 
 var _ domain.PersonalizationOptionsRepository = (*personalizationOptionsRepository)(nil)
 
-func NewPersonalizationOptionsRepository(db database.Connection) domain.PersonalizationOptionsRepository {
+func NewPostgresPersonalizationOptionsRepository(db database.Connection) domain.PersonalizationOptionsRepository {
 	tracer := otel.Tracer("db:postgres:personalization_options")
 	return &personalizationOptionsRepository{
 		db:     db,

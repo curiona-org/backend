@@ -30,11 +30,11 @@ var _ Repository = (*repository)(nil)
 
 func NewPostgresRepository(db database.Connection, cacheConn cache.Connection) Repository {
 	return &repository{
-		account:                NewAccountRepository(db),
-		roadmap:                NewRoadmapRepository(db, cacheConn),
-		topic:                  NewTopicRepository(db),
-		personalizationOptions: NewPersonalizationOptionsRepository(db),
-		session:                NewSessionRepository(db),
+		account:                NewPostgresAccountRepository(db),
+		roadmap:                NewPostgresRoadmapRepository(db, cacheConn),
+		topic:                  NewPostgresTopicRepository(db),
+		personalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
+		session:                NewPostgresSessionRepository(db),
 	}
 }
 

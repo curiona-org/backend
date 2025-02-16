@@ -19,7 +19,7 @@ type topicRepository struct {
 
 var _ domain.TopicRepository = (*topicRepository)(nil)
 
-func NewTopicRepository(db database.Connection) domain.TopicRepository {
+func NewPostgresTopicRepository(db database.Connection) domain.TopicRepository {
 	tracer := otel.Tracer("db:postgres:topics")
 	return &topicRepository{
 		db:     db,
