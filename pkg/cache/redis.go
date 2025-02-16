@@ -2,10 +2,12 @@ package cache
 
 import (
 	"context"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -33,6 +35,8 @@ func (c *redisCache[V]) Get(ctx context.Context, key string) (V, bool) {
 	var value V
 	data, err := c.conn.Get(ctx, key).Result()
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to get key: "+key)
+		span.RecordError(err)
 		return value, false
 	}
 
@@ -51,7 +55,10 @@ func (c *redisCache[V]) Set(ctx context.Context, key string, value V) {
 		return
 	}
 
-	c.conn.Set(ctx, key, data, 0)
+	if err := c.conn.Set(ctx, key, data, 0).Err(); err != nil {
+		span.SetStatus(codes.Error, "failed to set key: "+key)
+		span.RecordError(err)
+	}
 }
 
 func (c *redisCache[V]) Delete(ctx context.Context, key ...string) error {
@@ -65,7 +72,11 @@ func (c *redisCache[V]) Delete(ctx context.Context, key ...string) error {
 	pipe.Select(ctx, 0)
 	pipe.Del(ctx, key...)
 	_, err := pipe.Exec(ctx)
-	return err
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to delete keys: "+strings.Join(key, ", "))
+		span.RecordError(err)
+	}
+	return nil
 }
 func (c *redisCache[V]) Truncate(ctx context.Context) error {
 	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Truncate")
@@ -75,5 +86,9 @@ func (c *redisCache[V]) Truncate(ctx context.Context) error {
 	pipe.Select(ctx, 0)
 	pipe.FlushDB(ctx)
 	_, err := pipe.Exec(ctx)
-	return err
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to truncate cache")
+		span.RecordError(err)
+	}
+	return nil
 }
