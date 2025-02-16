@@ -41,7 +41,7 @@ func (s *Server) Listen() chan os.Signal {
 	go func() {
 		log.Info().Msgf("Listening on %s", s.port)
 		if err := s.Echo.Start(":" + s.port); err != nil {
-			log.Warn().Msgf(err.Error())
+			log.Warn().Msg(err.Error())
 		}
 	}()
 
