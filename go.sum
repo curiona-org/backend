@@ -18,8 +18,6 @@ github.com/aarondl/opt v0.0.0-20230114172057-b91f370c41f0 h1:vLrhbOWVPxtHao/QthU
 github.com/aarondl/opt v0.0.0-20230114172057-b91f370c41f0/go.mod h1:l4/5NZtYd/SIohsFhaJQQe+sPOTG22furpZ5FvcYOzk=
 github.com/cenkalti/backoff/v4 v4.3.0 h1:MyRJ/UdXutAwSAT+s3wNd7MfTIcy71VQueUuFK343L8=
 github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
-github.com/cohesion-org/deepseek-go v1.1.0 h1:ejgX+KWSPZg05qV5YJ22TRygElCmHzZoxJtvLN5DNaY=
-github.com/cohesion-org/deepseek-go v1.1.0/go.mod h1:je2+GYTRsFGimyZNP4hpAcARQ7dcMaidT5YisexH0w0=
 github.com/cohesion-org/deepseek-go v1.1.2 h1:7a9qIccDgU7bR92ZwwpEzOMrC3gR2+FJ1PQ0t+k/Kx0=
 github.com/cohesion-org/deepseek-go v1.1.2/go.mod h1:Mi/tP7IzBoXxDC606CFbJC5Ofk2HCikCayBXweo1RDg=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
