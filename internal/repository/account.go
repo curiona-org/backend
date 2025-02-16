@@ -139,8 +139,8 @@ func (r *accountRepository) Save(ctx context.Context, input *domain.Account) (do
 	var profile domain.Profile
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		saveAccountQuery, saveAccountArgs := psql.Insert(
-			im.Into(domain.AccountTable, "email", "password", "created_at", "updated_at"),
-			im.Values(psql.Arg(input.Email, input.Password, input.CreatedAt, input.UpdatedAt)),
+			im.Into(domain.AccountTable, "email", "password", "provider", "created_at", "updated_at"),
+			im.Values(psql.Arg(input.Email, input.Password, input.Provider, input.CreatedAt, input.UpdatedAt)),
 			im.Returning("id", "email", "created_at", "updated_at"),
 		).MustBuild(ctx)
 

@@ -52,7 +52,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 
 	span.SetAttributes(attribute.Bool("create_account", true))
 	profile := domain.NewProfile(input.Name, input.Avatar)
-	account, err := domain.NewAccount(input.Email, input.Password, profile)
+	account, err := domain.NewAccount(input.Email, input.Password, domain.AccountProvider(input.Provider), profile)
 	if err != nil {
 		return registrationResult{}, err
 	}

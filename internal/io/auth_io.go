@@ -1,6 +1,10 @@
 package io
 
-import "time"
+import (
+	"time"
+
+	"github.com/roadmap-thesis/backend/internal/domain"
+)
 
 type AuthInput struct {
 	Name       string `json:"name" validate:"omitempty"`
@@ -12,7 +16,8 @@ type AuthInput struct {
 	ClientIP  string `json:"-"`
 	UserAgent string `json:"-"`
 
-	IgnorePasswordCheck bool `json:"-"` // used to skip password check in some cases
+	Provider            domain.AccountProvider `json:"-"`
+	IgnorePasswordCheck bool                   `json:"-"` // used to skip password check in some cases
 }
 
 type AuthOutput struct {

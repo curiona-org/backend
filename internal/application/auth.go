@@ -19,6 +19,7 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 	if input.OAuthToken != "" {
 		result, err = app.authGoogle(ctx, input)
 	} else {
+		input.Provider = domain.AccountProviderEmail
 		result, err = app.authEmailPassword(ctx, input)
 	}
 
