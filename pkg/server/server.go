@@ -63,8 +63,7 @@ func (s *Server) Shutdown(ctx context.Context, signal os.Signal) {
 	select {
 	case <-timeout.Done():
 		log.Warn().Msg("shutdown timed out, forcing exit")
-		//nolint:gocritic
-		os.Exit(1)
+		os.Exit(1) //nolint:gocritic
 	case err := <-shutdownChan:
 		if err != nil {
 			log.Fatal().Err(err).Msg("there was an error shutting down")

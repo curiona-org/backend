@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
-	"github.com/roadmap-thesis/backend/internal/clients"
+	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
@@ -24,12 +24,11 @@ func main() {
 	config.Init()
 	logger.Init(config.IsDevelopment())
 
-	clients, err := clients.New(ctx)
+	provider, err := provider.New(ctx)
 	if err != nil {
-		//nolint:gocritic
-		log.Fatal().Err(err).Msg("Failed to initialize clients")
+		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}
-	defer clients.Close(ctx)
+	defer provider.Close(ctx)
 
 	if err = goose.SetDialect("pgx"); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize goose")
@@ -37,7 +36,7 @@ func main() {
 
 	goose.SetTableName("schema_migrations")
 
-	db := stdlib.OpenDBFromPool(clients.DB.Pool())
+	db := stdlib.OpenDBFromPool(provider.DB.Pool())
 	defer db.Close()
 
 	dir := "./migrations"

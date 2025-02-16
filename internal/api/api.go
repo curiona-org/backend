@@ -91,8 +91,7 @@ func (a *API) setupMiddlewares() {
 		LogStatus:   true,
 		LogError:    true,
 		HandleError: true,
-		//nolint:revive
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error { //nolint:revive
 			if v.Error == nil {
 				log.Debug().
 					Str("uri", v.URI).

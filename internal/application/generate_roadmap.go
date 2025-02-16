@@ -151,8 +151,7 @@ func (app *application) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapIn
 	return sb.String()
 }
 
-//nolint:funlen
-func (app *application) makeGenerateRoadmapSystemPrompt() string {
+func (app *application) makeGenerateRoadmapSystemPrompt() string { //nolint:funlen
 	var sb strings.Builder
 
 	promptUserPersonalizationOptions := []string{

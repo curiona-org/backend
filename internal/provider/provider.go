@@ -1,11 +1,10 @@
-package clients
+package provider
 
 import (
 	"context"
 
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
 	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/database"
@@ -16,20 +15,20 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type Clients struct {
+type Provider struct {
 	LLM     llm.Client
 	DB      database.Connection
 	Redis   *redis.Client
-	Google  oauth.Client
 	Tracing *trace.TracerProvider
 }
 
-func New(ctx context.Context) (*Clients, error) {
-	c := &Clients{}
+func New(ctx context.Context) (*Provider, error) {
+	c := &Provider{}
 
 	var group errgroup.Group
 
 	group.Go(func() error {
+		log.Info().Msg("initializing llm client")
 		var err error
 		c.LLM, err = llm.NewClient(
 			config.LLMProvider(),
@@ -42,6 +41,7 @@ func New(ctx context.Context) (*Clients, error) {
 	})
 
 	group.Go(func() error {
+		log.Info().Msg("initializing postgresql")
 		var err error
 		c.DB, err = database.New(ctx, &database.Config{
 			Name:                  config.DBName(),
@@ -63,6 +63,7 @@ func New(ctx context.Context) (*Clients, error) {
 	})
 
 	group.Go(func() error {
+		log.Info().Msg("initializing redis client")
 		var err error
 		c.Redis, err = cache.NewRedisConnection(ctx, &cache.RedisConfig{
 			DB:       config.RedisDB(),
@@ -78,6 +79,7 @@ func New(ctx context.Context) (*Clients, error) {
 	})
 
 	group.Go(func() error {
+		log.Info().Msg("initializing otel tracing provider")
 		var err error
 		c.Tracing, err = tracing.NewProvider(ctx, tracing.ProviderConfig{
 			OTLPExporterEndpoint: config.OTLPExporterEndpoint(),
@@ -97,7 +99,7 @@ func New(ctx context.Context) (*Clients, error) {
 	return c, nil
 }
 
-func (c *Clients) Close(ctx context.Context) {
+func (c *Provider) Close(ctx context.Context) {
 	c.DB.Close()
 	if err := c.Tracing.Shutdown(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed shutting down tracer provider")

@@ -6,7 +6,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/roadmap-thesis/backend/internal/api"
 	"github.com/roadmap-thesis/backend/internal/application"
-	"github.com/roadmap-thesis/backend/internal/clients"
+	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
@@ -22,19 +22,18 @@ func main() {
 	config.Init()
 	logger.Init(config.IsDevelopment())
 
-	clients, err := clients.New(ctx)
+	provider, err := provider.New(ctx)
 	if err != nil {
-		//nolint:gocritic
-		log.Fatal().Err(err).Msg("Failed to initialize clients")
+		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}
-	defer clients.Close(ctx)
+	defer provider.Close(ctx)
 
 	log.Info().Msg("Bootstrapping application...")
-	postgresRepository := repository.NewPostgresRepository(clients.DB, clients.Redis)
+	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Redis)
 
 	application := application.New(
 		postgresRepository,
-		clients.LLM,
+		provider.LLM,
 		auth.New(
 			auth.StrategyJWT,
 			&auth.Config{
