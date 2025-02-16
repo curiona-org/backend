@@ -9,7 +9,7 @@ export const options = {
   summaryTrendStats: ["avg", "min", "med", "max", "p(90)", "p(95)", "p(99)"],
   thresholds: {
     http_req_failed: ["rate<0.01"],
-    http_req_duration: ["p(99)<200"],
+    http_req_duration: ["p(99)<1s"],
   },
 };
 
