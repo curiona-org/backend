@@ -57,7 +57,7 @@ func (r *personalizationOptionsRepository) GetByRoadmapID(ctx context.Context, r
 }
 
 func (r *personalizationOptionsRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.PersonalizationOptions, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*personalizationOptionsRepository.fetch)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*personalizationOptionsRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)

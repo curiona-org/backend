@@ -11,7 +11,6 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -31,9 +30,8 @@ func NewPostgresProfileRepository(db database.Connection) domain.ProfileReposito
 }
 
 func (r *profileRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Profile, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*profileRepository.fetch)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*profileRepository.fetch)", query)
 	defer span.End()
-	span.SetAttributes(semconv.DBOperationKey.String("SELECT"))
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
@@ -102,9 +100,8 @@ func (r *profileRepository) Update(ctx context.Context, id int, updateFn func(pr
 			um.SetCol("name").ToArg(profile.Name),
 			um.Where(psql.Quote(domain.ProfileTable, "id").EQ(psql.Arg(id))),
 		).MustBuild(ctx)
-		_, updateSpan := spanWithQuery(traceCtx, r.tracer, "(*profileRepository.Update)", updateProfileQuery)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*profileRepository.Update)", updateProfileQuery)
 		defer updateSpan.End()
-		updateSpan.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
 
 		if _, err = tx.Exec(ctx, updateProfileQuery, updateProfileArgs...); err != nil {
 			updateSpan.SetStatus(codes.Error, "failed to update profile")

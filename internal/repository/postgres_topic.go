@@ -58,7 +58,7 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 }
 
 func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*topicRepository.fetch)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*topicRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)

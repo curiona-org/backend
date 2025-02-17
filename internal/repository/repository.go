@@ -1,13 +1,9 @@
 package repository
 
 import (
-	"context"
-
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type Repository interface {
@@ -63,11 +59,4 @@ func (r *repository) PersonalizationOptions() domain.PersonalizationOptionsRepos
 
 func (r *repository) Session() domain.SessionRepository {
 	return r.session
-}
-
-//nolint:spancheck
-func spanWithQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {
-	ctx, span := tracer.Start(ctx, method)
-	span.SetAttributes(semconv.DBStatementKey.String(query))
-	return ctx, span
 }

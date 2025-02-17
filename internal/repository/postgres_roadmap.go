@@ -127,7 +127,7 @@ func (r *roadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 }
 
 func (r *roadmapRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.fetch)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*roadmapRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -183,7 +183,7 @@ func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 		sm.OrderBy(psql.Quote("order")),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.fetchTopicsByRoadmapID)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*roadmapRepository.fetchTopicsByRoadmapID)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -230,7 +230,7 @@ func (r *roadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (do
 		im.Returning("id", "slug"),
 	).MustBuild(ctx)
 
-	traceCtx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.Save)", query)
+	traceCtx, span := spanWithInsertQuery(ctx, r.tracer, "(*roadmapRepository.Save)", query)
 	defer span.End()
 
 	var roadmap domain.Roadmap
@@ -265,21 +265,21 @@ func (r *roadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	subTopicMap := make(map[string][]*domain.Topic)
 
 	// Insert the topics
-	mods := []bob.Mod[*dialect.InsertQuery]{
+	insertTopicMods := []bob.Mod[*dialect.InsertQuery]{
 		im.Into(domain.TopicTable, "roadmap_id", "title", "slug", "description", "order", "finished", "created_at", "updated_at"),
 	}
 	for _, topic := range topics {
 		subTopicMap[topic.Slug] = topic.Subtopics
 		arg := psql.Arg(roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.Finished, topic.CreatedAt, topic.UpdatedAt)
-		mods = append(mods, im.Values(arg))
+		insertTopicMods = append(insertTopicMods, im.Values(arg))
 	}
-	mods = append(mods, im.Returning("id", "slug"))
+	insertTopicMods = append(insertTopicMods, im.Returning("id", "slug"))
 
 	query, args := psql.Insert(
-		mods...,
+		insertTopicMods...,
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.saveTopicsAndSubtopics)", query)
+	ctx, span := spanWithInsertQuery(ctx, r.tracer, "(*roadmapRepository.saveTopicsAndSubtopics)", query)
 	defer span.End()
 
 	rows, err := tx.Query(ctx, query, args...)
@@ -362,7 +362,7 @@ func (r *roadmapRepository) savePersonalizationOptions(ctx context.Context, tx p
 		)),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.savePersonalizationOptions)", query)
+	ctx, span := spanWithInsertQuery(ctx, r.tracer, "(*roadmapRepository.savePersonalizationOptions)", query)
 	defer span.End()
 
 	_, err := tx.Exec(ctx, query, args...)
@@ -379,7 +379,7 @@ func (r *roadmapRepository) Delete(ctx context.Context, id int) (domain.Roadmap,
 		dm.Where(psql.Quote("id").EQ(psql.Arg(id))),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*roadmapRepository.Delete)", query)
+	ctx, span := spanWithDeleteQuery(ctx, r.tracer, "(*roadmapRepository.Delete)", query)
 	defer span.End()
 
 	var roadmap domain.Roadmap

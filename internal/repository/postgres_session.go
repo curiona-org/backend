@@ -16,7 +16,6 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -64,7 +63,7 @@ func (r *sessionRepository) GetByAccountID(ctx context.Context, accountID int) (
 }
 
 func (r *sessionRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Session, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.fetch)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*sessionRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -103,7 +102,7 @@ func (r *sessionRepository) Save(ctx context.Context, input *domain.Session) (do
 		im.Returning("id", "created_at"),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.Save)", query)
+	ctx, span := spanWithInsertQuery(ctx, r.tracer, "(*sessionRepository.Save)", query)
 	defer span.End()
 
 	var id int
@@ -125,7 +124,7 @@ func (r *sessionRepository) Delete(ctx context.Context, id int) error {
 		dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(id))),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*sessionRepository.Delete)", query)
+	ctx, span := spanWithDeleteQuery(ctx, r.tracer, "(*sessionRepository.Delete)", query)
 	defer span.End()
 
 	commandTag, err := r.db.Exec(ctx, query, args...)
@@ -185,9 +184,8 @@ func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, upda
 				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),
 			).MustBuild(ctx)
 
-			_, span = spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", query)
+			_, span = spanWithDeleteQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", query)
 			defer span.End()
-			span.SetAttributes(semconv.DBOperationKey.String("DELETE"))
 
 			commandTag, execErr := r.db.Exec(ctx, query, args...)
 			if execErr != nil {
@@ -213,9 +211,8 @@ func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, upda
 			um.SetCol("blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
-		updateTraceCtx, updateSpan := spanWithQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", updateOldSessionQuery)
+		updateTraceCtx, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*sessionRepository.Renew)", updateOldSessionQuery)
 		defer updateSpan.End()
-		updateSpan.SetAttributes(semconv.DBOperationKey.String("UPDATE"))
 
 		if _, err = tx.Exec(ctx, updateOldSessionQuery, updateOldSessionArgs...); err != nil {
 			updateSpan.SetStatus(codes.Error, "failed to update session")
@@ -227,9 +224,8 @@ func (r *sessionRepository) Renew(ctx context.Context, refreshToken string, upda
 			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
 			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.Blocked, session.ExpiresAt)),
 		).MustBuild(ctx)
-		_, insertSpan := spanWithQuery(updateTraceCtx, r.tracer, "(*sessionRepository.Renew)", newSessionQuery)
+		_, insertSpan := spanWithInsertQuery(updateTraceCtx, r.tracer, "(*sessionRepository.Renew)", newSessionQuery)
 		defer insertSpan.End()
-		insertSpan.SetAttributes(semconv.DBOperationKey.String("INSERT"))
 
 		if _, err = tx.Exec(ctx, newSessionQuery, newSessionArgs...); err != nil {
 			insertSpan.SetStatus(codes.Error, "failed to update session")

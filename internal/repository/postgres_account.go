@@ -92,7 +92,7 @@ func (r *accountRepository) GetByEmail(ctx context.Context, email string) (domai
 }
 
 func (r *accountRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Account, error) {
-	ctx, span := spanWithQuery(ctx, r.tracer, "(*accountRepository.fetch)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*accountRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -144,7 +144,7 @@ func (r *accountRepository) Save(ctx context.Context, input *domain.Account) (do
 			im.Returning("id", "email", "created_at", "updated_at"),
 		).MustBuild(ctx)
 
-		traceCtx, span := spanWithQuery(ctx, r.tracer, "(*accountRepository.Save)", saveAccountQuery)
+		traceCtx, span := spanWithInsertQuery(ctx, r.tracer, "(*accountRepository.Save)", saveAccountQuery)
 		defer span.End()
 
 		err := tx.QueryRow(ctx, saveAccountQuery, saveAccountArgs...).Scan(
@@ -164,7 +164,7 @@ func (r *accountRepository) Save(ctx context.Context, input *domain.Account) (do
 			im.Returning("name", "avatar"),
 		).MustBuild(ctx)
 
-		_, span = spanWithQuery(traceCtx, r.tracer, "(*accountRepository.Save)", saveProfileQuery)
+		_, span = spanWithInsertQuery(traceCtx, r.tracer, "(*accountRepository.Save)", saveProfileQuery)
 		defer span.End()
 
 		err = tx.QueryRow(ctx, saveProfileQuery, saveProfileArgs...).Scan(
