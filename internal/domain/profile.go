@@ -1,12 +1,18 @@
 package domain
 
 import (
+	"context"
+	"errors"
 	"html"
 	"time"
 )
 
 const (
 	ProfileTable = "profiles"
+)
+
+var (
+	ErrProfileNotFound = errors.New("profile not found")
 )
 
 type Profile struct {
@@ -16,6 +22,10 @@ type Profile struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type ProfileRepository interface {
+	Update(ctx context.Context, id int, updateFn func(*Profile) (bool, error)) error
 }
 
 func NewProfile(name, avatar string) *Profile {
@@ -31,8 +41,9 @@ func NewProfile(name, avatar string) *Profile {
 	}
 }
 
-func getDefaultAvatar(name string) string {
-	return "https://hostedboringavatars.vercel.app/api/beam?colors=1DA1F2,14171A,657786,F5F8FA&name=" + html.EscapeString(name)
+func (p *Profile) Update(name string) {
+	p.Name = name
+	p.UpdatedAt = time.Now()
 }
 
 func (p *Profile) IsZero() bool {
@@ -41,4 +52,8 @@ func (p *Profile) IsZero() bool {
 		p.Avatar == "" &&
 		p.CreatedAt.IsZero() &&
 		p.UpdatedAt.IsZero()
+}
+
+func getDefaultAvatar(name string) string {
+	return "https://hostedboringavatars.vercel.app/api/beam?colors=1DA1F2,14171A,657786,F5F8FA&name=" + html.EscapeString(name)
 }

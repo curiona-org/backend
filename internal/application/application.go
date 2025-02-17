@@ -17,6 +17,7 @@ type Application interface {
 	AuthVerify(ctx context.Context, token string) (*auth.Payload, error)
 	AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error)
 	GetProfile(ctx context.Context) (io.GetProfileOutput, error)
+	UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error)
 
 	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
 	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)

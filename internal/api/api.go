@@ -50,6 +50,7 @@ func (a *API) setupRoutes() {
 	a.instance.POST("/auth/refresh", a.AuthRefresh)
 
 	a.instance.GET("/profile", a.GetProfile, a.authMiddleware)
+	a.instance.PATCH("/profile", a.UpdateProfile, a.authMiddleware)
 
 	a.instance.GET("/roadmaps", a.ListUserRoadmaps, a.authMiddleware)
 	a.instance.GET("/roadmaps/:slug", a.GetRoadmapBySlug, a.authMiddleware)

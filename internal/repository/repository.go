@@ -12,6 +12,7 @@ import (
 
 type Repository interface {
 	Account() domain.AccountRepository
+	Profile() domain.ProfileRepository
 	Roadmap() domain.RoadmapRepository
 	Topic() domain.TopicRepository
 	PersonalizationOptions() domain.PersonalizationOptionsRepository
@@ -20,6 +21,7 @@ type Repository interface {
 
 type repository struct {
 	account                domain.AccountRepository
+	profile                domain.ProfileRepository
 	roadmap                domain.RoadmapRepository
 	topic                  domain.TopicRepository
 	personalizationOptions domain.PersonalizationOptionsRepository
@@ -31,6 +33,7 @@ var _ Repository = (*repository)(nil)
 func NewPostgresRepository(db database.Connection, cacheConn cache.Connection) Repository {
 	return &repository{
 		account:                NewPostgresAccountRepository(db),
+		profile:                NewPostgresProfileRepository(db),
 		roadmap:                NewPostgresRoadmapRepository(db, cacheConn),
 		topic:                  NewPostgresTopicRepository(db),
 		personalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
@@ -40,6 +43,10 @@ func NewPostgresRepository(db database.Connection, cacheConn cache.Connection) R
 
 func (r *repository) Account() domain.AccountRepository {
 	return r.account
+}
+
+func (r *repository) Profile() domain.ProfileRepository {
+	return r.profile
 }
 
 func (r *repository) Roadmap() domain.RoadmapRepository {
