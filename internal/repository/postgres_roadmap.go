@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
@@ -177,7 +178,7 @@ func (r *roadmapRepository) fetch(ctx context.Context, query string, args ...any
 
 func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {
 	query, args := psql.Select(
-		sm.Columns("id", "roadmap_id", psql.F("COALESCE", "parent_id", 0), "title", "slug", "description", psql.Quote("order"), "finished", "created_at", "updated_at"),
+		sm.Columns("id", "roadmap_id", "parent_id", "title", "slug", "description", psql.Quote("order"), "finished", "created_at", "updated_at"),
 		sm.From(domain.TopicTable),
 		sm.Where(psql.Quote("roadmap_id").EQ(psql.Arg(roadmapID))),
 		sm.OrderBy(psql.Quote("order")),
@@ -197,10 +198,11 @@ func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 	var topics []*domain.Topic
 	for rows.Next() {
 		var topic domain.Topic
+		var topicParentID pgtype.Int4
 		err = rows.Scan(
 			&topic.ID,
 			&topic.RoadmapID,
-			&topic.ParentID,
+			&topicParentID,
 			&topic.Title,
 			&topic.Slug,
 			&topic.Description,
@@ -211,6 +213,12 @@ func (r *roadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if topicParentID.Valid {
+			topic.ParentID = int(topicParentID.Int32)
+		} else {
+			topic.ParentID = 0
 		}
 
 		topics = append(topics, &topic)

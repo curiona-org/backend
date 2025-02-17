@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -32,7 +33,7 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 		sm.Columns(
 			psql.Quote(domain.TopicTable, "id"),
 			psql.Quote(domain.TopicTable, "roadmap_id"),
-			psql.F("COALESCE", psql.Quote(domain.TopicTable, "parent_id"), 0),
+			psql.Quote(domain.TopicTable, "parent_id"),
 			psql.Quote(domain.TopicTable, "title"),
 			psql.Quote(domain.TopicTable, "slug"),
 			psql.Quote(domain.TopicTable, "description"),
@@ -72,10 +73,11 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 	var topics []domain.Topic
 	for rows.Next() {
 		var topic domain.Topic
+		var topicParentID pgtype.Int4
 		err = rows.Scan(
 			&topic.ID,
 			&topic.RoadmapID,
-			&topic.ParentID,
+			&topicParentID,
 			&topic.Title,
 			&topic.Slug,
 			&topic.Description,
@@ -86,6 +88,12 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 		)
 		if err != nil {
 			return nil, err
+		}
+
+		if topicParentID.Valid {
+			topic.ParentID = int(topicParentID.Int32)
+		} else {
+			topic.ParentID = 0
 		}
 
 		topics = append(topics, topic)
