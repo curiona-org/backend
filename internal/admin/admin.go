@@ -1,0 +1,39 @@
+package admin
+
+import (
+	"context"
+
+	"github.com/roadmap-thesis/backend/internal/admin/io"
+	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/pkg/auth"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+)
+
+type Application interface {
+	Statistics(ctx context.Context) (io.StatisticsOutput, error)
+
+	ListUsers(ctx context.Context) (io.ListUsersOutput, error)
+	EditUser(ctx context.Context, input io.EditUserInput) (io.EditUserOutput, error)
+	DeleteUser(ctx context.Context, input io.DeleteUserInput) (io.DeleteUserOutput, error)
+
+	ListRoadmaps(ctx context.Context) (io.ListRoadmapsOutput, error)
+	DeleteRoadmap(ctx context.Context, input io.DeleteRoadmapInput) (io.DeleteRoadmapOutput, error)
+}
+
+type application struct {
+	repository repository.Repository
+	auth       *auth.Auth
+	tracer     trace.Tracer
+}
+
+var _ Application = (*application)(nil)
+
+func New(repository repository.Repository, auth *auth.Auth) Application {
+	tracer := otel.Tracer("application")
+	return &application{
+		repository: repository,
+		auth:       auth,
+		tracer:     tracer,
+	}
+}

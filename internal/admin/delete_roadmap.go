@@ -1,0 +1,13 @@
+package admin
+
+import (
+	"context"
+
+	"github.com/roadmap-thesis/backend/internal/admin/io"
+)
+
+func (app *application) DeleteRoadmap(ctx context.Context, input io.DeleteRoadmapInput) (io.DeleteRoadmapOutput, error) {
+	_ = ctx
+	_ = input
+	return io.DeleteRoadmapOutput{}, nil
+}
