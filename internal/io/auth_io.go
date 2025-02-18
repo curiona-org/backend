@@ -3,7 +3,7 @@ package io
 import (
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/internal/domain/object"
 )
 
 type AuthInput struct {
@@ -16,7 +16,7 @@ type AuthInput struct {
 	ClientIP  string `json:"-"`
 	UserAgent string `json:"-"`
 
-	Provider            domain.AccountProvider `json:"-"`
+	Provider            object.AccountProvider `json:"-"`
 	IgnorePasswordCheck bool                   `json:"-"` // used to skip password check in some cases
 }
 

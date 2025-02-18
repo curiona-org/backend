@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/internal/io"
 	"github.com/roadmap-thesis/backend/pkg/str"
 	"go.opentelemetry.io/otel/codes"
@@ -27,7 +27,7 @@ func (app *application) authGoogle(ctx context.Context, input io.AuthInput) (reg
 		Password: str.Random(32),
 		Avatar:   user.Avatar,
 
-		Provider:            domain.AccountProviderGoogle,
+		Provider:            object.AccountProviderGoogle,
 		IgnorePasswordCheck: true,
 	})
 }

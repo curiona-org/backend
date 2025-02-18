@@ -16,18 +16,11 @@ var (
 	ErrAccountNotFound = errors.New("account not found")
 )
 
-type AccountProvider string
-
-const (
-	AccountProviderEmail  AccountProvider = "email"
-	AccountProviderGoogle AccountProvider = "google"
-)
-
 type Account struct {
 	ID       int
 	Email    string
 	Password object.Password
-	Provider AccountProvider
+	Provider object.AccountProvider
 
 	Profile  *Profile
 	Roadmaps []*Roadmap
@@ -42,7 +35,7 @@ type AccountRepository interface {
 	Save(ctx context.Context, input *Account) (Account, error)
 }
 
-func NewAccount(email, plainPassword string, provider AccountProvider, profile *Profile) (*Account, error) {
+func NewAccount(email, plainPassword string, provider object.AccountProvider, profile *Profile) (*Account, error) {
 	password := object.Password(plainPassword)
 
 	if err := password.Validate(plainPassword); err != nil {

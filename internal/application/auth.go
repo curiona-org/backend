@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/internal/io"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -19,7 +20,7 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 	if input.OAuthToken != "" {
 		result, err = app.authGoogle(ctx, input)
 	} else {
-		input.Provider = domain.AccountProviderEmail
+		input.Provider = object.AccountProviderEmail
 		result, err = app.authEmailPassword(ctx, input)
 	}
 
