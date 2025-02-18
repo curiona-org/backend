@@ -6,11 +6,11 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/roadmap-thesis/backend/internal/api"
 	"github.com/roadmap-thesis/backend/internal/application"
+	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
 )

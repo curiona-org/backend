@@ -3,6 +3,7 @@ package config
 import (
 	"time"
 
+	"github.com/roadmap-thesis/backend/pkg/env"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 )
 
@@ -50,41 +51,41 @@ var config *Config
 // Init initializes the config package.
 func Init() {
 	config = &Config{
-		appName: LookupEnv("APP_NAME", "roadmap_application"),
-		appEnv:  LookupEnv("APP_ENV", "local"),
-		port:    LookupEnv("PORT", "5000"),
+		appName: env.LookupEnv("APP_NAME", "roadmap_application"),
+		appEnv:  env.LookupEnv("APP_ENV", "local"),
+		port:    env.LookupEnv("PORT", "5000"),
 
-		dbName:                  LookupEnv("DB_NAME", "roadmap"),
-		dbHost:                  LookupEnv("DB_HOST", "localhost"),
-		dbPort:                  LookupEnv("DB_PORT", 5432),
-		dbUser:                  LookupEnv("DB_USER", "postgres"),
-		dbPassword:              LookupEnv("DB_PASSWORD", ""),
-		dbConnectionTimeout:     LookupEnv("DB_CONNECT_TIMEOUT", 5),
-		dbPoolMinConnections:    LookupEnv("DB_POOL_MIN_CONNS", 0),
-		dbPoolMaxConnections:    LookupEnv("DB_POOL_MAX_CONNS", 4),
-		dbPoolMaxConnLifetime:   LookupEnv("DB_POOL_MAX_CONN_LIFETIME", time.Hour),
-		dbPoolMaxConnIdleTime:   LookupEnv("DB_POOL_MAX_CONN_IDLE_TIME", 30*time.Minute),
-		dbPoolHealthCheckPeriod: LookupEnv("DB_POOL_HEALTH_CHECK_PERIOD", time.Minute),
+		dbName:                  env.LookupEnv("DB_NAME", "roadmap"),
+		dbHost:                  env.LookupEnv("DB_HOST", "localhost"),
+		dbPort:                  env.LookupEnv("DB_PORT", 5432),
+		dbUser:                  env.LookupEnv("DB_USER", "postgres"),
+		dbPassword:              env.LookupEnv("DB_PASSWORD", ""),
+		dbConnectionTimeout:     env.LookupEnv("DB_CONNECT_TIMEOUT", 5),
+		dbPoolMinConnections:    env.LookupEnv("DB_POOL_MIN_CONNS", 0),
+		dbPoolMaxConnections:    env.LookupEnv("DB_POOL_MAX_CONNS", 4),
+		dbPoolMaxConnLifetime:   env.LookupEnv("DB_POOL_MAX_CONN_LIFETIME", time.Hour),
+		dbPoolMaxConnIdleTime:   env.LookupEnv("DB_POOL_MAX_CONN_IDLE_TIME", 30*time.Minute),
+		dbPoolHealthCheckPeriod: env.LookupEnv("DB_POOL_HEALTH_CHECK_PERIOD", time.Minute),
 
-		redisDB:       LookupEnv("REDIS_DB", 0),
-		redisNetwork:  LookupEnv("REDIS_NETWORK", "tcp"),
-		redisAddr:     LookupEnv("REDIS_ADDR", "localhost:6379"),
-		redisUsername: LookupEnv("REDIS_USERNAME", ""),
-		redisPassword: LookupEnv("REDIS_PASSWORD", ""),
+		redisDB:       env.LookupEnv("REDIS_DB", 0),
+		redisNetwork:  env.LookupEnv("REDIS_NETWORK", "tcp"),
+		redisAddr:     env.LookupEnv("REDIS_ADDR", "localhost:6379"),
+		redisUsername: env.LookupEnv("REDIS_USERNAME", ""),
+		redisPassword: env.LookupEnv("REDIS_PASSWORD", ""),
 
-		accessSecretKey:  LookupEnv("ACCESS_SECRET_KEY", "secret"),
-		accessExpiresIn:  LookupEnv("ACCESS_EXPIRES_IN", time.Minute*5),
-		refreshSecretKey: LookupEnv("REFRESH_SECRET_KEY", "secret"),
-		refreshExpiresIn: LookupEnv("REFRESH_EXPIRES_IN", time.Hour*24*30),
+		accessSecretKey:  env.LookupEnv("ACCESS_SECRET_KEY", "secret"),
+		accessExpiresIn:  env.LookupEnv("ACCESS_EXPIRES_IN", time.Minute*5),
+		refreshSecretKey: env.LookupEnv("REFRESH_SECRET_KEY", "secret"),
+		refreshExpiresIn: env.LookupEnv("REFRESH_EXPIRES_IN", time.Hour*24*30),
 
-		llmProvider: LookupEnv("LLM_PROVIDER", "openai"),
-		llmAPIKey:   LookupEnv("LLM_API_KEY", ""),
-		llmModel:    LookupEnv("LLM_MODEL", "gpt-4o-mini"),
+		llmProvider: env.LookupEnv("LLM_PROVIDER", "openai"),
+		llmAPIKey:   env.LookupEnv("LLM_API_KEY", ""),
+		llmModel:    env.LookupEnv("LLM_MODEL", "gpt-4o-mini"),
 
-		googleClientID:     LookupEnv("GOOGLE_CLIENT_ID", ""),
-		googleClientSecret: LookupEnv("GOOGLE_CLIENT_SECRET", ""),
+		googleClientID:     env.LookupEnv("GOOGLE_CLIENT_ID", ""),
+		googleClientSecret: env.LookupEnv("GOOGLE_CLIENT_SECRET", ""),
 
-		otlpExporterEndpoint: LookupEnv("OTLP_EXPORTER_ENDPOINT", "localhost:4317"),
+		otlpExporterEndpoint: env.LookupEnv("OTLP_EXPORTER_ENDPOINT", "localhost:4317"),
 	}
 }
 

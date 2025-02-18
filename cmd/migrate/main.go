@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
+	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/internal/provider"
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
 )

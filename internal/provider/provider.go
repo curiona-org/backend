@@ -5,8 +5,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
+	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/pkg/cache"
-	"github.com/roadmap-thesis/backend/pkg/config"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"github.com/roadmap-thesis/backend/pkg/tracing"
