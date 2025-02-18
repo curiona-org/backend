@@ -43,6 +43,8 @@ type Config struct {
 	googleClientID     string
 	googleClientSecret string
 
+	youtubeAPIKey string
+
 	otlpExporterEndpoint string
 }
 
@@ -84,6 +86,8 @@ func Init() {
 
 		googleClientID:     env.LookupEnv("GOOGLE_CLIENT_ID", ""),
 		googleClientSecret: env.LookupEnv("GOOGLE_CLIENT_SECRET", ""),
+
+		youtubeAPIKey: env.LookupEnv("YOUTUBE_API_KEY", ""),
 
 		otlpExporterEndpoint: env.LookupEnv("OTLP_EXPORTER_ENDPOINT", "localhost:4317"),
 	}
@@ -130,5 +134,7 @@ func LLMModel() string  { return config.llmModel }
 
 func GoogleClientID() string     { return config.googleClientID }
 func GoogleClientSecret() string { return config.googleClientSecret }
+
+func YoutubeAPIKey() string { return config.youtubeAPIKey }
 
 func OTLPExporterEndpoint() string { return config.otlpExporterEndpoint }

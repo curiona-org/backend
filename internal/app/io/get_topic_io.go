@@ -12,8 +12,20 @@ type GetTopicOutput struct {
 	Order       int    `json:"order"`
 	Finished    bool   `json:"finished"`
 
-	// Subtopics []GetTopicOutput `json:"subtopics"`
+	ExternalResources GetTopicOutputExternalResource `json:"external_resources"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type GetTopicOutputExternalResource struct {
+	Books         []GetTopicOutputExternalResourceItem `json:"books"`
+	YoutubeVideos []GetTopicOutputExternalResourceItem `json:"youtube_videos"`
+	Articles      []GetTopicOutputExternalResourceItem `json:"articles"`
+}
+
+type GetTopicOutputExternalResourceItem struct {
+	TopicID int    `json:"topic_id"`
+	Title   string `json:"title"`
+	URL     string `json:"url"`
 }

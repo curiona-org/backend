@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TYPE resource_type AS ENUM(
-  'video',
+  'youtube',
   'article',
   'book'
 );

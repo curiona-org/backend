@@ -47,6 +47,8 @@ func main() {
 			config.GoogleClientID(),
 			config.GoogleClientSecret(),
 		),
+		provider.GoogleBooks,
+		provider.Youtube,
 	)
 
 	api := api.New(config.Port(), app)

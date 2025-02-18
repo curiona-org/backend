@@ -28,6 +28,7 @@ type Topic struct {
 	Finished    bool
 
 	Subtopics []*Topic
+	Resources []ExternalResource
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -58,6 +59,7 @@ func (e *Topic) IsZero() bool {
 		e.Order == 0 &&
 		!e.Finished &&
 		len(e.Subtopics) == 0 &&
+		len(e.Resources) == 0 &&
 		e.CreatedAt.IsZero() &&
 		e.UpdatedAt.IsZero()
 }
@@ -72,6 +74,10 @@ func (e *Topic) IsChild() bool {
 
 func (e *Topic) HasSubtopics() bool {
 	return len(e.Subtopics) > 0
+}
+
+func (e *Topic) HasResources() bool {
+	return len(e.Resources) > 0
 }
 
 func (e *Topic) GetSubtopic(id int) *Topic {
@@ -93,6 +99,50 @@ func (e *Topic) AddSubtopic(subtopic *Topic) {
 
 	subtopic.ParentID = e.ID
 	e.Subtopics = append(e.Subtopics, subtopic)
+}
+
+func (e *Topic) AddResource(resource ...ExternalResource) {
+	if e.Resources == nil {
+		e.Resources = make([]ExternalResource, 0)
+	}
+
+	e.Resources = append(e.Resources, resource...)
+}
+
+func (e *Topic) GetYoutubeResources() []ExternalResource {
+	var youtubeResources []ExternalResource
+
+	for _, resource := range e.Resources {
+		if resource.IsYoutube() {
+			youtubeResources = append(youtubeResources, resource)
+		}
+	}
+
+	return youtubeResources
+}
+
+func (e *Topic) GetBookResources() []ExternalResource {
+	var bookResources []ExternalResource
+
+	for _, resource := range e.Resources {
+		if resource.IsBook() {
+			bookResources = append(bookResources, resource)
+		}
+	}
+
+	return bookResources
+}
+
+func (e *Topic) GetArticleResources() []ExternalResource {
+	var articleResources []ExternalResource
+
+	for _, resource := range e.Resources {
+		if resource.IsArticle() {
+			articleResources = append(articleResources, resource)
+		}
+	}
+
+	return articleResources
 }
 
 func (e *Topic) Update(title, description, slug string) {

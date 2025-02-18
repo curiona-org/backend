@@ -11,6 +11,7 @@ type Repository interface {
 	Profile() domain.ProfileRepository
 	Roadmap() domain.RoadmapRepository
 	Topic() domain.TopicRepository
+	ExternalResource() domain.ExternalResourceRepository
 	PersonalizationOptions() domain.PersonalizationOptionsRepository
 	Session() domain.SessionRepository
 }
@@ -20,6 +21,7 @@ type repository struct {
 	profile                domain.ProfileRepository
 	roadmap                domain.RoadmapRepository
 	topic                  domain.TopicRepository
+	externalResource       domain.ExternalResourceRepository
 	personalizationOptions domain.PersonalizationOptionsRepository
 	session                domain.SessionRepository
 }
@@ -31,7 +33,8 @@ func NewPostgresRepository(db database.Connection, cacheConn cache.Connection) R
 		account:                NewPostgresAccountRepository(db),
 		profile:                NewPostgresProfileRepository(db),
 		roadmap:                NewPostgresRoadmapRepository(db, cacheConn),
-		topic:                  NewPostgresTopicRepository(db),
+		topic:                  NewPostgresTopicRepository(db, cacheConn),
+		externalResource:       NewPostgresExternalResourceRepository(db, cacheConn),
 		personalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
 		session:                NewPostgresSessionRepository(db),
 	}
@@ -51,6 +54,10 @@ func (r *repository) Roadmap() domain.RoadmapRepository {
 
 func (r *repository) Topic() domain.TopicRepository {
 	return r.topic
+}
+
+func (r *repository) ExternalResource() domain.ExternalResourceRepository {
+	return r.externalResource
 }
 
 func (r *repository) PersonalizationOptions() domain.PersonalizationOptionsRepository {
