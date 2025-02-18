@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-// EnvTypes is a generic type for environment variables.
-type EnvTypes interface {
+// Types is a generic type for environment variables.
+type Types interface {
 	~string | ~[]string | ~int | int32 | int64 | time.Duration
 }
 
 // LookupEnv is a generic type implementation to search env keys.
-func LookupEnv[T EnvTypes](name string, defaultValue T) T {
+func LookupEnv[T Types](name string, defaultValue T) T {
 	value, ok := os.LookupEnv(name)
 	if !ok {
 		return defaultValue
