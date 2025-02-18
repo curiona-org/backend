@@ -101,6 +101,7 @@ func New(ctx context.Context) (*Provider, error) {
 
 func (p *Provider) Close(ctx context.Context) {
 	p.DB.Close()
+	p.Redis.Close()
 	if err := p.Tracing.Shutdown(ctx); err != nil {
 		log.Fatal().Err(err).Msg("Failed shutting down tracer provider")
 	}
