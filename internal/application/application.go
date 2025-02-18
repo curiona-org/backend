@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/io"
+	"github.com/roadmap-thesis/backend/internal/application/io"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"

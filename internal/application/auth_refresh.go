@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/application/io"
 	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/internal/io"
 )
 
 // AuthRefresh refreshes the access token using the refresh token and returns a new access token and a rotated refresh token.

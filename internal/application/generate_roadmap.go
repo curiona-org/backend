@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/roadmap-thesis/backend/internal/application/io"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
-	"github.com/roadmap-thesis/backend/internal/io"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"github.com/rs/zerolog/log"
