@@ -6,8 +6,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/roadmap-thesis/backend/internal/app"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/internal/application"
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/server"
@@ -18,10 +18,10 @@ import (
 
 type API struct {
 	instance    *server.Server
-	application application.Application
+	application app.Application
 }
 
-func New(port string, application application.Application) *API {
+func New(port string, application app.Application) *API {
 	instance := server.New(port)
 
 	api := &API{

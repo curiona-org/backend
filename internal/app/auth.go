@@ -1,10 +1,10 @@
-package application
+package app
 
 import (
 	"context"
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/application/io"
+	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"go.opentelemetry.io/otel/attribute"

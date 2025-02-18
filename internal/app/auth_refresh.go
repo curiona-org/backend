@@ -1,12 +1,12 @@
-package application
+package app
 
 import (
 	"context"
 	"errors"
 	"time"
 
+	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/internal/application/io"
 	"github.com/roadmap-thesis/backend/internal/domain"
 )
 

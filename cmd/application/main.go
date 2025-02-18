@@ -5,7 +5,7 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/roadmap-thesis/backend/internal/api"
-	"github.com/roadmap-thesis/backend/internal/application"
+	"github.com/roadmap-thesis/backend/internal/app"
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/roadmap-thesis/backend/internal/repository"
@@ -31,7 +31,7 @@ func main() {
 	log.Info().Msg("Bootstrapping application...")
 	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Redis)
 
-	application := application.New(
+	app := app.New(
 		postgresRepository,
 		provider.LLM,
 		auth.New(
@@ -49,7 +49,7 @@ func main() {
 		),
 	)
 
-	api := api.New(config.Port(), application)
+	api := api.New(config.Port(), app)
 
 	log.Info().Msg("Starting Application Server...")
 	api.Start(ctx)

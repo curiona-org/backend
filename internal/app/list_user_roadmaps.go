@@ -1,10 +1,10 @@
-package application
+package app
 
 import (
 	"context"
 	"errors"
 
-	"github.com/roadmap-thesis/backend/internal/application/io"
+	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/pkg/auth"
