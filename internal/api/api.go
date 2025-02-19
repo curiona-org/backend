@@ -2,13 +2,11 @@ package api
 
 import (
 	"context"
-	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/roadmap-thesis/backend/internal/api/middleware"
 	"github.com/roadmap-thesis/backend/internal/app"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/internal/server"
 	"github.com/rs/zerolog/log"
@@ -49,52 +47,28 @@ func (a *API) setupRoutes() {
 	a.instance.POST("/auth", a.Auth)
 	a.instance.POST("/auth/refresh", a.AuthRefresh)
 
-	a.instance.GET("/profile", a.GetProfile, a.authMiddleware)
-	a.instance.PATCH("/profile", a.UpdateProfile, a.authMiddleware)
+	authMiddleware := middleware.AuthMiddleware(a.application)
+	a.instance.GET("/profile", a.GetProfile, authMiddleware)
+	a.instance.PATCH("/profile", a.UpdateProfile, authMiddleware)
 
-	a.instance.GET("/roadmaps", a.ListUserRoadmaps, a.authMiddleware)
-	a.instance.GET("/roadmaps/:slug", a.GetRoadmapBySlug, a.authMiddleware)
-	a.instance.POST("/roadmaps", a.GenerateRoadmap, a.authMiddleware)
-	a.instance.GET("/roadmaps/topic/:slug", a.GetTopicBySlug, a.authMiddleware)
-	a.instance.PATCH("/roadmaps/topic/:slug/finish", a.MarkTopicAsFinished, a.authMiddleware)
-	a.instance.PATCH("/roadmaps/topic/:slug/incomplete", a.MarkTopicAsIncomplete, a.authMiddleware)
-}
-
-func (a *API) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		reqCtx := c.Request().Context()
-		authorization, ok := c.Request().Header["Authorization"]
-		if !ok {
-			return apperrors.Unauthorized()
-		}
-
-		bearer := strings.Split(authorization[0], " ")
-		if len(bearer) < 2 {
-			return apperrors.Unauthorized()
-		}
-
-		token := bearer[1]
-		payload, err := a.application.AuthVerify(reqCtx, token)
-		if err != nil {
-			return apperrors.Unauthorized()
-		}
-
-		ctx := context.WithValue(reqCtx, auth.AuthCtxKey, payload)
-		c.SetRequest(c.Request().WithContext(ctx))
-		return next(c)
-	}
+	a.instance.GET("/roadmaps", a.ListUserRoadmaps, authMiddleware)
+	a.instance.GET("/roadmaps/:slug", a.GetRoadmapBySlug, authMiddleware)
+	a.instance.POST("/roadmaps", a.GenerateRoadmap, authMiddleware)
+	a.instance.GET("/roadmaps/topic/:slug", a.GetTopicBySlug, authMiddleware)
+	a.instance.PATCH("/roadmaps/topic/:slug/finish", a.MarkTopicAsFinished, authMiddleware)
+	a.instance.PATCH("/roadmaps/topic/:slug/incomplete", a.MarkTopicAsIncomplete, authMiddleware)
 }
 
 func (a *API) setupMiddlewares() {
-	a.instance.Use(middleware.CORS())
-	a.instance.Use(middleware.Recover())
-	a.instance.Use(middleware.RequestID())
-	a.instance.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+	a.instance.Use(echoMiddleware.CORS())
+	a.instance.Use(echoMiddleware.Recover())
+	a.instance.Use(echoMiddleware.RequestID())
+	a.instance.Use(echoMiddleware.RequestLoggerWithConfig(echoMiddleware.RequestLoggerConfig{
 		LogURI:      true,
 		LogStatus:   true,
 		LogError:    true,
 		HandleError: true,
-		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error { //nolint:revive
+		LogValuesFunc: func(c echo.Context, v echoMiddleware.RequestLoggerValues) error { //nolint:revive
 			if v.Error == nil {
 				log.Debug().
 					Str("uri", v.URI).
@@ -112,7 +86,7 @@ func (a *API) setupMiddlewares() {
 		},
 	}))
 	if config.IsProduction() {
-		a.instance.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(rate.Limit(20))))
+		a.instance.Use(echoMiddleware.RateLimiter(echoMiddleware.NewRateLimiterMemoryStore(rate.Limit(20))))
 	}
 	a.instance.Use(otelecho.Middleware("api"))
 }
