@@ -44,62 +44,11 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 		var mu sync.Mutex
 
 		group.Go(func() error {
-			youtubeSearchCtx, youtubeSearchSpan := app.tracer.Start(traceCtx, "(*application.GetTopicBySlug).youtubeSearch")
-			defer youtubeSearchSpan.End()
-			searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.Title)
-			if err != nil {
-				return err
-			}
-
-			externalResources := make([]*domain.ExternalResource, 0)
-			for _, result := range searchResult {
-				externalResource := domain.NewExternalResource(
-					topic.ID,
-					result.Title,
-					result.URL,
-					object.ExternalResourceTypeYoutube,
-				)
-
-				mu.Lock()
-				topic.AddResource(*externalResource)
-				mu.Unlock()
-				externalResources = append(externalResources, externalResource)
-			}
-
-			if len(externalResources) == 0 {
-				return nil
-			}
-			return app.repository.ExternalResource().BulkSave(youtubeSearchCtx, topic.ID, externalResources)
+			return app.searchYoutubeExternalResources(traceCtx, &mu, &topic)
 		})
 
 		group.Go(func() error {
-			bookSearchCtx, bookSearchSpan := app.tracer.Start(traceCtx, "(*application.GetTopicBySlug).bookSearch")
-			defer bookSearchSpan.End()
-			searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.Title)
-			if err != nil {
-				return err
-			}
-
-			externalResources := make([]*domain.ExternalResource, 0)
-			for _, result := range searchResult {
-				externalResource := domain.NewExternalResource(
-					topic.ID,
-					result.Title,
-					"",
-					object.ExternalResourceTypeBook,
-				)
-
-				mu.Lock()
-				topic.AddResource(*externalResource)
-				mu.Unlock()
-				externalResources = append(externalResources, externalResource)
-			}
-
-			if len(externalResources) == 0 {
-				return nil
-			}
-
-			return app.repository.ExternalResource().BulkSave(bookSearchCtx, topic.ID, externalResources)
+			return app.searchGoogleBooksExternalResources(traceCtx, &mu, &topic)
 		})
 
 		if err := group.Wait(); err != nil {
@@ -110,6 +59,66 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 	app.mapExternalResourcesOutput(&output, topic)
 
 	return output, nil
+}
+
+func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
+	youtubeSearchCtx, youtubeSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).youtubeSearch")
+	defer youtubeSearchSpan.End()
+	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.Title)
+	if err != nil {
+		return err
+	}
+
+	externalResources := make([]*domain.ExternalResource, 0)
+	for _, result := range searchResult {
+		externalResource := domain.NewExternalResource(
+			topic.ID,
+			result.Title,
+			result.URL,
+			object.ExternalResourceTypeYoutube,
+		)
+
+		mu.Lock()
+		topic.AddResource(*externalResource)
+		mu.Unlock()
+		externalResources = append(externalResources, externalResource)
+	}
+
+	if len(externalResources) == 0 {
+		return nil
+	}
+
+	return app.repository.ExternalResource().BulkSave(youtubeSearchCtx, topic.ID, externalResources)
+}
+
+func (app *application) searchGoogleBooksExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
+	bookSearchCtx, bookSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).bookSearch")
+	defer bookSearchSpan.End()
+	searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.Title)
+	if err != nil {
+		return err
+	}
+
+	externalResources := make([]*domain.ExternalResource, 0)
+	for _, result := range searchResult {
+		externalResource := domain.NewExternalResource(
+			topic.ID,
+			result.Title,
+			"",
+			object.ExternalResourceTypeBook,
+		)
+
+		mu.Lock()
+		topic.AddResource(*externalResource)
+		mu.Unlock()
+		externalResources = append(externalResources, externalResource)
+	}
+
+	if len(externalResources) == 0 {
+		return nil
+	}
+
+	return app.repository.ExternalResource().BulkSave(bookSearchCtx, topic.ID, externalResources)
 }
 
 func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, topic domain.Topic) {
