@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/redis/go-redis/v9"
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
 	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/pkg/llm"
+	"github.com/roadmap-thesis/backend/pkg/redis"
 	"github.com/roadmap-thesis/backend/pkg/tracing"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -20,7 +20,7 @@ import (
 type Provider struct {
 	LLM         llm.Client
 	DB          database.Connection
-	Redis       *redis.Client
+	Cache       *cache.Connection
 	Tracing     *trace.TracerProvider
 	GoogleBooks book.Client
 	Youtube     youtube.Client
@@ -70,17 +70,20 @@ func New(ctx context.Context) (*Provider, error) {
 	})
 
 	group.Go(func() error {
-		log.Info().Msg("initializing redis client")
+		log.Info().Msg("initializing cache")
 		var err error
-		p.Redis, err = cache.NewRedisConnection(ctx, &cache.RedisConfig{
-			DB:       config.RedisDB(),
-			Network:  config.RedisNetwork(),
-			Addr:     config.RedisAddr(),
-			Username: config.RedisUsername(),
-			Password: config.RedisPassword(),
+		p.Cache, err = cache.NewConnection(ctx, &cache.Config{
+			Type: cache.TypeRedis,
+			RedisConfig: &redis.Config{
+				DB:       config.RedisDB(),
+				Network:  config.RedisNetwork(),
+				Addr:     config.RedisAddr(),
+				Username: config.RedisUsername(),
+				Password: config.RedisPassword(),
+			},
 		})
 		if err != nil {
-			return errors.Wrap(err, "initializing redis client")
+			return errors.Wrap(err, "initializing cache")
 		}
 		return nil
 	})
@@ -107,10 +110,17 @@ func New(ctx context.Context) (*Provider, error) {
 }
 
 func (p *Provider) Close(ctx context.Context) {
-	p.DB.Close()
-	p.Redis.Close()
-	if err := p.Tracing.Shutdown(ctx); err != nil {
-		log.Fatal().Err(err).Msg("Failed shutting down tracer provider")
+	if err := p.DB.Close(); err != nil {
+		log.Warn().Err(err).Msg("failed closing database connection")
 	}
+
+	if err := p.Cache.Close(); err != nil {
+		log.Warn().Err(err).Msg("failed closing cache connection")
+	}
+
+	if err := p.Tracing.Shutdown(ctx); err != nil {
+		log.Warn().Err(err).Msg("failed shutting down tracer provider")
+	}
+
 	log.Info().Msg("clients shutdown complete")
 }

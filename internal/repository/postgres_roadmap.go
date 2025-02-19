@@ -22,21 +22,22 @@ import (
 
 type RoadmapRepository struct {
 	db     database.Connection
-	cache  cache.Cache[domain.Roadmap]
+	cache  *cache.Connection
 	tracer trace.Tracer
 }
 
-func NewPostgresRoadmapRepository(db database.Connection, cacheConn cache.Connection) *RoadmapRepository {
+func NewPostgresRoadmapRepository(db database.Connection, cache *cache.Connection) *RoadmapRepository {
 	tracer := otel.Tracer("db:postgres:roadmaps")
 	return &RoadmapRepository{
 		db:     db,
-		cache:  cache.New[domain.Roadmap](cacheConn),
+		cache:  cache,
 		tracer: tracer,
 	}
 }
 
 func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
-	if roadmap, ok := r.cache.Get(ctx, "roadmap:"+slug); ok {
+	cacher := cache.New[domain.Roadmap](r.cache)
+	if roadmap, ok := cacher.Get(ctx, "roadmap:"+slug); ok {
 		return roadmap, nil
 	}
 
@@ -82,7 +83,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 
 	roadmap.SetTopics(topics)
 
-	r.cache.Set(ctx, "roadmap:"+slug, roadmap)
+	cacher.Set(ctx, "roadmap:"+slug, roadmap)
 
 	return roadmap, nil
 }

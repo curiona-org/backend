@@ -17,15 +17,15 @@ import (
 
 type ExternalResourceRepository struct {
 	db     database.Connection
-	cache  cache.Cache[domain.ExternalResource]
+	cache  *cache.Connection
 	tracer trace.Tracer
 }
 
-func NewPostgresExternalResourceRepository(db database.Connection, cacheConn cache.Connection) *ExternalResourceRepository {
+func NewPostgresExternalResourceRepository(db database.Connection, cache *cache.Connection) *ExternalResourceRepository {
 	tracer := otel.Tracer("db:postgres:external_resources")
 	return &ExternalResourceRepository{
 		db:     db,
-		cache:  cache.New[domain.ExternalResource](cacheConn),
+		cache:  cache,
 		tracer: tracer,
 	}
 }
@@ -35,7 +35,8 @@ func (r *ExternalResourceRepository) GetByTopicID(ctx context.Context, topicID i
 		return nil, nil
 	}
 
-	if resources, ok := r.cache.List(ctx, fmt.Sprintf("topics:%d:external_resources", topicID)); ok {
+	cacher := cache.New[domain.ExternalResource](r.cache)
+	if resources, ok := cacher.List(ctx, fmt.Sprintf("topics:%d:external_resources", topicID)); ok {
 		return resources, nil
 	}
 
@@ -62,7 +63,7 @@ func (r *ExternalResourceRepository) GetByTopicID(ctx context.Context, topicID i
 		return nil, domain.ErrExternalResourcesNotFound
 	}
 
-	r.cache.Set(ctx, fmt.Sprintf("topics:%d:external_resources", topicID), externalResources...)
+	cacher.Set(ctx, fmt.Sprintf("topics:%d:external_resources", topicID), externalResources...)
 
 	return externalResources, nil
 }
@@ -109,11 +110,12 @@ func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, 
 	ctx, span := r.tracer.Start(ctx, "(*ExternalResourceRepository.BulkSave)")
 	defer span.End()
 
+	cacher := cache.New[domain.ExternalResource](r.cache)
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		var resources [][]any
 
 		for _, res := range resource {
-			r.cache.Push(ctx, fmt.Sprintf("topics:%d:external_resources", topicID), *res)
+			cacher.Push(ctx, fmt.Sprintf("topics:%d:external_resources", topicID), *res)
 
 			resources = append(resources, []any{
 				topicID, res.Title, res.URL, res.Type, res.CreatedAt, res.UpdatedAt,

@@ -15,13 +15,13 @@ type Repository struct {
 	Session                *SessionRepository
 }
 
-func NewPostgresRepository(db database.Connection, cacheConn cache.Connection) *Repository {
+func NewPostgresRepository(db database.Connection, cache *cache.Connection) *Repository {
 	return &Repository{
 		Account:                NewPostgresAccountRepository(db),
 		Profile:                NewPostgresProfileRepository(db),
-		Roadmap:                NewPostgresRoadmapRepository(db, cacheConn),
-		Topic:                  NewPostgresTopicRepository(db, cacheConn),
-		ExternalResource:       NewPostgresExternalResourceRepository(db, cacheConn),
+		Roadmap:                NewPostgresRoadmapRepository(db, cache),
+		Topic:                  NewPostgresTopicRepository(db, cache),
+		ExternalResource:       NewPostgresExternalResourceRepository(db, cache),
 		PersonalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
 		Session:                NewPostgresSessionRepository(db),
 	}

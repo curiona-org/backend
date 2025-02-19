@@ -19,15 +19,15 @@ import (
 
 type TopicRepository struct {
 	db     database.Connection
-	cache  cache.Cache[domain.ExternalResource]
+	cache  *cache.Connection
 	tracer trace.Tracer
 }
 
-func NewPostgresTopicRepository(db database.Connection, cacheConn cache.Connection) *TopicRepository {
+func NewPostgresTopicRepository(db database.Connection, cache *cache.Connection) *TopicRepository {
 	tracer := otel.Tracer("db:postgres:topics")
 	return &TopicRepository{
 		db:     db,
-		cache:  cache.New[domain.ExternalResource](cacheConn),
+		cache:  cache,
 		tracer: tracer,
 	}
 }
@@ -67,9 +67,11 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
-	if r.cache.Exists(ctx, cacheKey) {
+
+	cacher := cache.New[domain.ExternalResource](r.cache)
+	if cacher.Exists(ctx, cacheKey) {
 		span.AddEvent("cache hit", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
-		resources, _ := r.cache.List(traceCtx, cacheKey)
+		resources, _ := cacher.List(traceCtx, cacheKey)
 		externalResources = resources
 		span.SetAttributes(
 			attribute.Bool("cache_hit", true),
@@ -150,6 +152,7 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 }
 
 func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {
+	cacher := cache.New[domain.ExternalResource](r.cache)
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.ExternalResourceTable, "id"),
@@ -192,7 +195,7 @@ func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 		}
 
 		cacheKey := fmt.Sprintf("topics:%d:external_resources", externalResource.TopicID)
-		r.cache.Push(traceCtx, cacheKey, externalResource)
+		cacher.Push(traceCtx, cacheKey, externalResource)
 		externalResources = append(externalResources, externalResource)
 	}
 

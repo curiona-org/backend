@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/roadmap-thesis/backend/pkg/redis"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -16,15 +16,10 @@ type redisCache[V any] struct {
 	tracer trace.Tracer
 }
 
-func NewRedisCache[V any](conn Connection) Cache[V] {
+func NewRedisCache[V any](conn *redis.Client) Cache[V] {
 	tracer := otel.Tracer("cache:redis")
-	cacheConn, ok := conn.(*redis.Client)
-	if !ok {
-		return NewNoopCache[V]() // temporary
-	}
-
 	return &redisCache[V]{
-		conn:   cacheConn,
+		conn:   conn,
 		tracer: tracer,
 	}
 }

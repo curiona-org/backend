@@ -29,7 +29,7 @@ func main() {
 	defer provider.Close(ctx)
 
 	log.Info().Msg("Bootstrapping application...")
-	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Redis)
+	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Cache)
 
 	app := app.New(
 		postgresRepository,
