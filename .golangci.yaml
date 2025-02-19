@@ -354,6 +354,8 @@ issues:
       linters: [ gocritic ]
     - text: 'shadow: declaration of "(err|ctx)" shadows declaration at'
       linters: [ govet ]
+    - text: "unused-parameter: parameter 'ctx' seems to be unused"
+      linters: [ revive ]
     - path: "_test\\.go"
       linters:
         - bodyclose
