@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,8 @@ type DB struct {
 }
 
 type Connection interface {
+	io.Closer
+
 	Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
 	Query(context.Context, string, ...any) (pgx.Rows, error)
@@ -25,7 +28,6 @@ type Connection interface {
 
 	// Pool returns the underlying pgxpool.Pool for direct access to the connection pool.
 	Pool() *pgxpool.Pool
-	Close()
 }
 
 // New creates a new PostgreSQL pgxpool client.
@@ -108,6 +110,7 @@ func (db *DB) Pool() *pgxpool.Pool {
 	return db.pool
 }
 
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	db.pool.Close()
+	return nil
 }
