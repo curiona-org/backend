@@ -3,7 +3,7 @@ package slug_test
 import (
 	"testing"
 
-	"github.com/roadmap-thesis/backend/pkg/slug"
+	"github.com/roadmap-thesis/backend/internal/slug"
 )
 
 func BenchmarkSanitize(b *testing.B) {

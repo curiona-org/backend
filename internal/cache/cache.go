@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/roadmap-thesis/backend/pkg/redis"
+	"github.com/roadmap-thesis/backend/internal/redis"
 )
 
 type Cache[V any] interface {

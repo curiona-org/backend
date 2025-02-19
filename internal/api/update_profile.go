@@ -4,7 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/pkg/server/render"
+	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
 func (a *API) UpdateProfile(c echo.Context) error {

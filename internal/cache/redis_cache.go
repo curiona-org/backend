@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/roadmap-thesis/backend/pkg/redis"
+	"github.com/roadmap-thesis/backend/internal/redis"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"

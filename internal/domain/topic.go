@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/roadmap-thesis/backend/pkg/slug"
-	"github.com/roadmap-thesis/backend/pkg/str"
+	"github.com/roadmap-thesis/backend/internal/slug"
+	"github.com/roadmap-thesis/backend/internal/str"
 )
 
 const (

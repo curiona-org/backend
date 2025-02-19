@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/admin/io"
+	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/repository"
-	"github.com/roadmap-thesis/backend/pkg/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )

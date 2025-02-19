@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/pkg/server"
+	"github.com/roadmap-thesis/backend/internal/server"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/roadmap-thesis/backend/pkg/cache"
-	"github.com/roadmap-thesis/backend/pkg/database"
+	"github.com/roadmap-thesis/backend/internal/cache"
+	"github.com/roadmap-thesis/backend/internal/database"
 )
 
 type Repository struct {

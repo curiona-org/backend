@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
+	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
-	"github.com/roadmap-thesis/backend/pkg/auth"
-	"github.com/roadmap-thesis/backend/pkg/llm"
+	"github.com/roadmap-thesis/backend/internal/llm"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"

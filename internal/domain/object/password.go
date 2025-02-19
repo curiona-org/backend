@@ -5,7 +5,7 @@ import (
 	"unicode"
 
 	"github.com/roadmap-thesis/backend/internal/apperrors"
-	"github.com/roadmap-thesis/backend/pkg/crypto"
+	"github.com/roadmap-thesis/backend/internal/crypto"
 )
 
 var (
