@@ -25,7 +25,7 @@ func NewPostgresExternalResourceRepository(db database.Connection, cacheConn cac
 	tracer := otel.Tracer("db:postgres:external_resources")
 	return &ExternalResourceRepository{
 		db:     db,
-		cache:  cache.NewRedisCache[domain.ExternalResource](cacheConn),
+		cache:  cache.New[domain.ExternalResource](cacheConn),
 		tracer: tracer,
 	}
 }

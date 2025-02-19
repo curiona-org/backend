@@ -2,6 +2,8 @@ package cache
 
 import (
 	"context"
+
+	"github.com/redis/go-redis/v9"
 )
 
 type Cache[V any] interface {
@@ -16,3 +18,12 @@ type Cache[V any] interface {
 }
 
 type Connection interface{}
+
+func New[V any](conn Connection) Cache[V] {
+	cacheConn, ok := conn.(*redis.Client)
+	if ok {
+		return NewRedisCache[V](cacheConn)
+	}
+
+	return NewNoopCache[V]()
+}

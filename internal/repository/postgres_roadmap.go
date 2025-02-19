@@ -30,7 +30,7 @@ func NewPostgresRoadmapRepository(db database.Connection, cacheConn cache.Connec
 	tracer := otel.Tracer("db:postgres:roadmaps")
 	return &RoadmapRepository{
 		db:     db,
-		cache:  cache.NewRedisCache[domain.Roadmap](cacheConn),
+		cache:  cache.New[domain.Roadmap](cacheConn),
 		tracer: tracer,
 	}
 }

@@ -27,7 +27,7 @@ func NewPostgresTopicRepository(db database.Connection, cacheConn cache.Connecti
 	tracer := otel.Tracer("db:postgres:topics")
 	return &TopicRepository{
 		db:     db,
-		cache:  cache.NewRedisCache[domain.ExternalResource](cacheConn),
+		cache:  cache.New[domain.ExternalResource](cacheConn),
 		tracer: tracer,
 	}
 }
