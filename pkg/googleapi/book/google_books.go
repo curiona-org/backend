@@ -10,10 +10,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-const (
-	googleBooksVolumeAPIUrl = "https://www.googleapis.com/books/v1/volumes?"
-)
-
 type Client interface {
 	Search(ctx context.Context, query string) ([]*Volume, error)
 }
@@ -21,18 +17,6 @@ type Client interface {
 type googleBooksClient struct {
 	secret string
 	tracer trace.Tracer
-}
-
-type googleBooksResult struct {
-	Items []struct {
-		VolumeInfo googleBooksVolumeInfo `json:"volumeInfo"`
-	} `json:"items"`
-}
-
-type googleBooksVolumeInfo struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	PageCount   int    `json:"pageCount"`
 }
 
 func New(secret string) Client {
