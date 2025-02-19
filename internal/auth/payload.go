@@ -11,7 +11,7 @@ type authContextKey string
 
 const (
 	// AuthCtxKey is the key used to store the auth payload in a context.
-	AuthCtxKey authContextKey = "identity"
+	AuthCtxKey authContextKey = "auth_payload"
 )
 
 func (k authContextKey) String() string {
