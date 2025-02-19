@@ -128,9 +128,8 @@ func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, to
 		}
 
 		item := io.GetTopicOutputExternalResourceItem{
-			TopicID: resource.TopicID,
-			Title:   resource.Title,
-			URL:     resource.URL,
+			Title: resource.Title,
+			URL:   resource.URL,
 		}
 
 		output.ExternalResources.YoutubeVideos = append(output.ExternalResources.YoutubeVideos, item)
@@ -142,9 +141,8 @@ func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, to
 		}
 
 		item := io.GetTopicOutputExternalResourceItem{
-			TopicID: resource.TopicID,
-			Title:   resource.Title,
-			URL:     resource.URL,
+			Title: resource.Title,
+			URL:   resource.URL,
 		}
 
 		output.ExternalResources.Books = append(output.ExternalResources.Books, item)
@@ -156,9 +154,8 @@ func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, to
 		}
 
 		item := io.GetTopicOutputExternalResourceItem{
-			TopicID: resource.TopicID,
-			Title:   resource.Title,
-			URL:     resource.URL,
+			Title: resource.Title,
+			URL:   resource.URL,
 		}
 
 		output.ExternalResources.Articles = append(output.ExternalResources.Articles, item)

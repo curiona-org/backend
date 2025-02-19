@@ -25,7 +25,6 @@ type GetTopicOutputExternalResource struct {
 }
 
 type GetTopicOutputExternalResourceItem struct {
-	TopicID int    `json:"topic_id"`
-	Title   string `json:"title"`
-	URL     string `json:"url"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
 }
