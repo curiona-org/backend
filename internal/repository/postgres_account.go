@@ -14,22 +14,20 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type accountRepository struct {
+type AccountRepository struct {
 	db     database.Connection
 	tracer trace.Tracer
 }
 
-var _ domain.AccountRepository = (*accountRepository)(nil)
-
-func NewPostgresAccountRepository(db database.Connection) domain.AccountRepository {
+func NewPostgresAccountRepository(db database.Connection) *AccountRepository {
 	tracer := otel.Tracer("db:postgres:accounts")
-	return &accountRepository{
+	return &AccountRepository{
 		db:     db,
 		tracer: tracer,
 	}
 }
 
-func (r *accountRepository) GetByID(ctx context.Context, id int) (domain.Account, error) {
+func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.AccountTable, "id"),
@@ -60,7 +58,7 @@ func (r *accountRepository) GetByID(ctx context.Context, id int) (domain.Account
 	return accounts[0], nil
 }
 
-func (r *accountRepository) GetByEmail(ctx context.Context, email string) (domain.Account, error) {
+func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domain.Account, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.AccountTable, "id"),
@@ -91,8 +89,8 @@ func (r *accountRepository) GetByEmail(ctx context.Context, email string) (domai
 	return accounts[0], nil
 }
 
-func (r *accountRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Account, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*accountRepository.fetch)", query)
+func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Account, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -134,7 +132,7 @@ func (r *accountRepository) fetch(ctx context.Context, query string, args ...any
 	return accounts, nil
 }
 
-func (r *accountRepository) Save(ctx context.Context, input *domain.Account) (domain.Account, error) {
+func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (domain.Account, error) {
 	var account domain.Account
 	var profile domain.Profile
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -144,7 +142,7 @@ func (r *accountRepository) Save(ctx context.Context, input *domain.Account) (do
 			im.Returning("id", "email", "created_at", "updated_at"),
 		).MustBuild(ctx)
 
-		traceCtx, span := spanWithInsertQuery(ctx, r.tracer, "(*accountRepository.Save)", saveAccountQuery)
+		traceCtx, span := spanWithInsertQuery(ctx, r.tracer, "(*AccountRepository.Save)", saveAccountQuery)
 		defer span.End()
 
 		err := tx.QueryRow(ctx, saveAccountQuery, saveAccountArgs...).Scan(
@@ -164,7 +162,7 @@ func (r *accountRepository) Save(ctx context.Context, input *domain.Account) (do
 			im.Returning("name", "avatar"),
 		).MustBuild(ctx)
 
-		_, span = spanWithInsertQuery(traceCtx, r.tracer, "(*accountRepository.Save)", saveProfileQuery)
+		_, span = spanWithInsertQuery(traceCtx, r.tracer, "(*AccountRepository.Save)", saveProfileQuery)
 		defer span.End()
 
 		err = tx.QueryRow(ctx, saveProfileQuery, saveProfileArgs...).Scan(

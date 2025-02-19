@@ -34,7 +34,7 @@ type Application interface {
 }
 
 type application struct {
-	repository  repository.Repository
+	repository  *repository.Repository
 	llm         llm.Client
 	auth        *auth.Auth
 	googleOAuth oauth.Client
@@ -44,7 +44,7 @@ type application struct {
 }
 
 func New(
-	repository repository.Repository,
+	repository *repository.Repository,
 	llm llm.Client,
 	auth *auth.Auth,
 	googleOAuth oauth.Client,

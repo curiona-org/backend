@@ -23,7 +23,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	}
 
 	var accessToken, refreshToken string
-	err = app.repository.Session().Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
+	err = app.repository.Session.Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
 		if session.Blocked {
 			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionIsBlocked)
 		}

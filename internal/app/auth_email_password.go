@@ -15,7 +15,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	ctx, span := app.tracer.Start(ctx, "(*application.authEmailPassword)")
 	defer span.End()
 
-	existingAccount, err := app.repository.Account().GetByEmail(ctx, input.Email)
+	existingAccount, err := app.repository.Account.GetByEmail(ctx, input.Email)
 	if err != nil && !errors.Is(err, domain.ErrAccountNotFound) {
 		return registrationResult{}, err
 	}
@@ -58,7 +58,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		return registrationResult{}, err
 	}
 
-	createdAccount, err := app.repository.Account().Save(ctx, account)
+	createdAccount, err := app.repository.Account.Save(ctx, account)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"time"
 
@@ -35,13 +34,6 @@ type Roadmap struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type RoadmapRepository interface {
-	ListByAccountID(ctx context.Context, accountID int) ([]Roadmap, error)
-	GetBySlug(ctx context.Context, slug string) (Roadmap, error)
-	Save(ctx context.Context, input *Roadmap) (Roadmap, error)
-	Delete(ctx context.Context, id int) (Roadmap, error)
 }
 
 func NewRoadmap(accountID int, title, description string) *Roadmap {

@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"time"
 
@@ -27,12 +26,6 @@ type Account struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type AccountRepository interface {
-	GetByEmail(ctx context.Context, email string) (Account, error)
-	GetByID(ctx context.Context, id int) (Account, error)
-	Save(ctx context.Context, input *Account) (Account, error)
 }
 
 func NewAccount(email, plainPassword string, provider object.AccountProvider, profile *Profile) (*Account, error) {

@@ -14,23 +14,21 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type profileRepository struct {
+type ProfileRepository struct {
 	db     database.Connection
 	tracer trace.Tracer
 }
 
-var _ domain.ProfileRepository = (*profileRepository)(nil)
-
-func NewPostgresProfileRepository(db database.Connection) domain.ProfileRepository {
+func NewPostgresProfileRepository(db database.Connection) *ProfileRepository {
 	tracer := otel.Tracer("db:postgres:profiles")
-	return &profileRepository{
+	return &ProfileRepository{
 		db:     db,
 		tracer: tracer,
 	}
 }
 
-func (r *profileRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Profile, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*profileRepository.fetch)", query)
+func (r *ProfileRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Profile, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*ProfileRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -59,8 +57,8 @@ func (r *profileRepository) fetch(ctx context.Context, query string, args ...any
 	return profiles, nil
 }
 
-func (r *profileRepository) Update(ctx context.Context, id int, updateFn func(profile *domain.Profile) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*profileRepository.Update)")
+func (r *ProfileRepository) Update(ctx context.Context, id int, updateFn func(profile *domain.Profile) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*ProfileRepository.Update)")
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
@@ -100,7 +98,7 @@ func (r *profileRepository) Update(ctx context.Context, id int, updateFn func(pr
 			um.SetCol("name").ToArg(profile.Name),
 			um.Where(psql.Quote(domain.ProfileTable, "id").EQ(psql.Arg(id))),
 		).MustBuild(ctx)
-		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*profileRepository.Update)", updateProfileQuery)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*ProfileRepository.Update)", updateProfileQuery)
 		defer updateSpan.End()
 
 		if _, err = tx.Exec(ctx, updateProfileQuery, updateProfileArgs...); err != nil {

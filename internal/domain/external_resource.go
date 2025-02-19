@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"time"
 
@@ -25,11 +24,6 @@ type ExternalResource struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type ExternalResourceRepository interface {
-	GetByTopicID(ctx context.Context, topicID int) ([]ExternalResource, error)
-	BulkSave(ctx context.Context, topicID int, resource []*ExternalResource) error
 }
 
 func NewExternalResource(topicID int, title, url string, resourceType object.ExternalResourceType) *ExternalResource {

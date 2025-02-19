@@ -16,7 +16,7 @@ func (app *application) GetProfile(ctx context.Context) (io.GetProfileOutput, er
 
 	span.SetAttributes(attribute.Int("account_id", auth.ID))
 
-	account, err := app.repository.Account().GetByID(ctx, auth.ID)
+	account, err := app.repository.Account.GetByID(ctx, auth.ID)
 	if err != nil {
 		return io.GetProfileOutput{}, err
 	}

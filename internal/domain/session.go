@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"time"
 )
@@ -26,13 +25,6 @@ type Session struct {
 	Blocked      bool
 	ExpiresAt    time.Time
 	CreatedAt    time.Time
-}
-
-type SessionRepository interface {
-	GetByAccountID(ctx context.Context, accountID int) (Session, error)
-	Save(ctx context.Context, input *Session) (Session, error)
-	Renew(ctx context.Context, refreshToken string, updateFn func(*Session) (bool, error)) error
-	Delete(ctx context.Context, id int) error
 }
 
 // NewSession creates a new session for the given account.

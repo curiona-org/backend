@@ -17,24 +17,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type topicRepository struct {
+type TopicRepository struct {
 	db     database.Connection
 	cache  cache.Cache[domain.ExternalResource]
 	tracer trace.Tracer
 }
 
-var _ domain.TopicRepository = (*topicRepository)(nil)
-
-func NewPostgresTopicRepository(db database.Connection, cacheConn cache.Connection) domain.TopicRepository {
+func NewPostgresTopicRepository(db database.Connection, cacheConn cache.Connection) *TopicRepository {
 	tracer := otel.Tracer("db:postgres:topics")
-	return &topicRepository{
+	return &TopicRepository{
 		db:     db,
 		cache:  cache.NewRedisCache[domain.ExternalResource](cacheConn),
 		tracer: tracer,
 	}
 }
 
-func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
+func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.TopicTable, "id"),
@@ -67,7 +65,7 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 
 	cacheKey := fmt.Sprintf("topics:%d:external_resources", topic.ID)
 
-	traceCtx, span := r.tracer.Start(ctx, "(*topicRepository.GetBySlug)")
+	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
 	if r.cache.Exists(ctx, cacheKey) {
 		span.AddEvent("cache hit", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
@@ -95,8 +93,8 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	return topic, nil
 }
 
-func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*topicRepository.fetch)", query)
+func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*TopicRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -151,7 +149,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 	return topics, nil
 }
 
-func (r *topicRepository) fetchExternalResourcesByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {
+func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.ExternalResourceTable, "id"),
@@ -166,7 +164,7 @@ func (r *topicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 		sm.Where(psql.Quote(domain.ExternalResourceTable, "topic_id").EQ(psql.Arg(topicID))),
 	).MustBuild(ctx)
 
-	traceCtx, span := spanWithSelectQuery(ctx, r.tracer, "(*topicRepository.fetchExternalResourcesByTopicID)", query)
+	traceCtx, span := spanWithSelectQuery(ctx, r.tracer, "(*TopicRepository.fetchExternalResourcesByTopicID)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)

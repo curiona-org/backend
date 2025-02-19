@@ -18,7 +18,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 	traceCtx, span := app.tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
-	topic, err := app.repository.Topic().GetBySlug(traceCtx, slug)
+	topic, err := app.repository.Topic.GetBySlug(traceCtx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
 			return io.GetTopicOutput{}, apperrors.ResourceNotFound("topic")
@@ -88,7 +88,7 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 		return nil
 	}
 
-	return app.repository.ExternalResource().BulkSave(youtubeSearchCtx, topic.ID, externalResources)
+	return app.repository.ExternalResource.BulkSave(youtubeSearchCtx, topic.ID, externalResources)
 }
 
 func (app *application) searchGoogleBooksExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
@@ -118,7 +118,7 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 		return nil
 	}
 
-	return app.repository.ExternalResource().BulkSave(bookSearchCtx, topic.ID, externalResources)
+	return app.repository.ExternalResource.BulkSave(bookSearchCtx, topic.ID, externalResources)
 }
 
 func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, topic domain.Topic) {

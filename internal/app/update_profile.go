@@ -18,7 +18,7 @@ func (app *application) UpdateProfile(ctx context.Context, input io.UpdateProfil
 	span.SetAttributes(attribute.Int("account_id", auth.ID))
 
 	var profileOutput *domain.Profile
-	err := app.repository.Profile().Update(ctx, auth.ID, func(profile *domain.Profile) (bool, error) {
+	err := app.repository.Profile.Update(ctx, auth.ID, func(profile *domain.Profile) (bool, error) {
 		profile.Update(input.Name)
 
 		profileOutput = profile

@@ -15,24 +15,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type externalResourceRepository struct {
+type ExternalResourceRepository struct {
 	db     database.Connection
 	cache  cache.Cache[domain.ExternalResource]
 	tracer trace.Tracer
 }
 
-var _ domain.ExternalResourceRepository = (*externalResourceRepository)(nil)
-
-func NewPostgresExternalResourceRepository(db database.Connection, cacheConn cache.Connection) domain.ExternalResourceRepository {
+func NewPostgresExternalResourceRepository(db database.Connection, cacheConn cache.Connection) *ExternalResourceRepository {
 	tracer := otel.Tracer("db:postgres:external_resources")
-	return &externalResourceRepository{
+	return &ExternalResourceRepository{
 		db:     db,
 		cache:  cache.NewRedisCache[domain.ExternalResource](cacheConn),
 		tracer: tracer,
 	}
 }
 
-func (r *externalResourceRepository) GetByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {
+func (r *ExternalResourceRepository) GetByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {
 	if topicID == 0 {
 		return nil, nil
 	}
@@ -69,8 +67,8 @@ func (r *externalResourceRepository) GetByTopicID(ctx context.Context, topicID i
 	return externalResources, nil
 }
 
-func (r *externalResourceRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.ExternalResource, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*externalResourceRepository.fetch)", query)
+func (r *ExternalResourceRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.ExternalResource, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*ExternalResourceRepository.fetch)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -107,8 +105,8 @@ func (r *externalResourceRepository) fetch(ctx context.Context, query string, ar
 	return externalResources, nil
 }
 
-func (r *externalResourceRepository) BulkSave(ctx context.Context, topicID int, resource []*domain.ExternalResource) error {
-	ctx, span := r.tracer.Start(ctx, "(*externalResourceRepository.BulkSave)")
+func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, resource []*domain.ExternalResource) error {
+	ctx, span := r.tracer.Start(ctx, "(*ExternalResourceRepository.BulkSave)")
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {

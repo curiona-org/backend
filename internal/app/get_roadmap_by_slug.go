@@ -16,7 +16,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
 	defer span.End()
 
-	roadmap, err := app.repository.Roadmap().GetBySlug(ctx, slug)
+	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
 			return io.GetRoadmapOutput{}, apperrors.ResourceNotFound("roadmap")
@@ -24,7 +24,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 		return io.GetRoadmapOutput{}, err
 	}
 
-	account, err := app.repository.Account().GetByID(ctx, roadmap.AccountID)
+	account, err := app.repository.Account.GetByID(ctx, roadmap.AccountID)
 	if err != nil {
 		return io.GetRoadmapOutput{}, err
 	}

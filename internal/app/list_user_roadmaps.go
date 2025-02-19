@@ -18,7 +18,7 @@ func (app *application) ListUserRoadmaps(ctx context.Context) (io.ListUserRoadma
 	auth := auth.FromContext(ctx)
 	span.SetAttributes(attribute.Int("account_id", auth.ID))
 
-	roadmaps, err := app.repository.Roadmap().ListByAccountID(ctx, auth.ID)
+	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, auth.ID)
 	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
 		return io.ListUserRoadmapsOutput{}, err
 	}

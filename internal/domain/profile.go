@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"errors"
 	"html"
 	"time"
@@ -22,10 +21,6 @@ type Profile struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type ProfileRepository interface {
-	Update(ctx context.Context, id int, updateFn func(*Profile) (bool, error)) error
 }
 
 func NewProfile(name, avatar string) *Profile {
