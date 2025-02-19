@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+//nolint:spancheck
 func spanWithOperationKey(ctx context.Context, tracer trace.Tracer, method, operation, key string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(
