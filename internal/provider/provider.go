@@ -6,12 +6,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/roadmap-thesis/backend/internal/config"
-	"github.com/roadmap-thesis/backend/pkg/book"
 	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"github.com/roadmap-thesis/backend/pkg/tracing"
-	"github.com/roadmap-thesis/backend/pkg/youtube"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/sync/errgroup"
@@ -27,7 +27,10 @@ type Provider struct {
 }
 
 func New(ctx context.Context) (*Provider, error) {
-	p := &Provider{}
+	p := &Provider{
+		GoogleBooks: book.New(config.GoogleBooksAPIKey()),
+		Youtube:     youtube.New(config.YoutubeAPIKey()),
+	}
 
 	var group errgroup.Group
 
@@ -92,26 +95,6 @@ func New(ctx context.Context) (*Provider, error) {
 		})
 		if err != nil {
 			return errors.Wrap(err, "initializing tracer provider")
-		}
-		return nil
-	})
-
-	group.Go(func() error {
-		log.Info().Msg("initializing google books client")
-		var err error
-		p.GoogleBooks, err = book.NewAPI(book.GoogleBooks)
-		if err != nil {
-			return errors.Wrap(err, "initializing google books client")
-		}
-		return nil
-	})
-
-	group.Go(func() error {
-		log.Info().Msg("initializing youtube client")
-		var err error
-		p.Youtube, err = youtube.New(ctx, config.YoutubeAPIKey())
-		if err != nil {
-			return errors.Wrap(err, "initializing youtube client")
 		}
 		return nil
 	})

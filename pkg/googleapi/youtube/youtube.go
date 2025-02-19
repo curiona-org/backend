@@ -24,12 +24,12 @@ type client struct {
 	tracer trace.Tracer
 }
 
-func New(ctx context.Context, secret string) (Client, error) {
+func New(secret string) Client {
 	tracer := otel.Tracer("youtube")
 	return &client{
 		secret: secret,
 		tracer: tracer,
-	}, nil
+	}
 }
 
 type SearchResult struct {
@@ -58,8 +58,10 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 		return nil, err
 	}
 
-	videos := make([]*SearchResult, 0)
-	for i, item := range response.Items {
+	items := response.Items
+
+	videos := make([]*SearchResult, 0, len(items))
+	for i, item := range items {
 		if item.Id.Kind == "youtube#video" {
 			videoURL := "https://www.youtube.com/watch?v=" + item.Id.VideoId
 			video := SearchResult{

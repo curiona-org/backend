@@ -7,9 +7,9 @@ import (
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
-	"github.com/roadmap-thesis/backend/pkg/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/pkg/llm"
-	"github.com/roadmap-thesis/backend/pkg/youtube"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
