@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/roadmap-thesis/backend/internal/cache"
 	"github.com/roadmap-thesis/backend/internal/database"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
+	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -208,4 +210,69 @@ func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 	}
 
 	return externalResources, nil
+}
+
+func (r *TopicRepository) Update(ctx context.Context, slug string, updateFn func(topic *domain.Topic) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.Update)")
+	defer span.End()
+
+	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
+		fetchTopicQuery, fetchTopicArgs := psql.Select(
+			sm.Columns(
+				psql.Quote(domain.TopicTable, "id"),
+				psql.Quote(domain.TopicTable, "roadmap_id"),
+				psql.Quote(domain.TopicTable, "parent_id"),
+				psql.Quote(domain.TopicTable, "title"),
+				psql.Quote(domain.TopicTable, "slug"),
+				psql.Quote(domain.TopicTable, "description"),
+				psql.Quote(domain.TopicTable, "order"),
+				psql.Quote(domain.TopicTable, "finished"),
+				psql.Quote(domain.TopicTable, "external_search_query"),
+				psql.Quote(domain.TopicTable, "created_at"),
+				psql.Quote(domain.TopicTable, "updated_at"),
+			),
+			sm.From(domain.TopicTable),
+			sm.Where(psql.Quote("slug").EQ(psql.Arg(slug))),
+		).MustBuild(ctx)
+
+		topics, err := r.fetch(ctx, fetchTopicQuery, fetchTopicArgs...)
+		if err != nil {
+			return err
+		}
+
+		if len(topics) == 0 {
+			return domain.ErrTopicNotFound
+		}
+
+		topic := topics[0]
+		updated, err := updateFn(&topic)
+		if err != nil {
+			return err
+		}
+
+		if !updated {
+			return nil
+		}
+
+		updateTopicQuery, updateTopicArgs := psql.Update(
+			um.Table(domain.TopicTable),
+			um.SetCol("finished").ToArg(topic.Finished),
+			um.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
+		).MustBuild(ctx)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateTopicQuery)
+		defer updateSpan.End()
+
+		if _, err = tx.Exec(ctx, updateTopicQuery, updateTopicArgs...); err != nil {
+			updateSpan.SetStatus(codes.Error, "failed to update topic")
+			updateSpan.RecordError(err)
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -154,6 +154,11 @@ func (e *Topic) MarkAsFinished() {
 	e.UpdateChangelog()
 }
 
+func (e *Topic) MarkAsIncomplete() {
+	e.Finished = false
+	e.UpdateChangelog()
+}
+
 func (e *Topic) UpdateChangelog() {
 	e.UpdatedAt = time.Now()
 }

@@ -56,6 +56,8 @@ func (a *API) setupRoutes() {
 	a.instance.GET("/roadmaps/:slug", a.GetRoadmapBySlug, a.authMiddleware)
 	a.instance.POST("/roadmaps", a.GenerateRoadmap, a.authMiddleware)
 	a.instance.GET("/roadmaps/topic/:slug", a.GetTopicBySlug, a.authMiddleware)
+	a.instance.PATCH("/roadmaps/topic/:slug/finish", a.MarkTopicAsFinished, a.authMiddleware)
+	a.instance.PATCH("/roadmaps/topic/:slug/incomplete", a.MarkTopicAsIncomplete, a.authMiddleware)
 }
 
 func (a *API) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

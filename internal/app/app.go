@@ -24,13 +24,12 @@ type Application interface {
 	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
 	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
 	ListUserRoadmaps(ctx context.Context) (io.ListUserRoadmapsOutput, error)
-
-	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)
 	// DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) (io.DeleteUserRoadmapOutput, error)
 	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
-	// GetTopicResources(ctx context.Context, input io.GetTopicResourcesInput) (io.GetTopicResourcesOutput, error)
-	// MarkTopicAsFinish(ctx context.Context, input io.MarkTopicAsFinishInput) (io.TopicFinishOutput, error)
-	// MarkTopicAsIncomplete(ctx context.Context, input io.MarkTopicAsIncompleteInput) (io.TopicFinishOutput, error)
+
+	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)
+	MarkTopicAsFinished(ctx context.Context, slug string) error
+	MarkTopicAsIncomplete(ctx context.Context, slug string) error
 }
 
 type application struct {
