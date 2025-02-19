@@ -8,6 +8,8 @@ import (
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"github.com/roadmap-thesis/backend/pkg/tracing"
 	"github.com/rs/zerolog/log"
@@ -16,14 +18,19 @@ import (
 )
 
 type Provider struct {
-	LLM     llm.Client
-	DB      database.Connection
-	Redis   *redis.Client
-	Tracing *trace.TracerProvider
+	LLM         llm.Client
+	DB          database.Connection
+	Redis       *redis.Client
+	Tracing     *trace.TracerProvider
+	GoogleBooks book.Client
+	Youtube     youtube.Client
 }
 
 func New(ctx context.Context) (*Provider, error) {
-	p := &Provider{}
+	p := &Provider{
+		GoogleBooks: book.New(config.GoogleBooksAPIKey()),
+		Youtube:     youtube.New(config.YoutubeAPIKey()),
+	}
 
 	var group errgroup.Group
 

@@ -7,6 +7,8 @@ import (
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/pkg/llm"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -36,16 +38,27 @@ type application struct {
 	llm         llm.Client
 	auth        *auth.Auth
 	googleOAuth oauth.Client
+	googleBooks book.Client
+	youtube     youtube.Client
 	tracer      trace.Tracer
 }
 
-func New(repository repository.Repository, llm llm.Client, auth *auth.Auth, googleOAuth oauth.Client) Application {
-	tracer := otel.Tracer("application")
+func New(
+	repository repository.Repository,
+	llm llm.Client,
+	auth *auth.Auth,
+	googleOAuth oauth.Client,
+	googleBooks book.Client,
+	youtube youtube.Client,
+) Application {
+	tracer := otel.Tracer("app")
 	return &application{
 		repository:  repository,
 		llm:         llm,
 		auth:        auth,
 		googleOAuth: googleOAuth,
+		googleBooks: googleBooks,
+		youtube:     youtube,
 		tracer:      tracer,
 	}
 }

@@ -23,7 +23,35 @@ func (c *noopCache[V]) Get(ctx context.Context, key string) (V, bool) {
 	return *new(V), false
 }
 
-func (c *noopCache[V]) Set(ctx context.Context, key string, value V) {
+func (c *noopCache[V]) GetArray(ctx context.Context, key string) ([]V, bool) {
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).GetArray")
+	defer span.End()
+	_ = key
+	return nil, false
+}
+
+func (c *noopCache[V]) List(ctx context.Context, key string) ([]V, bool) {
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).List")
+	defer span.End()
+	_ = key
+	return nil, false
+}
+
+func (c *noopCache[V]) Push(ctx context.Context, key string, value V) {
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Push")
+	defer span.End()
+	_ = key
+	_ = value
+}
+
+func (c *noopCache[V]) Exists(ctx context.Context, key string) bool {
+	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Exists")
+	defer span.End()
+	_ = key
+	return false
+}
+
+func (c *noopCache[V]) Set(ctx context.Context, key string, value ...V) {
 	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Set")
 	defer span.End()
 	_ = key

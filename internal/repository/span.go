@@ -11,6 +11,7 @@ import (
 func spanWithSelectQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(
+		semconv.DBSystemPostgreSQL,
 		semconv.DBStatementKey.String(query),
 		semconv.DBOperationKey.String("SELECT"))
 	return ctx, span
@@ -20,6 +21,7 @@ func spanWithSelectQuery(ctx context.Context, tracer trace.Tracer, method, query
 func spanWithInsertQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(
+		semconv.DBSystemPostgreSQL,
 		semconv.DBStatementKey.String(query),
 		semconv.DBOperationKey.String("INSERT"))
 	return ctx, span
@@ -29,6 +31,7 @@ func spanWithInsertQuery(ctx context.Context, tracer trace.Tracer, method, query
 func spanWithUpdateQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(
+		semconv.DBSystemPostgreSQL,
 		semconv.DBStatementKey.String(query),
 		semconv.DBOperationKey.String("UPDATE"))
 	return ctx, span
@@ -38,6 +41,7 @@ func spanWithUpdateQuery(ctx context.Context, tracer trace.Tracer, method, query
 func spanWithDeleteQuery(ctx context.Context, tracer trace.Tracer, method, query string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(
+		semconv.DBSystemPostgreSQL,
 		semconv.DBStatementKey.String(query),
 		semconv.DBOperationKey.String("DELETE"))
 	return ctx, span

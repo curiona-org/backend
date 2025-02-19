@@ -2,28 +2,34 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/cache"
 	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 type topicRepository struct {
 	db     database.Connection
+	cache  cache.Cache[domain.ExternalResource]
 	tracer trace.Tracer
 }
 
 var _ domain.TopicRepository = (*topicRepository)(nil)
 
-func NewPostgresTopicRepository(db database.Connection) domain.TopicRepository {
+func NewPostgresTopicRepository(db database.Connection, cacheConn cache.Connection) domain.TopicRepository {
 	tracer := otel.Tracer("db:postgres:topics")
 	return &topicRepository{
 		db:     db,
+		cache:  cache.NewRedisCache[domain.ExternalResource](cacheConn),
 		tracer: tracer,
 	}
 }
@@ -39,6 +45,7 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 			psql.Quote(domain.TopicTable, "description"),
 			psql.Quote(domain.TopicTable, "order"),
 			psql.Quote(domain.TopicTable, "finished"),
+			psql.Quote(domain.TopicTable, "external_search_query"),
 			psql.Quote(domain.TopicTable, "created_at"),
 			psql.Quote(domain.TopicTable, "updated_at"),
 		),
@@ -55,7 +62,37 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 		return domain.Topic{}, domain.ErrTopicNotFound
 	}
 
-	return topics[0], nil
+	topic := topics[0]
+	var externalResources []domain.ExternalResource
+
+	cacheKey := fmt.Sprintf("topics:%d:external_resources", topic.ID)
+
+	traceCtx, span := r.tracer.Start(ctx, "(*topicRepository.GetBySlug)")
+	defer span.End()
+	if r.cache.Exists(ctx, cacheKey) {
+		span.AddEvent("cache hit", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
+		resources, _ := r.cache.List(traceCtx, cacheKey)
+		externalResources = resources
+		span.SetAttributes(
+			attribute.Bool("cache_hit", true),
+			attribute.Int("external_resources_count", len(externalResources)))
+	} else {
+		span.AddEvent("cache miss", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
+		externalResources, err = r.fetchExternalResourcesByTopicID(ctx, topic.ID)
+		if err != nil && !errors.Is(err, domain.ErrExternalResourcesNotFound) {
+			return domain.Topic{}, err
+		}
+
+		span.SetAttributes(
+			attribute.Bool("cache_hit", false),
+			attribute.Int("external_resources_count", len(externalResources)))
+	}
+
+	for _, resource := range externalResources {
+		topic.AddResource(resource)
+	}
+
+	return topic, nil
 }
 
 func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
@@ -74,6 +111,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 	for rows.Next() {
 		var topic domain.Topic
 		var topicParentID pgtype.Int4
+		var externalSearchQuery pgtype.Text
 		err = rows.Scan(
 			&topic.ID,
 			&topic.RoadmapID,
@@ -83,6 +121,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 			&topic.Description,
 			&topic.Order,
 			&topic.Finished,
+			&externalSearchQuery,
 			&topic.CreatedAt,
 			&topic.UpdatedAt,
 		)
@@ -96,6 +135,12 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 			topic.ParentID = 0
 		}
 
+		if externalSearchQuery.Valid {
+			topic.ExternalSearchQuery = externalSearchQuery.String
+		} else {
+			topic.ExternalSearchQuery = ""
+		}
+
 		topics = append(topics, topic)
 	}
 
@@ -104,4 +149,62 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 	}
 
 	return topics, nil
+}
+
+func (r *topicRepository) fetchExternalResourcesByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {
+	query, args := psql.Select(
+		sm.Columns(
+			psql.Quote(domain.ExternalResourceTable, "id"),
+			psql.Quote(domain.ExternalResourceTable, "topic_id"),
+			psql.Quote(domain.ExternalResourceTable, "title"),
+			psql.Quote(domain.ExternalResourceTable, "url"),
+			psql.Quote(domain.ExternalResourceTable, "type"),
+			psql.Quote(domain.ExternalResourceTable, "created_at"),
+			psql.Quote(domain.ExternalResourceTable, "updated_at"),
+		),
+		sm.From(domain.ExternalResourceTable),
+		sm.Where(psql.Quote(domain.ExternalResourceTable, "topic_id").EQ(psql.Arg(topicID))),
+	).MustBuild(ctx)
+
+	traceCtx, span := spanWithSelectQuery(ctx, r.tracer, "(*topicRepository.fetchExternalResourcesByTopicID)", query)
+	defer span.End()
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch external resources")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var externalResources []domain.ExternalResource
+	for rows.Next() {
+		var externalResource domain.ExternalResource
+		err = rows.Scan(
+			&externalResource.ID,
+			&externalResource.TopicID,
+			&externalResource.Title,
+			&externalResource.URL,
+			&externalResource.Type,
+			&externalResource.CreatedAt,
+			&externalResource.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		cacheKey := fmt.Sprintf("topics:%d:external_resources", externalResource.TopicID)
+		r.cache.Push(traceCtx, cacheKey, externalResource)
+		externalResources = append(externalResources, externalResource)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(externalResources) == 0 {
+		return nil, domain.ErrExternalResourcesNotFound
+	}
+
+	return externalResources, nil
 }
