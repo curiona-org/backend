@@ -66,7 +66,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 				externalResources = append(externalResources, externalResource)
 			}
 
-			return app.repository.ExternalResource().BulkSave(traceCtx, topic.ID, externalResources)
+			return app.repository.ExternalResource().BulkSave(youtubeSearchCtx, topic.ID, externalResources)
 		})
 
 		group.Go(func() error {
@@ -92,7 +92,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 				externalResources = append(externalResources, externalResource)
 			}
 
-			return app.repository.ExternalResource().BulkSave(traceCtx, topic.ID, externalResources)
+			return app.repository.ExternalResource().BulkSave(bookSearchCtx, topic.ID, externalResources)
 		})
 
 		if err := group.Wait(); err != nil {
