@@ -45,6 +45,7 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 			psql.Quote(domain.TopicTable, "description"),
 			psql.Quote(domain.TopicTable, "order"),
 			psql.Quote(domain.TopicTable, "finished"),
+			psql.Quote(domain.TopicTable, "external_search_query"),
 			psql.Quote(domain.TopicTable, "created_at"),
 			psql.Quote(domain.TopicTable, "updated_at"),
 		),
@@ -110,6 +111,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 	for rows.Next() {
 		var topic domain.Topic
 		var topicParentID pgtype.Int4
+		var externalSearchQuery pgtype.Text
 		err = rows.Scan(
 			&topic.ID,
 			&topic.RoadmapID,
@@ -119,6 +121,7 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 			&topic.Description,
 			&topic.Order,
 			&topic.Finished,
+			&externalSearchQuery,
 			&topic.CreatedAt,
 			&topic.UpdatedAt,
 		)
@@ -130,6 +133,12 @@ func (r *topicRepository) fetch(ctx context.Context, query string, args ...any) 
 			topic.ParentID = int(topicParentID.Int32)
 		} else {
 			topic.ParentID = 0
+		}
+
+		if externalSearchQuery.Valid {
+			topic.ExternalSearchQuery = externalSearchQuery.String
+		} else {
+			topic.ExternalSearchQuery = ""
 		}
 
 		topics = append(topics, topic)

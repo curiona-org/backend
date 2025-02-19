@@ -18,14 +18,15 @@ var (
 )
 
 type Topic struct {
-	ID          int
-	RoadmapID   int
-	ParentID    int
-	Title       string
-	Slug        string
-	Description string
-	Order       int
-	Finished    bool
+	ID                  int
+	RoadmapID           int
+	ParentID            int
+	Title               string
+	Slug                string
+	Description         string
+	Order               int
+	Finished            bool
+	ExternalSearchQuery string
 
 	Subtopics []*Topic
 	Resources []ExternalResource
@@ -38,14 +39,15 @@ type TopicRepository interface {
 	GetBySlug(ctx context.Context, slug string) (Topic, error)
 }
 
-func NewTopic(title, description string) *Topic {
+func NewTopic(title, description, externalSearchQuery string) *Topic {
 	return &Topic{
-		Title:       title,
-		Slug:        slug.Make(title + " " + str.Random(5)),
-		Description: description,
-		Finished:    false,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Title:               title,
+		Slug:                slug.Make(title + " " + str.Random(5)),
+		Description:         description,
+		Finished:            false,
+		ExternalSearchQuery: externalSearchQuery,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 }
 

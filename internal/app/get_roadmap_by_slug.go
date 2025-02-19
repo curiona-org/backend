@@ -56,16 +56,17 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 
 	for _, topic := range roadmap.Topics {
 		outputTopic := io.GetRoadmapOutputTopics{
-			ID:          topic.ID,
-			RoadmapID:   topic.RoadmapID,
-			ParentID:    topic.ParentID,
-			Title:       topic.Title,
-			Slug:        topic.Slug,
-			Description: topic.Description,
-			Order:       topic.Order,
-			Finished:    topic.Finished,
-			CreatedAt:   topic.CreatedAt,
-			UpdatedAt:   topic.UpdatedAt,
+			ID:                  topic.ID,
+			RoadmapID:           topic.RoadmapID,
+			ParentID:            topic.ParentID,
+			Title:               topic.Title,
+			Slug:                topic.Slug,
+			Description:         topic.Description,
+			Order:               topic.Order,
+			Finished:            topic.Finished,
+			ExternalSearchQuery: topic.ExternalSearchQuery,
+			CreatedAt:           topic.CreatedAt,
+			UpdatedAt:           topic.UpdatedAt,
 		}
 
 		topicMap[topic.ParentID] = append(topicMap[topic.ParentID], outputTopic)

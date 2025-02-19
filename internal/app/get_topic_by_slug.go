@@ -64,7 +64,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
 	youtubeSearchCtx, youtubeSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).youtubeSearch")
 	defer youtubeSearchSpan.End()
-	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.Title)
+	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 func (app *application) searchGoogleBooksExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
 	bookSearchCtx, bookSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).bookSearch")
 	defer bookSearchSpan.End()
-	searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.Title)
+	searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
 		return err
 	}
