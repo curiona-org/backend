@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 
 	"github.com/roadmap-thesis/backend/pkg/redis"
 )
@@ -39,6 +40,10 @@ func NewConnection(ctx context.Context, cfg *Config) (*Connection, error) {
 			return nil, err
 		}
 		conn.Redis = rdb
+	case TypeNoop:
+		// noop
+	default:
+		return nil, errors.New("invalid cache type")
 	}
 	return conn, nil
 }
