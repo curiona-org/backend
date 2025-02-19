@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
@@ -40,6 +41,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 
 	if !topic.HasResources() {
 		var group errgroup.Group
+		var mu sync.Mutex
 
 		group.Go(func() error {
 			youtubeSearchCtx, youtubeSearchSpan := app.tracer.Start(traceCtx, "(*application.GetTopicBySlug).youtubeSearch")
@@ -58,7 +60,9 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 					object.ExternalResourceTypeYoutube,
 				)
 
+				mu.Lock()
 				topic.AddResource(*externalResource)
+				mu.Unlock()
 				externalResources = append(externalResources, externalResource)
 			}
 
@@ -82,7 +86,9 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 					object.ExternalResourceTypeBook,
 				)
 
+				mu.Lock()
 				topic.AddResource(*externalResource)
+				mu.Unlock()
 				externalResources = append(externalResources, externalResource)
 			}
 
