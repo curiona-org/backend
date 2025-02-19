@@ -62,7 +62,7 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	}
 
 	topic := topics[0]
-	externalResources := make([]domain.ExternalResource, 0)
+	var externalResources []domain.ExternalResource
 
 	cacheKey := fmt.Sprintf("topics:%d:external_resources", topic.ID)
 
