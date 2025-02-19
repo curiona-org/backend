@@ -7,7 +7,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -31,7 +30,7 @@ func NewRedisCache[V any](conn Connection) Cache[V] {
 }
 
 func (c *redisCache[V]) Get(ctx context.Context, key string) (V, bool) {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Get", trace.WithAttributes(attribute.String("key", key)))
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).Get", "GET", key)
 	defer span.End()
 
 	var value V
@@ -51,7 +50,7 @@ func (c *redisCache[V]) Get(ctx context.Context, key string) (V, bool) {
 
 // GetArray returns an array stored in a single key.
 func (c *redisCache[V]) GetArray(ctx context.Context, key string) ([]V, bool) {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).GetArray", trace.WithAttributes(attribute.String("key", key)))
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).GetArray", "GET", key)
 	defer span.End()
 
 	var values []V
@@ -71,7 +70,7 @@ func (c *redisCache[V]) GetArray(ctx context.Context, key string) ([]V, bool) {
 
 // List returns a list of values stored using redis list.
 func (c *redisCache[V]) List(ctx context.Context, key string) ([]V, bool) {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).List", trace.WithAttributes(attribute.String("key", key)))
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).List", "LRANGE", key)
 	defer span.End()
 
 	var values []V
@@ -85,6 +84,8 @@ func (c *redisCache[V]) List(ctx context.Context, key string) ([]V, bool) {
 	for _, d := range data {
 		var value V
 		if err = msgpack.Unmarshal([]byte(d), &value); err != nil {
+			span.SetStatus(codes.Error, "failed to unmarshal value")
+			span.RecordError(err)
 			return values, false
 		}
 		values = append(values, value)
@@ -93,8 +94,8 @@ func (c *redisCache[V]) List(ctx context.Context, key string) ([]V, bool) {
 	return values, true
 }
 
-func (c *redisCache[V]) Push(ctx context.Context, key string, value ...V) {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Push", trace.WithAttributes(attribute.String("key", key)))
+func (c *redisCache[V]) Push(ctx context.Context, key string, value V) {
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).Push", "RPUSH", key)
 	defer span.End()
 
 	data, err := msgpack.Marshal(value)
@@ -109,7 +110,7 @@ func (c *redisCache[V]) Push(ctx context.Context, key string, value ...V) {
 }
 
 func (c *redisCache[V]) Exists(ctx context.Context, key string) bool {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Exists", trace.WithAttributes(attribute.String("key", key)))
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).Exists", "EXISTS", key)
 	defer span.End()
 
 	ok, err := c.conn.Exists(ctx, key).Result()
@@ -123,7 +124,7 @@ func (c *redisCache[V]) Exists(ctx context.Context, key string) bool {
 }
 
 func (c *redisCache[V]) Set(ctx context.Context, key string, value ...V) {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Set", trace.WithAttributes(attribute.String("key", key)))
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).Set", "SET", key)
 	defer span.End()
 
 	data, err := msgpack.Marshal(value)
@@ -138,8 +139,7 @@ func (c *redisCache[V]) Set(ctx context.Context, key string, value ...V) {
 }
 
 func (c *redisCache[V]) Delete(ctx context.Context, key ...string) error {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Delete",
-		trace.WithAttributes(attribute.String("key", strings.Join(key, ","))))
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).Delete", "DEL", strings.Join(key, ", "))
 	defer span.End()
 
 	if len(key) == 0 {
@@ -156,7 +156,7 @@ func (c *redisCache[V]) Delete(ctx context.Context, key ...string) error {
 	return nil
 }
 func (c *redisCache[V]) Truncate(ctx context.Context) error {
-	ctx, span := c.tracer.Start(ctx, "(*redisCache[V]).Truncate")
+	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).Truncate", "FLUSHDB", "")
 	defer span.End()
 
 	pipe := c.conn.Pipeline()

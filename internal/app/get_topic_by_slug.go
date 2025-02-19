@@ -66,6 +66,9 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 				externalResources = append(externalResources, externalResource)
 			}
 
+			if len(externalResources) == 0 {
+				return nil
+			}
 			return app.repository.ExternalResource().BulkSave(youtubeSearchCtx, topic.ID, externalResources)
 		})
 
@@ -90,6 +93,10 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 				topic.AddResource(*externalResource)
 				mu.Unlock()
 				externalResources = append(externalResources, externalResource)
+			}
+
+			if len(externalResources) == 0 {
+				return nil
 			}
 
 			return app.repository.ExternalResource().BulkSave(bookSearchCtx, topic.ID, externalResources)

@@ -37,7 +37,7 @@ func (c *noopCache[V]) List(ctx context.Context, key string) ([]V, bool) {
 	return nil, false
 }
 
-func (c *noopCache[V]) Push(ctx context.Context, key string, value ...V) {
+func (c *noopCache[V]) Push(ctx context.Context, key string, value V) {
 	_, span := c.tracer.Start(ctx, "(*noopCache[V]).Push")
 	defer span.End()
 	_ = key

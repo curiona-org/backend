@@ -12,6 +12,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -65,15 +66,25 @@ func (r *topicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 
 	cacheKey := fmt.Sprintf("topics:%d:external_resources", topic.ID)
 
-	if resources, ok := r.cache.List(ctx, cacheKey); ok {
+	traceCtx, span := r.tracer.Start(ctx, "(*topicRepository.GetBySlug)")
+	defer span.End()
+	if r.cache.Exists(ctx, cacheKey) {
+		span.AddEvent("cache hit", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
+		resources, _ := r.cache.List(traceCtx, cacheKey)
 		externalResources = resources
+		span.SetAttributes(
+			attribute.Bool("cache_hit", true),
+			attribute.Int("external_resources_count", len(externalResources)))
 	} else {
+		span.AddEvent("cache miss", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
 		externalResources, err = r.fetchExternalResourcesByTopicID(ctx, topic.ID)
 		if err != nil && !errors.Is(err, domain.ErrExternalResourcesNotFound) {
 			return domain.Topic{}, err
 		}
 
-		r.cache.Push(ctx, cacheKey, externalResources...)
+		span.SetAttributes(
+			attribute.Bool("cache_hit", false),
+			attribute.Int("external_resources_count", len(externalResources)))
 	}
 
 	for _, resource := range externalResources {
@@ -146,7 +157,7 @@ func (r *topicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 		sm.Where(psql.Quote(domain.ExternalResourceTable, "topic_id").EQ(psql.Arg(topicID))),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*topicRepository.fetchExternalResourcesByTopicID)", query)
+	traceCtx, span := spanWithSelectQuery(ctx, r.tracer, "(*topicRepository.fetchExternalResourcesByTopicID)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -173,6 +184,8 @@ func (r *topicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 			return nil, err
 		}
 
+		cacheKey := fmt.Sprintf("topics:%d:external_resources", externalResource.TopicID)
+		r.cache.Push(traceCtx, cacheKey, externalResource)
 		externalResources = append(externalResources, externalResource)
 	}
 
