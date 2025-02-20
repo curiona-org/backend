@@ -37,7 +37,7 @@ RUN adduser \
 USER appuser
 
 COPY --from=builder /bin/server /bin/
-COPY --from=builder ./.env /bin/
+COPY --from=builder /app/.env /bin/
 COPY --from=builder /bin/migrate /bin/
 
 EXPOSE 8080
