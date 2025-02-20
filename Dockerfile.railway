@@ -6,22 +6,22 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 
-RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-/go/pkg/mod,target=/go/pkg/mod \
+RUN --mount=type=cache,target=/go/pkg/mod,id=s/${RAILWAY_SERVICE_ID}-/go/pkg/mod \
     go mod download -x
 
 COPY . .
 
-RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-/go/pkg/mod,target=/go/pkg/mod \
+RUN --mount=type=cache,target=/go/pkg/mod,id=s/${RAILWAY_SERVICE_ID}-/go/pkg/mod \
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
     go build -v -a -installsuffix cgo -o /bin/server ./cmd/application/main.go
 
-RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-/go/pkg/mod,target=/go/pkg/mod \
+RUN --mount=type=cache,target=/go/pkg/mod,id=s/${RAILWAY_SERVICE_ID}-/go/pkg/mod \
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
     go build -v -a -installsuffix cgo -o /bin/migrate ./cmd/migrate/main.go
 
 FROM alpine:3.17.2 AS final
 
-RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-/var/cache/apk,target=/var/cache/apk \
+RUN --mount=type=cache,target=/var/cache/apk,id=s/${RAILWAY_SERVICE_ID}-/var/cache/apk \
     apk --update add \
     ca-certificates \
     tzdata \
