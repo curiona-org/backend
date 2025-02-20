@@ -43,26 +43,6 @@ func (c *redisCache[V]) Get(ctx context.Context, key string) (V, bool) {
 	return value, true
 }
 
-// GetArray returns an array stored in a single key.
-func (c *redisCache[V]) GetArray(ctx context.Context, key string) ([]V, bool) {
-	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).GetArray", "GET", key)
-	defer span.End()
-
-	var values []V
-	data, err := c.conn.Get(ctx, key).Result()
-	if err != nil {
-		span.SetStatus(codes.Error, "failed to get key: "+key)
-		span.RecordError(err)
-		return values, false
-	}
-
-	if err = msgpack.Unmarshal([]byte(data), &values); err != nil {
-		return values, false
-	}
-
-	return values, true
-}
-
 // List returns a list of values stored using redis list.
 func (c *redisCache[V]) List(ctx context.Context, key string) ([]V, bool) {
 	ctx, span := spanWithOperationKey(ctx, c.tracer, "(*redisCache[V]).List", "LRANGE", key)

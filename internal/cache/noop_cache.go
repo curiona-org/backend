@@ -16,11 +16,6 @@ func (c *noopCache[V]) Get(ctx context.Context, key string) (V, bool) {
 	return *new(V), false
 }
 
-func (c *noopCache[V]) GetArray(ctx context.Context, key string) ([]V, bool) {
-	_ = key
-	return nil, false
-}
-
 func (c *noopCache[V]) List(ctx context.Context, key string) ([]V, bool) {
 	_ = key
 	return nil, false
