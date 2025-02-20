@@ -6,19 +6,15 @@ WORKDIR /app
 COPY go.mod go.sum ./
 
 RUN --mount=type=cache,id=s/3fa29419-7b19-452f-87ae-7f2b0a40ce3f-/go/pkg/mod,target=/go/pkg/mod \
-    --mount=type=bind,source=go.sum,target=go.sum \
-    --mount=type=bind,source=go.mod,target=go.mod \
     go mod download -x
 
 COPY . .
 
 RUN --mount=type=cache,id=s/3fa29419-7b19-452f-87ae-7f2b0a40ce3f-/go/pkg/mod,target=/go/pkg/mod \
-    --mount=type=bind,target=. \
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
     go build -v -a -installsuffix cgo -o /bin/server ./cmd/application/main.go
 
 RUN --mount=type=cache,id=s/3fa29419-7b19-452f-87ae-7f2b0a40ce3f-/go/pkg/mod,target=/go/pkg/mod \
-    --mount=type=bind,target=. \
     GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
     go build -v -a -installsuffix cgo -o /bin/migrate ./cmd/migrate/main.go
 
