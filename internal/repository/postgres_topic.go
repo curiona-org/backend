@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -217,7 +218,7 @@ func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 
 		cacher.Write(traceCtx, &cache.Key{
 			Namespace: fmt.Sprintf("%s:%d:external_resources", domain.TopicTable, topicID),
-			Key:       fmt.Sprintf("%d", externalResource.ID),
+			Key:       strconv.Itoa(externalResource.ID),
 		}, externalResource, 0)
 		externalResources = append(externalResources, externalResource)
 	}
