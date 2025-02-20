@@ -67,12 +67,12 @@ func (c *redisCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
 	}
 
 	var values []V
-	pipe := c.conn.Pipeline()
-	for _, key := range keys {
-		pipe.HGet(ctx, key, "data")
-	}
-
-	results, err := pipe.Exec(ctx)
+	results, err := c.conn.Pipelined(ctx, func(pipe baseredis.Pipeliner) error {
+		for _, key := range keys {
+			pipe.HGet(ctx, key, "data")
+		}
+		return nil
+	})
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to read key: "+k.Key)
 		span.RecordError(err)
@@ -129,16 +129,15 @@ func (c *redisCache[V]) Write(ctx context.Context, k *Key, value V, ttl time.Dur
 		return
 	}
 
-	pipe := c.conn.Pipeline()
-	pipe.Select(ctx, 0)
+	_, err = c.conn.Pipelined(ctx, func(pipe baseredis.Pipeliner) error {
+		pipe.HSet(ctx, key, "data", data)
+		if ttl > 0 {
+			pipe.Expire(ctx, key, ttl)
+		}
 
-	pipe.HSet(ctx, key, "data", data)
-	if ttl > 0 {
-		pipe.Expire(ctx, key, ttl)
-	}
-
-	pipe.SAdd(ctx, namespace, key)
-	_, err = pipe.Exec(ctx)
+		pipe.SAdd(ctx, namespace, key)
+		return nil
+	})
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to write key: "+key)
 		span.RecordError(err)
