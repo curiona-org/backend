@@ -55,7 +55,7 @@ var config *Config
 func Init() {
 	config = &Config{
 		appName: env.LookupEnv("APP_NAME", "roadmap_application"),
-		appEnv:  env.LookupEnv("APP_ENV", "local"),
+		appEnv:  env.LookupEnv("APP_ENV", "development"),
 		port:    env.LookupEnv("PORT", "5000"),
 
 		dbName:                  env.LookupEnv("DB_NAME", "roadmap"),
@@ -98,7 +98,8 @@ func Init() {
 func AppName() string     { return config.appName }
 func AppEnv() string      { return config.appEnv }
 func IsProduction() bool  { return config.appEnv == "production" }
-func IsDevelopment() bool { return config.appEnv != "production" }
+func IsStaging() bool     { return config.appEnv == "staging" }
+func IsDevelopment() bool { return config.appEnv != "production" && config.appEnv != "staging" }
 func Port() string        { return config.port }
 
 func DBName() string                         { return config.dbName }
