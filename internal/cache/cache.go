@@ -27,8 +27,6 @@ func (k *Key) String() string {
 	return key
 }
 
-type FetcherFunc[V any] func() (V, error)
-
 type Cache[V any] interface {
 	Read(ctx context.Context, k *Key, out *V) bool
 	List(ctx context.Context, k *Key) ([]V, bool)
