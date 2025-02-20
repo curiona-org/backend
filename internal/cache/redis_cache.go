@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	_ "embed"
-
 	baseredis "github.com/redis/go-redis/v9"
 	"github.com/roadmap-thesis/backend/internal/redis"
 	"github.com/vmihailenco/msgpack/v5"
