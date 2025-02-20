@@ -3,17 +3,38 @@ package cache
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/roadmap-thesis/backend/internal/redis"
 )
 
+const (
+	DefaultTTL = 5 * time.Minute
+)
+
+type Key struct {
+	Namespace string
+	Key       string
+}
+
+func (k *Key) String() string {
+	key := k.Key
+
+	if k.Namespace != "" && k.Key != "" {
+		key = k.Namespace + ":" + key
+	}
+
+	return key
+}
+
+type FetcherFunc[V any] func() (V, error)
+
 type Cache[V any] interface {
-	Get(ctx context.Context, key string) (V, bool)
-	List(ctx context.Context, key string) ([]V, bool)
-	Push(ctx context.Context, key string, value V)
-	Exists(ctx context.Context, key string) bool
-	Set(ctx context.Context, key string, value ...V)
-	Delete(ctx context.Context, key ...string) error
+	Read(ctx context.Context, k *Key, out *V) bool
+	List(ctx context.Context, k *Key) ([]V, bool)
+	Write(ctx context.Context, k *Key, value V, ttl time.Duration)
+	Exists(ctx context.Context, k *Key) bool
+	Delete(ctx context.Context, k ...*Key) error
 	Truncate(ctx context.Context) error
 }
 

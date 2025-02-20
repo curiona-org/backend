@@ -35,60 +35,73 @@ func NewPostgresTopicRepository(db database.Connection, cache *cache.Connection)
 }
 
 func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
-	query, args := psql.Select(
-		sm.Columns(
-			psql.Quote(domain.TopicTable, "id"),
-			psql.Quote(domain.TopicTable, "roadmap_id"),
-			psql.Quote(domain.TopicTable, "parent_id"),
-			psql.Quote(domain.TopicTable, "title"),
-			psql.Quote(domain.TopicTable, "slug"),
-			psql.Quote(domain.TopicTable, "description"),
-			psql.Quote(domain.TopicTable, "order"),
-			psql.Quote(domain.TopicTable, "finished"),
-			psql.Quote(domain.TopicTable, "external_search_query"),
-			psql.Quote(domain.TopicTable, "created_at"),
-			psql.Quote(domain.TopicTable, "updated_at"),
-		),
-		sm.From(domain.TopicTable),
-		sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
-	).MustBuild(ctx)
-
-	topics, err := r.fetch(ctx, query, args...)
-	if err != nil {
-		return domain.Topic{}, err
-	}
-
-	if len(topics) == 0 {
-		return domain.Topic{}, domain.ErrTopicNotFound
-	}
-
-	topic := topics[0]
-	var externalResources []domain.ExternalResource
-
-	cacheKey := fmt.Sprintf("topics:%d:external_resources", topic.ID)
-
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
 
-	cacher := cache.New[domain.ExternalResource](r.cache)
-	if cacher.Exists(ctx, cacheKey) {
-		span.AddEvent("cache hit", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
-		resources, _ := cacher.List(traceCtx, cacheKey)
-		externalResources = resources
-		span.SetAttributes(
-			attribute.Bool("cache_hit", true),
-			attribute.Int("external_resources_count", len(externalResources)))
+	var topic domain.Topic
+	topicCacher := cache.New[domain.Topic](r.cache)
+	topicCacheKey := &cache.Key{
+		Namespace: domain.TopicTable,
+		Key:       slug,
+	}
+	if topicCacher.Exists(traceCtx, topicCacheKey) {
+		span.AddEvent("topic cache hit")
+
+		topicCacher.Read(traceCtx, topicCacheKey, &topic)
 	} else {
-		span.AddEvent("cache miss", trace.WithAttributes(attribute.String("cache_key", cacheKey)))
-		externalResources, err = r.fetchExternalResourcesByTopicID(ctx, topic.ID)
-		if err != nil && !errors.Is(err, domain.ErrExternalResourcesNotFound) {
+		span.AddEvent("topic cache miss")
+
+		query, args := psql.Select(
+			sm.Columns(
+				psql.Quote(domain.TopicTable, "id"),
+				psql.Quote(domain.TopicTable, "roadmap_id"),
+				psql.Quote(domain.TopicTable, "parent_id"),
+				psql.Quote(domain.TopicTable, "title"),
+				psql.Quote(domain.TopicTable, "slug"),
+				psql.Quote(domain.TopicTable, "description"),
+				psql.Quote(domain.TopicTable, "order"),
+				psql.Quote(domain.TopicTable, "finished"),
+				psql.Quote(domain.TopicTable, "external_search_query"),
+				psql.Quote(domain.TopicTable, "created_at"),
+				psql.Quote(domain.TopicTable, "updated_at"),
+			),
+			sm.From(domain.TopicTable),
+			sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
+		).MustBuild(ctx)
+
+		topics, err := r.fetch(traceCtx, query, args...)
+		if err != nil {
 			return domain.Topic{}, err
 		}
 
-		span.SetAttributes(
-			attribute.Bool("cache_hit", false),
-			attribute.Int("external_resources_count", len(externalResources)))
+		if len(topics) == 0 {
+			return domain.Topic{}, domain.ErrTopicNotFound
+		}
+
+		topic = topics[0]
 	}
+
+	var externalResources []domain.ExternalResource
+
+	externalResourceCacher := cache.New[domain.ExternalResource](r.cache)
+	externalResourceCacheKey := &cache.Key{
+		Key: fmt.Sprintf("%s:%d:external_resources", domain.TopicTable, topic.ID),
+	}
+	if externalResourceCacher.Exists(traceCtx, externalResourceCacheKey) {
+		span.AddEvent("external resource cache hit")
+
+		externalResources, _ = externalResourceCacher.List(traceCtx, externalResourceCacheKey)
+	} else {
+		span.AddEvent("external resource cache miss")
+
+		var err error
+		externalResources, err = r.fetchExternalResourcesByTopicID(traceCtx, topic.ID)
+		if err != nil && !errors.Is(err, domain.ErrExternalResourcesNotFound) {
+			return domain.Topic{}, err
+		}
+	}
+
+	span.SetAttributes(attribute.Int("external_resources_count", len(externalResources)))
 
 	for _, resource := range externalResources {
 		topic.AddResource(resource)
@@ -109,6 +122,7 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 	}
 	defer rows.Close()
 
+	topicCacher := cache.New[domain.Topic](r.cache)
 	var topics []domain.Topic
 	for rows.Next() {
 		var topic domain.Topic
@@ -143,6 +157,11 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 			topic.ExternalSearchQuery = ""
 		}
 
+		topicCacheKey := &cache.Key{
+			Namespace: domain.TopicTable,
+			Key:       topic.Slug,
+		}
+		topicCacher.Write(ctx, topicCacheKey, topic, 0)
 		topics = append(topics, topic)
 	}
 
@@ -196,8 +215,10 @@ func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 			return nil, err
 		}
 
-		cacheKey := fmt.Sprintf("topics:%d:external_resources", externalResource.TopicID)
-		cacher.Push(traceCtx, cacheKey, externalResource)
+		cacher.Write(traceCtx, &cache.Key{
+			Namespace: fmt.Sprintf("%s:%d:external_resources", domain.TopicTable, topicID),
+			Key:       fmt.Sprintf("%d", externalResource.ID),
+		}, externalResource, 0)
 		externalResources = append(externalResources, externalResource)
 	}
 

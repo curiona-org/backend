@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -37,7 +38,9 @@ func NewPostgresRoadmapRepository(db database.Connection, cache *cache.Connectio
 
 func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
 	cacher := cache.New[domain.Roadmap](r.cache)
-	if roadmap, ok := cacher.Get(ctx, "roadmap:"+slug); ok {
+	var roadmap domain.Roadmap
+	ok := cacher.Read(ctx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug}, &roadmap)
+	if ok {
 		return roadmap, nil
 	}
 
@@ -75,7 +78,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 		return domain.Roadmap{}, domain.ErrRoadmapNotFound
 	}
 
-	roadmap := roadmaps[0]
+	roadmap = roadmaps[0]
 	topics, err := r.fetchTopicsByRoadmapID(ctx, roadmap.ID)
 	if err != nil {
 		return domain.Roadmap{}, err
@@ -83,7 +86,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 
 	roadmap.SetTopics(topics)
 
-	cacher.Set(ctx, "roadmap:"+slug, roadmap)
+	cacher.Write(ctx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug}, roadmap, time.Hour)
 
 	return roadmap, nil
 }

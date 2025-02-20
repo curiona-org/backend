@@ -33,3 +33,7 @@ func optionsFromConfig(cfg *Config) *baseredis.Options {
 
 	return opts
 }
+
+func (c *Client) NewScript(src string) *baseredis.Script {
+	return baseredis.NewScript(src)
+}

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"time"
 )
 
 type noopCache[V any] struct {
@@ -11,35 +12,33 @@ func NewNoopCache[V any]() Cache[V] {
 	return &noopCache[V]{}
 }
 
-func (c *noopCache[V]) Get(ctx context.Context, key string) (V, bool) {
-	_ = key
-	return *new(V), false
-}
-
-func (c *noopCache[V]) List(ctx context.Context, key string) ([]V, bool) {
-	_ = key
-	return nil, false
-}
-
-func (c *noopCache[V]) Push(ctx context.Context, key string, value V) {
-	_ = key
-	_ = value
-}
-
-func (c *noopCache[V]) Exists(ctx context.Context, key string) bool {
-	_ = key
+func (c *noopCache[V]) Read(ctx context.Context, k *Key, out *V) bool {
+	_ = k
+	_ = out
 	return false
 }
 
-func (c *noopCache[V]) Set(ctx context.Context, key string, value ...V) {
-	_ = key
-	_ = value
+func (c *noopCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
+	_ = k
+	return nil, false
 }
 
-func (c *noopCache[V]) Delete(ctx context.Context, key ...string) error {
-	_ = key
+func (c *noopCache[V]) Write(ctx context.Context, k *Key, value V, ttl time.Duration) {
+	_ = k
+	_ = value
+	_ = ttl
+}
+
+func (c *noopCache[V]) Exists(ctx context.Context, k *Key) bool {
+	_ = k
+	return false
+}
+
+func (c *noopCache[V]) Delete(ctx context.Context, k ...*Key) error {
+	_ = k
 	return nil
 }
+
 func (c *noopCache[V]) Truncate(ctx context.Context) error {
 	return nil
 }

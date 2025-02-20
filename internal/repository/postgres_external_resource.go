@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/roadmap-thesis/backend/internal/cache"
@@ -36,7 +37,9 @@ func (r *ExternalResourceRepository) GetByTopicID(ctx context.Context, topicID i
 	}
 
 	cacher := cache.New[domain.ExternalResource](r.cache)
-	if resources, ok := cacher.List(ctx, fmt.Sprintf("topics:%d:external_resources", topicID)); ok {
+	if resources, ok := cacher.List(ctx, &cache.Key{
+		Key: fmt.Sprintf("%s:%d:external_resources", domain.TopicTable, topicID),
+	}); ok {
 		return resources, nil
 	}
 
@@ -63,8 +66,6 @@ func (r *ExternalResourceRepository) GetByTopicID(ctx context.Context, topicID i
 		return nil, domain.ErrExternalResourcesNotFound
 	}
 
-	cacher.Set(ctx, fmt.Sprintf("topics:%d:external_resources", topicID), externalResources...)
-
 	return externalResources, nil
 }
 
@@ -80,6 +81,7 @@ func (r *ExternalResourceRepository) fetch(ctx context.Context, query string, ar
 	}
 	defer rows.Close()
 
+	cacher := cache.New[domain.ExternalResource](r.cache)
 	var externalResources []domain.ExternalResource
 	for rows.Next() {
 		var externalResource domain.ExternalResource
@@ -96,6 +98,13 @@ func (r *ExternalResourceRepository) fetch(ctx context.Context, query string, ar
 			return nil, err
 		}
 
+		// TODO: writing to caching inside the loop is not efficient
+		// consider writing to cache in bulk or use pipelining
+		cacher.Write(ctx, &cache.Key{
+			Namespace: fmt.Sprintf("%s:%d:external_resources", domain.TopicTable, externalResource.TopicID),
+			Key:       strconv.Itoa(externalResource.ID),
+		}, externalResource, cache.DefaultTTL)
+
 		externalResources = append(externalResources, externalResource)
 	}
 
@@ -110,13 +119,10 @@ func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, 
 	ctx, span := r.tracer.Start(ctx, "(*ExternalResourceRepository.BulkSave)")
 	defer span.End()
 
-	cacher := cache.New[domain.ExternalResource](r.cache)
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		var resources [][]any
 
 		for _, res := range resource {
-			cacher.Push(ctx, fmt.Sprintf("topics:%d:external_resources", topicID), *res)
-
 			resources = append(resources, []any{
 				topicID, res.Title, res.URL, res.Type, res.CreatedAt, res.UpdatedAt,
 			})
