@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
@@ -17,6 +18,9 @@ func (a *API) GenerateRoadmap(c echo.Context) error {
 	if err := c.Validate(&input); err != nil {
 		return err
 	}
+
+	auth := auth.FromContext(c.Request().Context())
+	input.AccountID = auth.ID
 
 	output, err := a.application.GenerateRoadmap(c.Request().Context(), input)
 	if err != nil {

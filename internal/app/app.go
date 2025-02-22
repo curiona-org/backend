@@ -18,12 +18,12 @@ type Application interface {
 	Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error)
 	AuthVerify(ctx context.Context, token string) (*auth.Payload, error)
 	AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error)
-	GetProfile(ctx context.Context) (io.GetProfileOutput, error)
+	GetProfile(ctx context.Context, accountID int) (io.GetProfileOutput, error)
 	UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error)
 
 	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
 	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
-	ListUserRoadmaps(ctx context.Context) (io.ListUserRoadmapsOutput, error)
+	ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error)
 	// DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) (io.DeleteUserRoadmapOutput, error)
 	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 

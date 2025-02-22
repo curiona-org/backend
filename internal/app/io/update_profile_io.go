@@ -3,7 +3,8 @@ package io
 import "time"
 
 type UpdateProfileInput struct {
-	Name string `json:"name" validate:"required"`
+	AccountID int    `json:"-"`
+	Name      string `json:"name" validate:"required"`
 }
 
 type UpdateProfileOutput struct {

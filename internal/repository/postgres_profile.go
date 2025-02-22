@@ -10,6 +10,7 @@ import (
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -58,7 +59,9 @@ func (r *ProfileRepository) fetch(ctx context.Context, query string, args ...any
 }
 
 func (r *ProfileRepository) Update(ctx context.Context, id int, updateFn func(profile *domain.Profile) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*ProfileRepository.Update)")
+	traceCtx, span := r.tracer.Start(ctx, "(*ProfileRepository.Update)", trace.WithAttributes(
+		attribute.Int("id", id),
+	))
 	defer span.End()
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {

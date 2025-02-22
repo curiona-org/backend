@@ -4,19 +4,13 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/auth"
-	"go.opentelemetry.io/otel/attribute"
 )
 
-func (app *application) GetProfile(ctx context.Context) (io.GetProfileOutput, error) {
+func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetProfileOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*application.GetProfile)")
 	defer span.End()
 
-	auth := auth.FromContext(ctx)
-
-	span.SetAttributes(attribute.Int("account_id", auth.ID))
-
-	account, err := app.repository.Account.GetByID(ctx, auth.ID)
+	account, err := app.repository.Account.GetByID(ctx, accountID)
 	if err != nil {
 		return io.GetProfileOutput{}, err
 	}

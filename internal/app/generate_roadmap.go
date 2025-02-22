@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/internal/llm"
@@ -39,8 +38,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 		return io.GenerateRoadmapOutput{}, err
 	}
 
-	auth := auth.FromContext(ctx)
-	roadmap := domain.NewRoadmap(auth.ID, generated.Title, generated.Description)
+	roadmap := domain.NewRoadmap(input.AccountID, generated.Title, generated.Description)
 
 	for _, topic := range generated.Topics {
 		newTopic := domain.NewTopic(topic.Title, topic.Description, topic.SearchQuery)
@@ -54,7 +52,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	}
 
 	personalizationOpt := domain.NewPersonalizationOptions(
-		auth.ID,
+		input.AccountID,
 		0,
 		object.NewInterval(
 			input.PersonalizationOptions.DailyTimeAvailability.Value,

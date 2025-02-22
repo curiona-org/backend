@@ -3,6 +3,7 @@ package io
 import "github.com/roadmap-thesis/backend/internal/domain/object"
 
 type GenerateRoadmapInput struct {
+	AccountID              int    `json:"-"`
 	Topic                  string `json:"topic" validate:"required"`
 	PersonalizationOptions struct {
 		DailyTimeAvailability struct {

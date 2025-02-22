@@ -5,20 +5,15 @@ import (
 	"errors"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
-	"go.opentelemetry.io/otel/attribute"
 )
 
-func (app *application) ListUserRoadmaps(ctx context.Context) (io.ListUserRoadmapsOutput, error) {
+func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*application.ListUserRoadmaps)")
 	defer span.End()
 
-	auth := auth.FromContext(ctx)
-	span.SetAttributes(attribute.Int("account_id", auth.ID))
-
-	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, auth.ID)
+	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, accountID)
 	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
 		return io.ListUserRoadmapsOutput{}, err
 	}

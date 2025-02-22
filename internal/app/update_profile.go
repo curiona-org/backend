@@ -4,21 +4,15 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/domain"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 func (app *application) UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*application.GetProfile)")
 	defer span.End()
 
-	auth := auth.FromContext(ctx)
-
-	span.SetAttributes(attribute.Int("account_id", auth.ID))
-
 	var profileOutput *domain.Profile
-	err := app.repository.Profile.Update(ctx, auth.ID, func(profile *domain.Profile) (bool, error) {
+	err := app.repository.Profile.Update(ctx, input.AccountID, func(profile *domain.Profile) (bool, error) {
 		profile.Update(input.Name)
 
 		profileOutput = profile
