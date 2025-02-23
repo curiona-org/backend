@@ -3,8 +3,6 @@ package server
 import (
 	"context"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -36,8 +34,6 @@ func (s *Server) Port() string {
 
 // Listen starts the API server.
 func (s *Server) Listen() chan os.Signal {
-	exitSignal := make(chan os.Signal, 1)
-	signal.Notify(exitSignal, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		log.Info().Msgf("Listening on %s", s.port)
 		if err := s.Echo.Start(":" + s.port); err != nil {
@@ -45,7 +41,7 @@ func (s *Server) Listen() chan os.Signal {
 		}
 	}()
 
-	return exitSignal
+	return s.waitForSignals()
 }
 
 // Shutdown gracefully shuts down the API server.
