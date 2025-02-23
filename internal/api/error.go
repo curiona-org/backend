@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
@@ -16,7 +16,7 @@ func (a *API) ErrorHandler(err error, c echo.Context) {
 		return
 	}
 
-	var appErr *apperrors.AppError
+	var appErr *cerrors.AppError
 	var httpErr *echo.HTTPError
 	code := http.StatusInternalServerError
 	switch {
@@ -24,7 +24,7 @@ func (a *API) ErrorHandler(err error, c echo.Context) {
 		code = appErr.Code()
 	case errors.As(err, &httpErr):
 		if httpErr.Code == http.StatusNotFound {
-			err = apperrors.NotFound()
+			err = cerrors.NotFound()
 		}
 		code = httpErr.Code
 	}

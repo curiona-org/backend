@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 )
 
@@ -15,7 +15,7 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 
 	err := app.repository.Topic.Update(ctx, input.Slug, func(topic *domain.Topic) (bool, error) {
 		if topic.AccountID != input.AccountID {
-			return false, apperrors.NotFound()
+			return false, cerrors.NotFound()
 		}
 
 		if topic.Finished {
@@ -27,7 +27,7 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return apperrors.Wrap(apperrors.NotFound(), err)
+			return cerrors.Wrap(cerrors.NotFound(), err)
 		}
 		return err
 	}

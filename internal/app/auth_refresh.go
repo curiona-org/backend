@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 )
 
@@ -25,11 +25,11 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	var accessToken, refreshToken string
 	err = app.repository.Session.Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
 		if session.Blocked {
-			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionIsBlocked)
+			return false, cerrors.Wrap(cerrors.Unauthorized(), domain.ErrSessionIsBlocked)
 		}
 
 		if time.Now().After(session.ExpiresAt) {
-			return false, apperrors.Wrap(apperrors.Unauthorized(), domain.ErrSessionExpired)
+			return false, cerrors.Wrap(cerrors.Unauthorized(), domain.ErrSessionExpired)
 		}
 
 		accessToken, err = app.auth.Access.Generate(payload.ID)
@@ -51,7 +51,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
-			return io.AuthRefreshOutput{}, apperrors.Wrap(apperrors.Unauthorized(), err)
+			return io.AuthRefreshOutput{}, cerrors.Wrap(cerrors.Unauthorized(), err)
 		}
 		return io.AuthRefreshOutput{}, err
 	}

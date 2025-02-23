@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/internal/str"
 	"go.opentelemetry.io/otel/codes"
@@ -18,7 +18,7 @@ func (app *application) authGoogle(ctx context.Context, input io.AuthInput) (reg
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return registrationResult{}, apperrors.Wrap(apperrors.Unauthorized(), err)
+		return registrationResult{}, cerrors.Wrap(cerrors.Unauthorized(), err)
 	}
 
 	return app.authEmailPassword(ctx, io.AuthInput{

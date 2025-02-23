@@ -6,8 +6,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/auth"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 )
 
 func AuthMiddleware(app app.Application) func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -16,18 +16,18 @@ func AuthMiddleware(app app.Application) func(next echo.HandlerFunc) echo.Handle
 			reqCtx := c.Request().Context()
 			authorization, ok := c.Request().Header["Authorization"]
 			if !ok {
-				return apperrors.Unauthorized()
+				return cerrors.Unauthorized()
 			}
 
 			bearer := strings.Split(authorization[0], " ")
 			if len(bearer) < 2 {
-				return apperrors.Unauthorized()
+				return cerrors.Unauthorized()
 			}
 
 			token := bearer[1]
 			payload, err := app.AuthVerify(reqCtx, token)
 			if err != nil {
-				return apperrors.Unauthorized()
+				return cerrors.Unauthorized()
 			}
 
 			ctx := context.WithValue(reqCtx, auth.AuthCtxKey, payload)

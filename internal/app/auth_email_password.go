@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -38,7 +38,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 
 		matched := existingAccount.CheckPassword(input.Password)
 		if !matched {
-			return registrationResult{}, apperrors.InvalidCredentials()
+			return registrationResult{}, cerrors.InvalidCredentials()
 		}
 
 		return registrationResult{

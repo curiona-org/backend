@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/roadmap-thesis/backend/internal/worker"
@@ -23,7 +23,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 	topic, err := app.repository.Topic.GetBySlug(traceCtx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return io.GetTopicOutput{}, apperrors.ResourceNotFound("topic")
+			return io.GetTopicOutput{}, cerrors.ResourceNotFound("topic")
 		}
 		return io.GetTopicOutput{}, err
 	}

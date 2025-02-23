@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/database"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -176,7 +176,7 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 		session := sessions[0]
 
 		updated, err := updateFn(&session)
-		if err != nil && errors.Is(apperrors.Unwrap(err), domain.ErrSessionIsBlocked) {
+		if err != nil && errors.Is(cerrors.Unwrap(err), domain.ErrSessionIsBlocked) {
 			query, args := psql.Delete(
 				dm.From(domain.SessionTable),
 				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),

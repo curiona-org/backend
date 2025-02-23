@@ -3,15 +3,15 @@ package api
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/auth"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
 func (a *API) MarkTopicAsFinished(c echo.Context) error {
 	slug := c.Param("slug")
 	if slug == "" {
-		return apperrors.NotFound()
+		return cerrors.NotFound()
 	}
 
 	auth := auth.FromContext(c.Request().Context())

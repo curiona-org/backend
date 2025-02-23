@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
@@ -13,7 +13,7 @@ func (a *API) Auth(c echo.Context) error {
 	var input io.AuthInput
 
 	if err := c.Bind(&input); err != nil {
-		return apperrors.InvalidData()
+		return cerrors.InvalidData()
 	}
 
 	if err := c.Validate(&input); err != nil {

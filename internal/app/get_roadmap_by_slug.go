@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,7 +19,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
-			return io.GetRoadmapOutput{}, apperrors.ResourceNotFound("roadmap")
+			return io.GetRoadmapOutput{}, cerrors.ResourceNotFound("roadmap")
 		}
 		return io.GetRoadmapOutput{}, err
 	}

@@ -5,14 +5,14 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
 func (a *API) AuthRefresh(c echo.Context) error {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
-		return apperrors.Unauthorized()
+		return cerrors.Unauthorized()
 	}
 
 	output, err := a.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{

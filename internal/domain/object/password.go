@@ -4,16 +4,16 @@ import (
 	"errors"
 	"unicode"
 
-	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/crypto"
 )
 
 var (
 	// ErrPasswordInvalidCharacters is returned when the password contains invalid characters.
-	ErrPasswordInvalidCharacters = apperrors.Wrap(apperrors.InvalidData(), errors.New("password invalid characters"))
+	ErrPasswordInvalidCharacters = cerrors.Wrap(cerrors.InvalidData(), errors.New("password invalid characters"))
 
 	// ErrPasswordEmpty is returned when the password is empty.
-	ErrPasswordEmpty = apperrors.Wrap(apperrors.InvalidData(), errors.New("password empty"))
+	ErrPasswordEmpty = cerrors.Wrap(cerrors.InvalidData(), errors.New("password empty"))
 )
 
 // Password can be plain/hashed.
