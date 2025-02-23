@@ -52,7 +52,7 @@ func (p *Provider) WithLLM() *Provider {
 	return p
 }
 
-func (p *Provider) WithDB() *Provider {
+func (p *Provider) WithPostgresDB() *Provider {
 	p.group.Go(func() error {
 		var err error
 		p.DB, err = database.New(context.Background(), &database.Config{
@@ -78,7 +78,7 @@ func (p *Provider) WithDB() *Provider {
 	return p
 }
 
-func (p *Provider) WithCache() *Provider {
+func (p *Provider) WithRedisCache() *Provider {
 	p.group.Go(func() error {
 		var err error
 		p.Cache, err = cache.NewConnection(context.Background(), &cache.Config{
@@ -90,6 +90,22 @@ func (p *Provider) WithCache() *Provider {
 				Username: config.RedisUsername(),
 				Password: config.RedisPassword(),
 			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "initializing cache")
+		}
+		log.Info().Msg("initialized cache")
+		return nil
+	})
+
+	return p
+}
+
+func (p *Provider) WithNoopCache() *Provider {
+	p.group.Go(func() error {
+		var err error
+		p.Cache, err = cache.NewConnection(context.Background(), &cache.Config{
+			Type: cache.TypeNoop,
 		})
 		if err != nil {
 			return errors.Wrap(err, "initializing cache")

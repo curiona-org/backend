@@ -25,8 +25,8 @@ func main() {
 	logger.Init(config.IsDevelopment())
 
 	provider, err := provider.New().
-		WithDB().
-		WithCache().
+		WithPostgresDB().
+		WithRedisCache().
 		WithQueue().
 		WithLLM().
 		WithYoutubeClient().
