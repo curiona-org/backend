@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/config"
+	"github.com/curiona-org/backend/internal/config"
 	"github.com/stretchr/testify/assert"
 )
 

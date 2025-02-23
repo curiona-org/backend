@@ -3,7 +3,7 @@ package io
 import (
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/domain/object"
 )
 
 type AuthInput struct {

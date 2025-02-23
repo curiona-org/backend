@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/domain"
 )
 
 func (app *application) UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error) {

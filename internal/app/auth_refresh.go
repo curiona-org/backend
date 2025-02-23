@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/pkg/cerrors"
 )
 
 // AuthRefresh refreshes the access token using the refresh token and returns a new access token and a rotated refresh token.

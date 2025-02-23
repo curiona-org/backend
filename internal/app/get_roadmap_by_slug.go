@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/internal/domain/object"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/cerrors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

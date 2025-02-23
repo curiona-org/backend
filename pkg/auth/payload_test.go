@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/curiona-org/backend/pkg/auth"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/roadmap-thesis/backend/pkg/auth"
 	"github.com/stretchr/testify/assert"
 )
 

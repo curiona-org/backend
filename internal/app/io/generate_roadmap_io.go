@@ -1,6 +1,6 @@
 package io
 
-import "github.com/roadmap-thesis/backend/internal/domain/object"
+import "github.com/curiona-org/backend/internal/domain/object"
 
 type GenerateRoadmapInput struct {
 	AccountID              int    `json:"-"`

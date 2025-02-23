@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/curiona-org/backend/internal/app"
+	"github.com/curiona-org/backend/pkg/auth"
+	"github.com/curiona-org/backend/pkg/cerrors"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/internal/app"
-	"github.com/roadmap-thesis/backend/pkg/auth"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
 )
 
 func AuthMiddleware(app app.CurionaApplication) func(next echo.HandlerFunc) echo.HandlerFunc {

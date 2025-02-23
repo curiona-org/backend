@@ -3,7 +3,7 @@ package logger
 import (
 	"os"
 
-	"github.com/roadmap-thesis/backend/internal/config"
+	"github.com/curiona-org/backend/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"

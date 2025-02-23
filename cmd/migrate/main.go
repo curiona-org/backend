@@ -4,13 +4,13 @@ import (
 	"context"
 	"flag"
 
+	"github.com/curiona-org/backend/internal/config"
+	"github.com/curiona-org/backend/internal/provider"
+	"github.com/curiona-org/backend/internal/provider/option"
+	"github.com/curiona-org/backend/pkg/logger"
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
-	"github.com/roadmap-thesis/backend/internal/config"
-	"github.com/roadmap-thesis/backend/internal/provider"
-	"github.com/roadmap-thesis/backend/internal/provider/option"
-	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
 )
 

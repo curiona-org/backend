@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/domain/object"
 )
 
 func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error) {

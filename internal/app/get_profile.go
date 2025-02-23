@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/app/io"
 )
 
 func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetProfileOutput, error) {

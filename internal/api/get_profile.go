@@ -1,9 +1,9 @@
 package api
 
 import (
+	"github.com/curiona-org/backend/pkg/auth"
+	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/pkg/auth"
-	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 func (a *API) GetProfile(c echo.Context) error {

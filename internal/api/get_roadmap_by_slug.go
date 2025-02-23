@@ -1,9 +1,9 @@
 package api
 
 import (
+	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
-	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 func (a *API) GetRoadmapBySlug(c echo.Context) error {

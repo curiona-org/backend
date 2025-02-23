@@ -1,11 +1,11 @@
 package api
 
 import (
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/pkg/auth"
+	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/pkg/auth"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
-	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 func (a *API) GenerateRoadmap(c echo.Context) error {

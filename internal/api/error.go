@@ -4,10 +4,10 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
-	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 //nolint:staticcheck,errorlint,wastedassign

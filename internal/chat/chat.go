@@ -1,10 +1,10 @@
 package chat
 
 import (
-	"github.com/roadmap-thesis/backend/internal/repository"
-	"github.com/roadmap-thesis/backend/internal/worker"
-	"github.com/roadmap-thesis/backend/pkg/auth"
-	"github.com/roadmap-thesis/backend/pkg/llm"
+	"github.com/curiona-org/backend/internal/repository"
+	"github.com/curiona-org/backend/internal/worker"
+	"github.com/curiona-org/backend/pkg/auth"
+	"github.com/curiona-org/backend/pkg/llm"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )

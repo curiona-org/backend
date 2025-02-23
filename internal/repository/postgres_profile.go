@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 
+	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/pkg/database"
 	"github.com/jackc/pgx/v5"
-	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"

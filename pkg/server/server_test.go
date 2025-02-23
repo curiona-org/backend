@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/curiona-org/backend/pkg/server"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/pkg/server"
 	"github.com/stretchr/testify/assert"
 )
 

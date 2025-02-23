@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/domain/object"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
-	"github.com/roadmap-thesis/backend/pkg/str"
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/pkg/str"
 	"go.opentelemetry.io/otel/codes"
 )
 

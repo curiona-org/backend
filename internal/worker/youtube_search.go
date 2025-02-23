@@ -3,9 +3,9 @@ package worker
 import (
 	"context"
 
+	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/hibiken/asynq"
-	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/internal/domain/object"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel/codes"

@@ -3,9 +3,9 @@ package admin
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/admin/io"
-	"github.com/roadmap-thesis/backend/internal/repository"
-	"github.com/roadmap-thesis/backend/pkg/auth"
+	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/repository"
+	"github.com/curiona-org/backend/pkg/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )

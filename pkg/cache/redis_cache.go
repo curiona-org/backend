@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/curiona-org/backend/pkg/redis"
 	baseredis "github.com/redis/go-redis/v9"
-	"github.com/roadmap-thesis/backend/pkg/redis"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"

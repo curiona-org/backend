@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/domain"
-	"github.com/roadmap-thesis/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/pkg/cerrors"
 )
 
 func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTopicInput) error {

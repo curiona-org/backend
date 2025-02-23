@@ -3,7 +3,7 @@ package object_test
 import (
 	"testing"
 
-	"github.com/roadmap-thesis/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

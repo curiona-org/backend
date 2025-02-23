@@ -3,10 +3,10 @@ package worker
 import (
 	"context"
 
+	"github.com/curiona-org/backend/internal/repository"
+	"github.com/curiona-org/backend/pkg/googleapi/book"
+	"github.com/curiona-org/backend/pkg/googleapi/youtube"
 	"github.com/hibiken/asynq"
-	"github.com/roadmap-thesis/backend/internal/repository"
-	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
-	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/roadmap-thesis/backend/pkg/env"
+	"github.com/curiona-org/backend/pkg/env"
 	"github.com/stretchr/testify/assert"
 )
 

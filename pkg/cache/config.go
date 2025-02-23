@@ -1,6 +1,6 @@
 package cache
 
-import "github.com/roadmap-thesis/backend/pkg/redis"
+import "github.com/curiona-org/backend/pkg/redis"
 
 type Type string
 

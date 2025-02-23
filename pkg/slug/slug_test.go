@@ -3,7 +3,7 @@ package slug_test
 import (
 	"testing"
 
-	"github.com/roadmap-thesis/backend/pkg/slug"
+	"github.com/curiona-org/backend/pkg/slug"
 	"github.com/stretchr/testify/assert"
 )
 

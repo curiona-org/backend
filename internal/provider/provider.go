@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 
+	"github.com/curiona-org/backend/pkg/cache"
+	"github.com/curiona-org/backend/pkg/database"
+	"github.com/curiona-org/backend/pkg/googleapi/book"
+	"github.com/curiona-org/backend/pkg/googleapi/youtube"
+	"github.com/curiona-org/backend/pkg/llm"
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
-	"github.com/roadmap-thesis/backend/pkg/cache"
-	"github.com/roadmap-thesis/backend/pkg/database"
-	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
-	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
-	"github.com/roadmap-thesis/backend/pkg/llm"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/sync/errgroup"
