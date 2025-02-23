@@ -74,7 +74,6 @@ func main() {
 	log.Info().Msg("Starting Application Server...")
 
 	group, groupCtx := errgroup.WithContext(ctx)
-	group.SetLimit(2)
 
 	group.Go(func() error {
 		return worker.Start(groupCtx)
