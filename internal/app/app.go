@@ -10,6 +10,7 @@ import (
 	"github.com/roadmap-thesis/backend/internal/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/internal/llm"
 	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/internal/worker"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -39,6 +40,7 @@ type application struct {
 	googleOAuth oauth.Client
 	googleBooks book.Client
 	youtube     youtube.Client
+	worker      worker.Worker
 	tracer      trace.Tracer
 }
 

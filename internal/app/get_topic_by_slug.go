@@ -9,6 +9,8 @@ import (
 	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
+	"github.com/roadmap-thesis/backend/internal/worker"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -67,7 +69,17 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 	defer youtubeSearchSpan.End()
 	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
-		return err
+		log.Warn().Msg("failed to search youtube")
+		err := app.worker.EnqueueSearchYoutubeExternalResources(youtubeSearchCtx,
+			worker.SearchYoutubeExternalResourcesInput{
+				TopicID:     topic.ID,
+				SearchQuery: topic.ExternalSearchQuery,
+			})
+		if err != nil {
+			log.Error().Err(err).Msg("failed to enqueue search youtube external resources")
+		}
+		log.Info().Msg("enqueued search youtube external resources")
+		return nil
 	}
 
 	externalResources := make([]*domain.ExternalResource, 0)
@@ -97,7 +109,17 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 	defer bookSearchSpan.End()
 	searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
-		return err
+		log.Warn().Msg("failed to search google books")
+		err := app.worker.EnqueueSearchGoogleBooksExternalResources(bookSearchCtx,
+			worker.SearchGoogleBooksExternalResourcesInput{
+				TopicID:     topic.ID,
+				SearchQuery: topic.ExternalSearchQuery,
+			})
+		if err != nil {
+			log.Error().Err(err).Msg("failed to enqueue search google books external resources")
+		}
+		log.Info().Msg("enqueued search google books external resources")
+		return nil
 	}
 
 	externalResources := make([]*domain.ExternalResource, 0)
