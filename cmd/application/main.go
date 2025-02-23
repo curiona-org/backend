@@ -24,7 +24,15 @@ func main() {
 	config.Init()
 	logger.Init(config.IsDevelopment())
 
-	provider, err := provider.New(ctx)
+	provider, err := provider.New().
+		WithDB().
+		WithCache().
+		WithQueue().
+		WithLLM().
+		WithYoutubeClient().
+		WithGoogleBooksClient().
+		WithTracing().
+		Init()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}

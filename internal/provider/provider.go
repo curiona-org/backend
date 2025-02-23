@@ -27,17 +27,16 @@ type Provider struct {
 	Tracing     *trace.TracerProvider
 	GoogleBooks book.Client
 	Youtube     youtube.Client
+
+	group errgroup.Group
 }
 
-func New(ctx context.Context) (*Provider, error) { //nolint:funlen
-	p := &Provider{
-		GoogleBooks: book.New(config.GoogleBooksAPIKey()),
-		Youtube:     youtube.New(config.YoutubeAPIKey()),
-	}
+func New() *Provider {
+	return &Provider{}
+}
 
-	var group errgroup.Group
-
-	group.Go(func() error {
+func (p *Provider) WithLLM() *Provider {
+	p.group.Go(func() error {
 		log.Info().Msg("initializing llm client")
 		var err error
 		p.LLM, err = llm.NewClient(
@@ -50,10 +49,13 @@ func New(ctx context.Context) (*Provider, error) { //nolint:funlen
 		return nil
 	})
 
-	group.Go(func() error {
-		log.Info().Msg("initializing postgresql")
+	return p
+}
+
+func (p *Provider) WithDB() *Provider {
+	p.group.Go(func() error {
 		var err error
-		p.DB, err = database.New(ctx, &database.Config{
+		p.DB, err = database.New(context.Background(), &database.Config{
 			Name:                  config.DBName(),
 			Host:                  config.DBHost(),
 			Port:                  config.DBPort(),
@@ -69,13 +71,17 @@ func New(ctx context.Context) (*Provider, error) { //nolint:funlen
 		if err != nil {
 			return errors.Wrap(err, "initializing postgresql")
 		}
+		log.Info().Msg("initialized postgresql")
 		return nil
 	})
 
-	group.Go(func() error {
-		log.Info().Msg("initializing cache")
+	return p
+}
+
+func (p *Provider) WithCache() *Provider {
+	p.group.Go(func() error {
 		var err error
-		p.Cache, err = cache.NewConnection(ctx, &cache.Config{
+		p.Cache, err = cache.NewConnection(context.Background(), &cache.Config{
 			Type: cache.TypeRedis,
 			RedisConfig: &redis.Config{
 				DB:       config.RedisDB(),
@@ -88,7 +94,15 @@ func New(ctx context.Context) (*Provider, error) { //nolint:funlen
 		if err != nil {
 			return errors.Wrap(err, "initializing cache")
 		}
+		log.Info().Msg("initialized cache")
+		return nil
+	})
 
+	return p
+}
+
+func (p *Provider) WithQueue() *Provider {
+	p.group.Go(func() error {
 		p.Queue = asynq.NewClient(asynq.RedisClientOpt{
 			DB:       config.RedisDB(),
 			Network:  config.RedisNetwork(),
@@ -110,13 +124,37 @@ func New(ctx context.Context) (*Provider, error) { //nolint:funlen
 			},
 		)
 
+		log.Info().Msg("initialized queue")
 		return nil
 	})
 
-	group.Go(func() error {
-		log.Info().Msg("initializing otel tracing provider")
+	return p
+}
+
+func (p *Provider) WithGoogleBooksClient() *Provider {
+	p.group.Go(func() error {
+		p.GoogleBooks = book.New(config.GoogleBooksAPIKey())
+		log.Info().Msg("initialized google books client")
+		return nil
+	})
+
+	return p
+}
+
+func (p *Provider) WithYoutubeClient() *Provider {
+	p.group.Go(func() error {
+		p.Youtube = youtube.New(config.YoutubeAPIKey())
+		log.Info().Msg("initialized youtube client")
+		return nil
+	})
+
+	return p
+}
+
+func (p *Provider) WithTracing() *Provider {
+	p.group.Go(func() error {
 		var err error
-		p.Tracing, err = tracing.NewProvider(ctx, tracing.ProviderConfig{
+		p.Tracing, err = tracing.NewProvider(context.Background(), tracing.ProviderConfig{
 			OTLPExporterEndpoint: config.OTLPExporterEndpoint(),
 			AppName:              config.AppName(),
 			AppEnv:               config.AppEnv(),
@@ -124,31 +162,46 @@ func New(ctx context.Context) (*Provider, error) { //nolint:funlen
 		if err != nil {
 			return errors.Wrap(err, "initializing tracer provider")
 		}
+		log.Info().Msg("initialized otel tracing provider")
 		return nil
 	})
 
-	if err := group.Wait(); err != nil {
-		return nil, err
+	return p
+}
+
+// Init initializes all the clients concurrently.
+// If any of the clients fail to initialize, the function returns an error.
+func (p *Provider) Init() (*Provider, error) {
+	if err := p.group.Wait(); err != nil {
+		return nil, errors.Wrap(err, "initializing clients")
 	}
 
 	return p, nil
 }
 
 func (p *Provider) Close(ctx context.Context) {
-	if err := p.DB.Close(); err != nil {
-		log.Warn().Err(err).Msg("failed closing database connection")
+	if p.DB != nil {
+		if err := p.DB.Close(); err != nil {
+			log.Warn().Err(err).Msg("failed closing database connection")
+		}
 	}
 
-	if err := p.Queue.Close(); err != nil {
-		log.Warn().Err(err).Msg("failed closing queue connection")
+	if p.Queue != nil {
+		if err := p.Queue.Close(); err != nil {
+			log.Warn().Err(err).Msg("failed closing queue connection")
+		}
 	}
 
-	if err := p.Cache.Close(); err != nil {
-		log.Warn().Err(err).Msg("failed closing cache connection")
+	if p.Cache != nil {
+		if err := p.Cache.Close(); err != nil {
+			log.Warn().Err(err).Msg("failed closing cache connection")
+		}
 	}
 
-	if err := p.Tracing.Shutdown(ctx); err != nil {
-		log.Warn().Err(err).Msg("failed shutting down tracer provider")
+	if p.Tracing != nil {
+		if err := p.Tracing.Shutdown(ctx); err != nil {
+			log.Warn().Err(err).Msg("failed shutting down tracer provider")
+		}
 	}
 
 	log.Info().Msg("clients shutdown complete")

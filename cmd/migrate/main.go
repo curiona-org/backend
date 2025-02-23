@@ -8,8 +8,8 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
 	"github.com/roadmap-thesis/backend/internal/config"
-	"github.com/roadmap-thesis/backend/internal/database"
 	"github.com/roadmap-thesis/backend/internal/logger"
+	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,23 +24,11 @@ func main() {
 	config.Init()
 	logger.Init(config.IsDevelopment())
 
-	postgresConn, err := database.New(ctx, &database.Config{
-		Name:                  config.DBName(),
-		Host:                  config.DBHost(),
-		Port:                  config.DBPort(),
-		User:                  config.DBUser(),
-		Password:              config.DBPassword(),
-		ConnectionTimeout:     config.DBConnectionTimeout(),
-		PoolMaxConnections:    config.DBPoolMaxConnections(),
-		PoolMinConnections:    config.DBPoolMinConnections(),
-		PoolMaxConnLifetime:   config.DBPoolMaxConnLifetime(),
-		PoolMaxConnIdleTime:   config.DBPoolMaxConnIdleTime(),
-		PoolHealthCheckPeriod: config.DBPoolHealthCheckPeriod(),
-	})
+	provider, err := provider.New().WithDB().Init()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}
-	defer postgresConn.Close()
+	defer provider.Close(ctx)
 
 	if err = goose.SetDialect("pgx"); err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize goose")
@@ -48,7 +36,7 @@ func main() {
 
 	goose.SetTableName("schema_migrations")
 
-	db := stdlib.OpenDBFromPool(postgresConn.Pool())
+	db := stdlib.OpenDBFromPool(provider.DB.Pool())
 	defer db.Close()
 
 	dir := "./migrations"
