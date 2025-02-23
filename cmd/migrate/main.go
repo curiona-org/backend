@@ -22,7 +22,7 @@ func main() {
 	defer cancel()
 
 	config.Init()
-	logger.Init(config.IsDevelopment())
+	logger.Init()
 
 	provider, err := provider.New().WithPostgresDB(ctx).Init()
 	if err != nil {

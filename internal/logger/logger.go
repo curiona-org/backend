@@ -3,17 +3,18 @@ package logger
 import (
 	"os"
 
+	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
 )
 
-func Init(debug bool) {
+func Init() {
 	// Setup logger
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
-	if debug {
+	if config.IsDevelopment() || config.IsStaging() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		log.Logger = log.
 			Output(zerolog.ConsoleWriter{Out: os.Stderr}).
@@ -22,7 +23,7 @@ func Init(debug bool) {
 			Stack().
 			Logger()
 	} else {
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 		log.Logger = log.
 			With().
 			Caller().
