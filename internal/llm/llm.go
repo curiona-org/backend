@@ -16,14 +16,15 @@ type Provider string
 const (
 	OpenAI   Provider = "openai"
 	DeepSeek Provider = "deepseek"
+	Groq     Provider = "groq"
 )
 
 func NewClient(provider Provider, authToken, model string) (Client, error) {
 	var client Client
 	switch provider {
-	case OpenAI:
-		log.Info().Msg("using OpenAI LLM provider")
-		client = NewOpenAiClient(authToken, model)
+	case OpenAI, Groq:
+		log.Info().Msgf("using %s LLM provider", provider)
+		client = NewOpenAiClient(provider, authToken, model)
 	case DeepSeek:
 		log.Info().Msg("using DeepSeek LLM provider")
 		client = NewDeepSeekClient(authToken, model)

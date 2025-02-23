@@ -19,8 +19,13 @@ type openAiClient struct {
 
 var _ Client = (*openAiClient)(nil)
 
-func NewOpenAiClient(authToken, model string) Client {
-	client := openai.NewClient(authToken)
+func NewOpenAiClient(provider Provider, authToken, model string) Client {
+	cfg := openai.DefaultConfig(authToken)
+	if provider == Groq {
+		cfg.BaseURL = "https://api.groq.com/openai/v1"
+	}
+
+	client := openai.NewClientWithConfig(cfg)
 
 	tracer := otel.Tracer("llm:openai")
 	return &openAiClient{
