@@ -31,7 +31,7 @@ type application struct {
 var _ Application = (*application)(nil)
 
 func New(repository *repository.Repository, auth *auth.Auth) Application {
-	tracer := otel.Tracer("application")
+	tracer := otel.Tracer("admin")
 	return &application{
 		repository: repository,
 		auth:       auth,
