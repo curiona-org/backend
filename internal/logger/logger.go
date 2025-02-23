@@ -14,7 +14,8 @@ func Init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
-	if config.IsDevelopment() {
+	switch {
+	case config.IsDevelopment():
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		log.Logger = log.
 			Output(zerolog.ConsoleWriter{Out: os.Stderr}).
@@ -22,14 +23,14 @@ func Init() {
 			Caller().
 			Stack().
 			Logger()
-	} else if config.IsStaging() {
+	case config.IsStaging():
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 		log.Logger = log.
 			With().
 			Caller().
 			Stack().
 			Logger()
-	} else {
+	default:
 		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 		log.Logger = log.
 			With().
