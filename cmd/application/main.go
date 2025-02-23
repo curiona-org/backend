@@ -12,6 +12,7 @@ import (
 	"github.com/roadmap-thesis/backend/internal/logger"
 	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/internal/worker"
 	"github.com/rs/zerolog/log"
 )
 
@@ -53,6 +54,16 @@ func main() {
 
 	api := api.New(config.Port(), app)
 
+	worker := worker.New(
+		provider.Queue,
+		provider.QueueServer,
+		postgresRepository,
+		provider.GoogleBooks,
+		provider.Youtube,
+	)
+
 	log.Info().Msg("Starting Application Server...")
+
+	go worker.Start()
 	api.Start(ctx)
 }

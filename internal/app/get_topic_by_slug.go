@@ -9,6 +9,8 @@ import (
 	"github.com/roadmap-thesis/backend/internal/apperrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
+	"github.com/roadmap-thesis/backend/internal/worker"
+	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -45,11 +47,37 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 		var mu sync.Mutex
 
 		group.Go(func() error {
-			return app.searchYoutubeExternalResources(traceCtx, &mu, &topic)
+			err := app.searchYoutubeExternalResources(traceCtx, &mu, &topic)
+			if err != nil {
+				log.Warn().Msg("failed to search youtube")
+				err := app.worker.EnqueueSearchYoutubeExternalResources(traceCtx,
+					worker.SearchYoutubeExternalResourcesInput{
+						TopicID:     topic.ID,
+						SearchQuery: topic.ExternalSearchQuery,
+					})
+				if err != nil {
+					log.Error().Err(err).Msg("failed to enqueue search youtube external resources")
+				}
+				log.Info().Msg("enqueued search youtube external resources")
+			}
+			return nil
 		})
 
 		group.Go(func() error {
-			return app.searchGoogleBooksExternalResources(traceCtx, &mu, &topic)
+			err := app.searchGoogleBooksExternalResources(traceCtx, &mu, &topic)
+			if err != nil {
+				log.Warn().Msg("failed to search google books")
+				err := app.worker.EnqueueSearchGoogleBooksExternalResources(traceCtx,
+					worker.SearchGoogleBooksExternalResourcesInput{
+						TopicID:     topic.ID,
+						SearchQuery: topic.ExternalSearchQuery,
+					})
+				if err != nil {
+					log.Error().Err(err).Msg("failed to enqueue search google books external resources")
+				}
+				log.Info().Msg("enqueued search google books external resources")
+			}
+			return nil
 		})
 
 		if err := group.Wait(); err != nil {

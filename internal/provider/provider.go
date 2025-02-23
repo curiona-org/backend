@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
 	"github.com/roadmap-thesis/backend/internal/cache"
 	"github.com/roadmap-thesis/backend/internal/config"
@@ -21,6 +22,8 @@ type Provider struct {
 	LLM         llm.Client
 	DB          database.Connection
 	Cache       *cache.Connection
+	Queue       *asynq.Client
+	QueueServer *asynq.Server
 	Tracing     *trace.TracerProvider
 	GoogleBooks book.Client
 	Youtube     youtube.Client
@@ -85,6 +88,28 @@ func New(ctx context.Context) (*Provider, error) {
 		if err != nil {
 			return errors.Wrap(err, "initializing cache")
 		}
+
+		p.Queue = asynq.NewClient(asynq.RedisClientOpt{
+			DB:       config.RedisDB(),
+			Network:  config.RedisNetwork(),
+			Addr:     config.RedisAddr(),
+			Username: config.RedisUsername(),
+			Password: config.RedisPassword(),
+		})
+
+		p.QueueServer = asynq.NewServer(
+			asynq.RedisClientOpt{
+				DB:       config.RedisDB(),
+				Network:  config.RedisNetwork(),
+				Addr:     config.RedisAddr(),
+				Username: config.RedisUsername(),
+				Password: config.RedisPassword(),
+			},
+			asynq.Config{
+				Concurrency: 10,
+			},
+		)
+
 		return nil
 	})
 
@@ -112,6 +137,10 @@ func New(ctx context.Context) (*Provider, error) {
 func (p *Provider) Close(ctx context.Context) {
 	if err := p.DB.Close(); err != nil {
 		log.Warn().Err(err).Msg("failed closing database connection")
+	}
+
+	if err := p.Queue.Close(); err != nil {
+		log.Warn().Err(err).Msg("failed closing queue connection")
 	}
 
 	if err := p.Cache.Close(); err != nil {
