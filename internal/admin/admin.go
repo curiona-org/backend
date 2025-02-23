@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Application interface {
+type AdminApp interface {
 	Statistics(ctx context.Context) (io.StatisticsOutput, error)
 
 	ListUsers(ctx context.Context) (io.ListUsersOutput, error)
@@ -27,9 +27,9 @@ type application struct {
 	tracer     trace.Tracer
 }
 
-var _ Application = (*application)(nil)
+var _ AdminApp = (*application)(nil)
 
-func New(repository repository.Repository, auth *auth.Auth) Application {
+func New(repository repository.Repository, auth *auth.Auth) AdminApp {
 	tracer := otel.Tracer("application")
 	return &application{
 		repository: repository,
