@@ -13,6 +13,8 @@ type JWT struct {
 	expiresIn time.Duration
 }
 
+var _ Token = (*JWT)(nil)
+
 func NewJWT(secret string, expiresIn time.Duration) Token {
 	return JWT{secret: secret, expiresIn: expiresIn}
 }

@@ -4,6 +4,8 @@ import "time"
 
 type Noop struct{}
 
+var _ Token
+
 func NewNoop() Token {
 	return Noop{}
 }

@@ -13,6 +13,8 @@ type google struct {
 	cfg *oauth2.Config
 }
 
+var _ Client = (*google)(nil)
+
 func NewGoogleProvider(clientID, clientSecret string) Client {
 	oauthConfig := &oauth2.Config{
 		ClientID:     clientID,

@@ -44,6 +44,8 @@ type application struct {
 	tracer      trace.Tracer
 }
 
+var _ Application = (*application)(nil)
+
 func New(
 	repository *repository.Repository,
 	llm llm.Client,

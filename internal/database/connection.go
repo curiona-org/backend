@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DB struct {
+type db struct {
 	pool *pgxpool.Pool
 }
 
@@ -29,6 +29,8 @@ type Connection interface {
 	// Pool returns the underlying pgxpool.Pool for direct access to the connection pool.
 	Pool() *pgxpool.Pool
 }
+
+var _ Connection = (*db)(nil)
 
 // New creates a new PostgreSQL pgxpool client.
 func New(ctx context.Context, cfg *Config) (Connection, error) {
@@ -46,7 +48,7 @@ func New(ctx context.Context, cfg *Config) (Connection, error) {
 		return nil, err
 	}
 
-	return &DB{pool: pool}, nil
+	return &db{pool: pool}, nil
 }
 
 // dbDSN builds a connection string suitable for the pgx Postgres driver, using
@@ -94,23 +96,23 @@ func dbValues(cfg *Config) map[string]string {
 	return p
 }
 
-func (db *DB) Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
+func (db *db) Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {
 	return db.pool.Exec(ctx, query, args...)
 }
 
-func (db *DB) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+func (db *db) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
 	return db.pool.QueryRow(ctx, query, args...)
 }
 
-func (db *DB) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+func (db *db) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
 	return db.pool.Query(ctx, query, args...)
 }
 
-func (db *DB) Pool() *pgxpool.Pool {
+func (db *db) Pool() *pgxpool.Pool {
 	return db.pool
 }
 
-func (db *DB) Close() error {
+func (db *db) Close() error {
 	db.pool.Close()
 	return nil
 }

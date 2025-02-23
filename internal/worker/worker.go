@@ -24,13 +24,6 @@ type Worker interface {
 		ctx context.Context,
 		payload SearchGoogleBooksExternalResourcesInput,
 	) error
-
-	Handler
-}
-
-type Handler interface {
-	searchYoutubeExternalResources(ctx context.Context, task *asynq.Task) error
-	searchGoogleBooksExternalResources(ctx context.Context, task *asynq.Task) error
 }
 
 var _ Worker = (*worker)(nil)

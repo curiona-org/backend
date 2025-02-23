@@ -18,6 +18,8 @@ type deepSeekClient struct {
 	tracer trace.Tracer
 }
 
+var _ Client = (*deepSeekClient)(nil)
+
 func NewDeepSeekClient(authToken, model string) Client {
 	client := deepseek.NewClient(authToken)
 	tracer := otel.Tracer("llm:deepseek")

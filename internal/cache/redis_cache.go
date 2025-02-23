@@ -19,6 +19,8 @@ type redisCache[V any] struct {
 	tracer trace.Tracer
 }
 
+var _ Cache[any] = (*redisCache[any])(nil)
+
 func NewRedisCache[V any](conn *redis.Client) Cache[V] {
 	tracer := otel.Tracer("cache:redis")
 	return &redisCache[V]{

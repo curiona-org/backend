@@ -17,6 +17,8 @@ type openAiClient struct {
 	tracer trace.Tracer
 }
 
+var _ Client = (*openAiClient)(nil)
+
 func NewOpenAiClient(authToken, model string) Client {
 	client := openai.NewClient(authToken)
 

@@ -8,6 +8,8 @@ import (
 type noopCache[V any] struct {
 }
 
+var _ Cache[any] = (*noopCache[any])(nil)
+
 func NewNoopCache[V any]() Cache[V] {
 	return &noopCache[V]{}
 }
