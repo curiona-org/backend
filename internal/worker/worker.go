@@ -12,7 +12,9 @@ import (
 )
 
 type Worker interface {
-	Start() error
+	// Start starts the worker and listens for incoming tasks.
+	// Should be called in the main function.
+	Start(ctx context.Context) error
 
 	EnqueueSearchYoutubeExternalResources(
 		ctx context.Context,
@@ -23,9 +25,15 @@ type Worker interface {
 		payload SearchGoogleBooksExternalResourcesInput,
 	) error
 
+	Handler
+}
+
+type Handler interface {
 	searchYoutubeExternalResources(ctx context.Context, task *asynq.Task) error
 	searchGoogleBooksExternalResources(ctx context.Context, task *asynq.Task) error
 }
+
+var _ Worker = (*worker)(nil)
 
 type worker struct {
 	srv         *asynq.Server
@@ -59,11 +67,11 @@ var (
 	TaskSearchGoogleBooksExternalResources = "queue:external_resources:google_books"
 )
 
-func (w *worker) Start() error {
+func (w *worker) Start(ctx context.Context) error {
 	mux := asynq.NewServeMux()
 
 	mux.HandleFunc(TaskSearchYoutubeExternalResources, w.searchYoutubeExternalResources)
 	mux.HandleFunc(TaskSearchGoogleBooksExternalResources, w.searchGoogleBooksExternalResources)
 
-	return w.srv.Start(mux)
+	return w.srv.Run(mux)
 }

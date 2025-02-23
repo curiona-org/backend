@@ -14,6 +14,7 @@ import (
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/internal/worker"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -64,6 +65,21 @@ func main() {
 
 	log.Info().Msg("Starting Application Server...")
 
-	go worker.Start()
-	api.Start(ctx)
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.SetLimit(2)
+
+	group.Go(func() error {
+		return worker.Start(groupCtx)
+	})
+
+	group.Go(func() error {
+		api.Start(groupCtx)
+		return nil
+	})
+
+	if err := group.Wait(); err != nil {
+		log.Fatal().Err(err).Msg("Encountered an error while running the application") //nolint:gocritic
+	}
+
+	log.Info().Msg("Application shutdown")
 }

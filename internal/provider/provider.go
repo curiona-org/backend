@@ -29,7 +29,7 @@ type Provider struct {
 	Youtube     youtube.Client
 }
 
-func New(ctx context.Context) (*Provider, error) {
+func New(ctx context.Context) (*Provider, error) { //nolint:funlen
 	p := &Provider{
 		GoogleBooks: book.New(config.GoogleBooksAPIKey()),
 		Youtube:     youtube.New(config.YoutubeAPIKey()),
