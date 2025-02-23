@@ -20,3 +20,5 @@ coverage/*
 go.work
 
 node_modules
+
+.vscode
