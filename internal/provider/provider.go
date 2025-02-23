@@ -52,10 +52,10 @@ func (p *Provider) WithLLM() *Provider {
 	return p
 }
 
-func (p *Provider) WithPostgresDB() *Provider {
+func (p *Provider) WithPostgresDB(ctx context.Context) *Provider {
 	p.group.Go(func() error {
 		var err error
-		p.DB, err = database.New(context.Background(), &database.Config{
+		p.DB, err = database.New(ctx, &database.Config{
 			Name:                  config.DBName(),
 			Host:                  config.DBHost(),
 			Port:                  config.DBPort(),
@@ -78,10 +78,10 @@ func (p *Provider) WithPostgresDB() *Provider {
 	return p
 }
 
-func (p *Provider) WithRedisCache() *Provider {
+func (p *Provider) WithRedisCache(ctx context.Context) *Provider {
 	p.group.Go(func() error {
 		var err error
-		p.Cache, err = cache.NewConnection(context.Background(), &cache.Config{
+		p.Cache, err = cache.NewConnection(ctx, &cache.Config{
 			Type: cache.TypeRedis,
 			RedisConfig: &redis.Config{
 				DB:       config.RedisDB(),
@@ -101,10 +101,10 @@ func (p *Provider) WithRedisCache() *Provider {
 	return p
 }
 
-func (p *Provider) WithNoopCache() *Provider {
+func (p *Provider) WithNoopCache(ctx context.Context) *Provider {
 	p.group.Go(func() error {
 		var err error
-		p.Cache, err = cache.NewConnection(context.Background(), &cache.Config{
+		p.Cache, err = cache.NewConnection(ctx, &cache.Config{
 			Type: cache.TypeNoop,
 		})
 		if err != nil {
@@ -167,10 +167,10 @@ func (p *Provider) WithYoutubeClient() *Provider {
 	return p
 }
 
-func (p *Provider) WithTracing() *Provider {
+func (p *Provider) WithTracing(ctx context.Context) *Provider {
 	p.group.Go(func() error {
 		var err error
-		p.Tracing, err = tracing.NewProvider(context.Background(), tracing.ProviderConfig{
+		p.Tracing, err = tracing.NewProvider(ctx, tracing.ProviderConfig{
 			OTLPExporterEndpoint: config.OTLPExporterEndpoint(),
 			AppName:              config.AppName(),
 			AppEnv:               config.AppEnv(),

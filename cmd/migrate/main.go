@@ -24,7 +24,7 @@ func main() {
 	config.Init()
 	logger.Init(config.IsDevelopment())
 
-	provider, err := provider.New().WithPostgresDB().Init()
+	provider, err := provider.New().WithPostgresDB(ctx).Init()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}

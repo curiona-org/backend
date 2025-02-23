@@ -25,13 +25,13 @@ func main() {
 	logger.Init(config.IsDevelopment())
 
 	provider, err := provider.New().
-		WithPostgresDB().
-		WithRedisCache().
+		WithPostgresDB(ctx).
+		WithRedisCache(ctx).
 		WithQueue().
 		WithLLM().
 		WithYoutubeClient().
 		WithGoogleBooksClient().
-		WithTracing().
+		WithTracing(ctx).
 		Init()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
