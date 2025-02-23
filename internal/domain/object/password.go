@@ -4,8 +4,8 @@ import (
 	"errors"
 	"unicode"
 
-	"github.com/roadmap-thesis/backend/internal/cerrors"
-	"github.com/roadmap-thesis/backend/internal/crypto"
+	"github.com/roadmap-thesis/backend/pkg/cerrors"
+	"github.com/roadmap-thesis/backend/pkg/crypto"
 )
 
 var (

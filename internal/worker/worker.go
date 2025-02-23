@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/hibiken/asynq"
-	"github.com/roadmap-thesis/backend/internal/googleapi/book"
-	"github.com/roadmap-thesis/backend/internal/googleapi/youtube"
 	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )

@@ -3,7 +3,7 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/roadmap-thesis/backend/internal/crypto"
+	"github.com/roadmap-thesis/backend/pkg/crypto"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

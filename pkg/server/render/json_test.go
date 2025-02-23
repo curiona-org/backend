@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/internal/server/render"
+	"github.com/roadmap-thesis/backend/pkg/server/render"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

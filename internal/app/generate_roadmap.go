@@ -10,7 +10,7 @@ import (
 	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/domain"
 	"github.com/roadmap-thesis/backend/internal/domain/object"
-	"github.com/roadmap-thesis/backend/internal/llm"
+	"github.com/roadmap-thesis/backend/pkg/llm"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"

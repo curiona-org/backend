@@ -4,17 +4,19 @@ import (
 	"context"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/roadmap-thesis/backend/internal/admin"
 	"github.com/roadmap-thesis/backend/internal/api"
 	"github.com/roadmap-thesis/backend/internal/app"
-	"github.com/roadmap-thesis/backend/internal/auth"
-	"github.com/roadmap-thesis/backend/internal/auth/oauth"
-	"github.com/roadmap-thesis/backend/internal/cache"
+	"github.com/roadmap-thesis/backend/internal/chat"
 	"github.com/roadmap-thesis/backend/internal/config"
-	"github.com/roadmap-thesis/backend/internal/logger"
 	"github.com/roadmap-thesis/backend/internal/provider"
 	"github.com/roadmap-thesis/backend/internal/provider/option"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/internal/worker"
+	"github.com/roadmap-thesis/backend/pkg/auth"
+	"github.com/roadmap-thesis/backend/pkg/auth/oauth"
+	"github.com/roadmap-thesis/backend/pkg/cache"
+	"github.com/roadmap-thesis/backend/pkg/logger"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
@@ -43,18 +45,29 @@ func main() {
 	log.Info().Msg("Bootstrapping application...")
 	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Cache)
 
-	app := app.New(
+	worker := worker.New(
+		provider.Queue,
+		provider.QueueServer,
+		postgresRepository,
+		provider.GoogleBooks,
+		provider.Youtube,
+	)
+
+	auth := auth.New(
+		auth.StrategyJWT,
+		&auth.Config{
+			AccessSecretKey:  config.AccessSecretKey(),
+			AccessExpiresIn:  config.AccessExpiresIn(),
+			RefreshSecretKey: config.RefreshSecretKey(),
+			RefreshExpiresIn: config.RefreshExpiresIn(),
+		},
+	)
+
+	curionaApp := app.New(
+		worker,
 		postgresRepository,
 		provider.LLM,
-		auth.New(
-			auth.StrategyJWT,
-			&auth.Config{
-				AccessSecretKey:  config.AccessSecretKey(),
-				AccessExpiresIn:  config.AccessExpiresIn(),
-				RefreshSecretKey: config.RefreshSecretKey(),
-				RefreshExpiresIn: config.RefreshExpiresIn(),
-			},
-		),
+		auth,
 		oauth.NewGoogleProvider(
 			config.GoogleClientID(),
 			config.GoogleClientSecret(),
@@ -62,15 +75,14 @@ func main() {
 		provider.GoogleBooks,
 		provider.Youtube,
 	)
+	adminApp := admin.New(postgresRepository, auth)
+	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth)
 
-	api := api.New(config.Port(), app)
-
-	worker := worker.New(
-		provider.Queue,
-		provider.QueueServer,
-		postgresRepository,
-		provider.GoogleBooks,
-		provider.Youtube,
+	api := api.New(
+		config.Port(),
+		curionaApp,
+		adminApp,
+		chatApp,
 	)
 
 	log.Info().Msg("Starting Application Server...")

@@ -6,9 +6,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/roadmap-thesis/backend/internal/cache"
-	"github.com/roadmap-thesis/backend/internal/database"
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/cache"
+	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/rs/zerolog/log"
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"

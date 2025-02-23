@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/internal/cerrors"
-	"github.com/roadmap-thesis/backend/internal/server/render"
+	"github.com/roadmap-thesis/backend/pkg/cerrors"
+	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 func (a *API) GetRoadmapBySlug(c echo.Context) error {

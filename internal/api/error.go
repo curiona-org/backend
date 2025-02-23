@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/roadmap-thesis/backend/internal/cerrors"
-	"github.com/roadmap-thesis/backend/internal/server/render"
+	"github.com/roadmap-thesis/backend/pkg/cerrors"
+	"github.com/roadmap-thesis/backend/pkg/server/render"
 )
 
 //nolint:staticcheck,errorlint,wastedassign

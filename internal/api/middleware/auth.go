@@ -6,11 +6,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/roadmap-thesis/backend/internal/app"
-	"github.com/roadmap-thesis/backend/internal/auth"
-	"github.com/roadmap-thesis/backend/internal/cerrors"
+	"github.com/roadmap-thesis/backend/pkg/auth"
+	"github.com/roadmap-thesis/backend/pkg/cerrors"
 )
 
-func AuthMiddleware(app app.Application) func(next echo.HandlerFunc) echo.HandlerFunc {
+func AuthMiddleware(app app.CurionaApplication) func(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			reqCtx := c.Request().Context()

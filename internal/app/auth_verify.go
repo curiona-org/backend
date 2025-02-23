@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/auth"
+	"github.com/roadmap-thesis/backend/pkg/auth"
 )
 
 func (app *application) AuthVerify(ctx context.Context, token string) (*auth.Payload, error) {

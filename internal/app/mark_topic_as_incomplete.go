@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/roadmap-thesis/backend/internal/app/io"
-	"github.com/roadmap-thesis/backend/internal/cerrors"
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/cerrors"
 )
 
 func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.MarkTopicInput) error {

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/roadmap-thesis/backend/internal/database"
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"

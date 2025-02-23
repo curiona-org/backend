@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/roadmap-thesis/backend/internal/admin/io"
-	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/repository"
+	"github.com/roadmap-thesis/backend/pkg/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
 
-type AdminApp interface {
+// Application is the interface that provides the admin application methods.
+type Application interface {
 	Statistics(ctx context.Context) (io.StatisticsOutput, error)
 
 	ListUsers(ctx context.Context) (io.ListUsersOutput, error)
@@ -22,14 +23,14 @@ type AdminApp interface {
 }
 
 type application struct {
-	repository repository.Repository
+	repository *repository.Repository
 	auth       *auth.Auth
 	tracer     trace.Tracer
 }
 
-var _ AdminApp = (*application)(nil)
+var _ Application = (*application)(nil)
 
-func New(repository repository.Repository, auth *auth.Auth) AdminApp {
+func New(repository *repository.Repository, auth *auth.Auth) Application {
 	tracer := otel.Tracer("application")
 	return &application{
 		repository: repository,

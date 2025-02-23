@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/roadmap-thesis/backend/internal/database"
 	"github.com/roadmap-thesis/backend/internal/domain"
+	"github.com/roadmap-thesis/backend/pkg/database"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"go.opentelemetry.io/otel"

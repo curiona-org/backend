@@ -3,8 +3,8 @@ package config
 import (
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/env"
-	"github.com/roadmap-thesis/backend/internal/llm"
+	"github.com/roadmap-thesis/backend/pkg/env"
+	"github.com/roadmap-thesis/backend/pkg/llm"
 )
 
 // Config is the global config for the application.

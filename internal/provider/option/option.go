@@ -5,15 +5,15 @@ import (
 
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
-	"github.com/roadmap-thesis/backend/internal/cache"
 	"github.com/roadmap-thesis/backend/internal/config"
-	"github.com/roadmap-thesis/backend/internal/database"
-	"github.com/roadmap-thesis/backend/internal/googleapi/book"
-	"github.com/roadmap-thesis/backend/internal/googleapi/youtube"
-	"github.com/roadmap-thesis/backend/internal/llm"
 	"github.com/roadmap-thesis/backend/internal/provider"
-	"github.com/roadmap-thesis/backend/internal/redis"
-	"github.com/roadmap-thesis/backend/internal/tracing"
+	"github.com/roadmap-thesis/backend/pkg/cache"
+	"github.com/roadmap-thesis/backend/pkg/database"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/book"
+	"github.com/roadmap-thesis/backend/pkg/googleapi/youtube"
+	"github.com/roadmap-thesis/backend/pkg/llm"
+	"github.com/roadmap-thesis/backend/pkg/redis"
+	"github.com/roadmap-thesis/backend/pkg/tracing"
 	"github.com/rs/zerolog/log"
 )
 

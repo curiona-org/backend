@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/roadmap-thesis/backend/internal/redis"
+	"github.com/roadmap-thesis/backend/pkg/redis"
 )
 
 const (

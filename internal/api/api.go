@@ -5,10 +5,12 @@ import (
 
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/roadmap-thesis/backend/internal/admin"
 	"github.com/roadmap-thesis/backend/internal/api/middleware"
 	"github.com/roadmap-thesis/backend/internal/app"
+	"github.com/roadmap-thesis/backend/internal/chat"
 	"github.com/roadmap-thesis/backend/internal/config"
-	"github.com/roadmap-thesis/backend/internal/server"
+	"github.com/roadmap-thesis/backend/pkg/server"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"golang.org/x/time/rate"
@@ -16,15 +18,19 @@ import (
 
 type API struct {
 	instance    *server.Server
-	application app.Application
+	application app.CurionaApplication
+	adminApp    admin.Application
+	chatApp     chat.Application
 }
 
-func New(port string, application app.Application) *API {
+func New(port string, curionaApp app.CurionaApplication, adminApp admin.Application, chatApp chat.Application) *API {
 	instance := server.New(port)
 
 	api := &API{
-		application: application,
 		instance:    instance,
+		application: curionaApp,
+		adminApp:    adminApp,
+		chatApp:     chatApp,
 	}
 
 	api.setupMiddlewares()
