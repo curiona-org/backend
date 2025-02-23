@@ -41,11 +41,11 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	roadmap := domain.NewRoadmap(input.AccountID, generated.Title, generated.Description)
 
 	for _, topic := range generated.Topics {
-		newTopic := domain.NewTopic(topic.Title, topic.Description, topic.SearchQuery)
+		newTopic := domain.NewTopic(input.AccountID, topic.Title, topic.Description, topic.SearchQuery)
 		roadmap.AddTopic(newTopic)
 		if len(topic.Subtopics) > 0 {
 			for _, subtopic := range topic.Subtopics {
-				newSubtopic := domain.NewTopic(subtopic.Title, subtopic.Description, subtopic.SearchQuery)
+				newSubtopic := domain.NewTopic(input.AccountID, subtopic.Title, subtopic.Description, subtopic.SearchQuery)
 				newTopic.AddSubtopic(newSubtopic)
 			}
 		}

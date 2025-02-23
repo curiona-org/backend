@@ -28,6 +28,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 
 	output := io.GetTopicOutput{
 		ID:          topic.ID,
+		AccountID:   topic.AccountID,
 		RoadmapID:   topic.RoadmapID,
 		ParentID:    topic.ParentID,
 		Title:       topic.Title,

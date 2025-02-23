@@ -284,11 +284,11 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 
 	// Insert the topics
 	insertTopicMods := []bob.Mod[*dialect.InsertQuery]{
-		im.Into(domain.TopicTable, "roadmap_id", "title", "slug", "description", "order", "finished", "external_search_query", "created_at", "updated_at"),
+		im.Into(domain.TopicTable, "account_id", "roadmap_id", "title", "slug", "description", "order", "finished", "external_search_query", "created_at", "updated_at"),
 	}
 	for _, topic := range topics {
 		subTopicMap[topic.Slug] = topic.Subtopics
-		arg := psql.Arg(roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.Finished, topic.ExternalSearchQuery, topic.CreatedAt, topic.UpdatedAt)
+		arg := psql.Arg(topic.AccountID, roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.Finished, topic.ExternalSearchQuery, topic.CreatedAt, topic.UpdatedAt)
 		insertTopicMods = append(insertTopicMods, im.Values(arg))
 	}
 	insertTopicMods = append(insertTopicMods, im.Returning("id", "slug"))
@@ -341,7 +341,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 
 		// Link the subtopic
 		linkedSubtopics = append(linkedSubtopics, []any{
-			roadmapID, parentID,
+			item.AccountID, roadmapID, parentID,
 			item.Title, item.Slug, item.Description, item.Order, item.Finished, item.ExternalSearchQuery,
 			item.CreatedAt, item.UpdatedAt,
 		})
@@ -351,7 +351,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	// Store the subtopics
 	_, err = tx.CopyFrom(ctx,
 		pgx.Identifier{domain.TopicTable},
-		[]string{"roadmap_id", "parent_id",
+		[]string{"account_id", "roadmap_id", "parent_id",
 			"title", "slug", "description", "order", "finished", "external_search_query",
 			"created_at", "updated_at"},
 		pgx.CopyFromRows(linkedSubtopics),

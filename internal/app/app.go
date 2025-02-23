@@ -28,8 +28,8 @@ type Application interface {
 	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 
 	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)
-	MarkTopicAsFinished(ctx context.Context, slug string) error
-	MarkTopicAsIncomplete(ctx context.Context, slug string) error
+	MarkTopicAsFinished(ctx context.Context, input io.MarkTopicInput) error
+	MarkTopicAsIncomplete(ctx context.Context, input io.MarkTopicInput) error
 }
 
 type application struct {

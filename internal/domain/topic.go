@@ -18,6 +18,7 @@ var (
 
 type Topic struct {
 	ID                  int
+	AccountID           int
 	RoadmapID           int
 	ParentID            int
 	Title               string
@@ -34,8 +35,9 @@ type Topic struct {
 	UpdatedAt time.Time
 }
 
-func NewTopic(title, description, externalSearchQuery string) *Topic {
+func NewTopic(accountID int, title, description, externalSearchQuery string) *Topic {
 	return &Topic{
+		AccountID:           accountID,
 		Title:               title,
 		Slug:                slug.Make(title + " " + str.Random(5)),
 		Description:         description,
@@ -48,6 +50,7 @@ func NewTopic(title, description, externalSearchQuery string) *Topic {
 
 func (e *Topic) IsZero() bool {
 	return e.ID == 0 &&
+		e.AccountID == 0 &&
 		e.RoadmapID == 0 &&
 		e.ParentID == 0 &&
 		e.Title == "" &&

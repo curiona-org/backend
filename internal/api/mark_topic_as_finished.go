@@ -2,7 +2,9 @@ package api
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/roadmap-thesis/backend/internal/app/io"
 	"github.com/roadmap-thesis/backend/internal/apperrors"
+	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/server/render"
 )
 
@@ -12,7 +14,11 @@ func (a *API) MarkTopicAsFinished(c echo.Context) error {
 		return apperrors.NotFound()
 	}
 
-	err := a.application.MarkTopicAsFinished(c.Request().Context(), slug)
+	auth := auth.FromContext(c.Request().Context())
+	err := a.application.MarkTopicAsFinished(c.Request().Context(), io.MarkTopicInput{
+		Slug:      slug,
+		AccountID: auth.ID,
+	})
 	if err != nil {
 		return err
 	}

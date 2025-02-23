@@ -55,6 +55,7 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 		query, args := psql.Select(
 			sm.Columns(
 				psql.Quote(domain.TopicTable, "id"),
+				psql.Quote(domain.TopicTable, "account_id"),
 				psql.Quote(domain.TopicTable, "roadmap_id"),
 				psql.Quote(domain.TopicTable, "parent_id"),
 				psql.Quote(domain.TopicTable, "title"),
@@ -131,6 +132,7 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 		var externalSearchQuery pgtype.Text
 		err = rows.Scan(
 			&topic.ID,
+			&topic.AccountID,
 			&topic.RoadmapID,
 			&topicParentID,
 			&topic.Title,
@@ -242,6 +244,7 @@ func (r *TopicRepository) Update(ctx context.Context, slug string, updateFn func
 		fetchTopicQuery, fetchTopicArgs := psql.Select(
 			sm.Columns(
 				psql.Quote(domain.TopicTable, "id"),
+				psql.Quote(domain.TopicTable, "account_id"),
 				psql.Quote(domain.TopicTable, "roadmap_id"),
 				psql.Quote(domain.TopicTable, "parent_id"),
 				psql.Quote(domain.TopicTable, "title"),

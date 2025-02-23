@@ -4,6 +4,7 @@ import "time"
 
 type GetTopicOutput struct {
 	ID          int    `json:"id"`
+	AccountID   int    `json:"account_id"`
 	RoadmapID   int    `json:"roadmap_id"`
 	ParentID    int    `json:"parent_id"`
 	Title       string `json:"title"`
