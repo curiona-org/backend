@@ -78,7 +78,7 @@ func main() {
 	})
 
 	if err := group.Wait(); err != nil {
-		log.Fatal().Err(err).Msg("Encountered an error while running the application") //nolint:gocritic
+		log.Fatal().Err(err).Msg("Encountered an error while running the application")
 	}
 
 	log.Info().Msg("Application shutdown")

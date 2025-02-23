@@ -47,37 +47,11 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 		var mu sync.Mutex
 
 		group.Go(func() error {
-			err := app.searchYoutubeExternalResources(traceCtx, &mu, &topic)
-			if err != nil {
-				log.Warn().Msg("failed to search youtube")
-				err := app.worker.EnqueueSearchYoutubeExternalResources(traceCtx,
-					worker.SearchYoutubeExternalResourcesInput{
-						TopicID:     topic.ID,
-						SearchQuery: topic.ExternalSearchQuery,
-					})
-				if err != nil {
-					log.Error().Err(err).Msg("failed to enqueue search youtube external resources")
-				}
-				log.Info().Msg("enqueued search youtube external resources")
-			}
-			return nil
+			return app.searchYoutubeExternalResources(traceCtx, &mu, &topic)
 		})
 
 		group.Go(func() error {
-			err := app.searchGoogleBooksExternalResources(traceCtx, &mu, &topic)
-			if err != nil {
-				log.Warn().Msg("failed to search google books")
-				err := app.worker.EnqueueSearchGoogleBooksExternalResources(traceCtx,
-					worker.SearchGoogleBooksExternalResourcesInput{
-						TopicID:     topic.ID,
-						SearchQuery: topic.ExternalSearchQuery,
-					})
-				if err != nil {
-					log.Error().Err(err).Msg("failed to enqueue search google books external resources")
-				}
-				log.Info().Msg("enqueued search google books external resources")
-			}
-			return nil
+			return app.searchGoogleBooksExternalResources(traceCtx, &mu, &topic)
 		})
 
 		if err := group.Wait(); err != nil {
@@ -95,7 +69,17 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 	defer youtubeSearchSpan.End()
 	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
-		return err
+		log.Warn().Msg("failed to search youtube")
+		err := app.worker.EnqueueSearchYoutubeExternalResources(youtubeSearchCtx,
+			worker.SearchYoutubeExternalResourcesInput{
+				TopicID:     topic.ID,
+				SearchQuery: topic.ExternalSearchQuery,
+			})
+		if err != nil {
+			log.Error().Err(err).Msg("failed to enqueue search youtube external resources")
+		}
+		log.Info().Msg("enqueued search youtube external resources")
+		return nil
 	}
 
 	externalResources := make([]*domain.ExternalResource, 0)
@@ -125,7 +109,17 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 	defer bookSearchSpan.End()
 	searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
-		return err
+		log.Warn().Msg("failed to search google books")
+		err := app.worker.EnqueueSearchGoogleBooksExternalResources(bookSearchCtx,
+			worker.SearchGoogleBooksExternalResourcesInput{
+				TopicID:     topic.ID,
+				SearchQuery: topic.ExternalSearchQuery,
+			})
+		if err != nil {
+			log.Error().Err(err).Msg("failed to enqueue search google books external resources")
+		}
+		log.Info().Msg("enqueued search google books external resources")
+		return nil
 	}
 
 	externalResources := make([]*domain.ExternalResource, 0)
