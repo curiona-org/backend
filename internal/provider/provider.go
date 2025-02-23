@@ -208,6 +208,10 @@ func (p *Provider) Close(ctx context.Context) {
 		}
 	}
 
+	if p.QueueServer != nil {
+		p.QueueServer.Stop()
+	}
+
 	if p.Cache != nil {
 		if err := p.Cache.Close(); err != nil {
 			log.Warn().Err(err).Msg("failed closing cache connection")
