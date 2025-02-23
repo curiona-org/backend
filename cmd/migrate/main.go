@@ -10,6 +10,7 @@ import (
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/internal/logger"
 	"github.com/roadmap-thesis/backend/internal/provider"
+	"github.com/roadmap-thesis/backend/internal/provider/option"
 	"github.com/rs/zerolog/log"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	config.Init()
 	logger.Init()
 
-	provider, err := provider.New().WithPostgresDB(ctx).Init()
+	provider, err := provider.New(option.WithPostgresDB(ctx))
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}

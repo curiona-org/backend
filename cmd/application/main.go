@@ -8,9 +8,11 @@ import (
 	"github.com/roadmap-thesis/backend/internal/app"
 	"github.com/roadmap-thesis/backend/internal/auth"
 	"github.com/roadmap-thesis/backend/internal/auth/oauth"
+	"github.com/roadmap-thesis/backend/internal/cache"
 	"github.com/roadmap-thesis/backend/internal/config"
 	"github.com/roadmap-thesis/backend/internal/logger"
 	"github.com/roadmap-thesis/backend/internal/provider"
+	"github.com/roadmap-thesis/backend/internal/provider/option"
 	"github.com/roadmap-thesis/backend/internal/repository"
 	"github.com/roadmap-thesis/backend/internal/worker"
 	"github.com/rs/zerolog/log"
@@ -24,15 +26,15 @@ func main() {
 	config.Init()
 	logger.Init()
 
-	provider, err := provider.New().
-		WithPostgresDB(ctx).
-		WithRedisCache(ctx).
-		WithQueue().
-		WithLLM().
-		WithYoutubeClient().
-		WithGoogleBooksClient().
-		WithTracing(ctx).
-		Init()
+	provider, err := provider.New(
+		option.WithLLM(),
+		option.WithPostgresDB(ctx),
+		option.WithCache(ctx, cache.TypeRedis),
+		option.WithQueue(),
+		option.WithYoutubeClient(),
+		option.WithGoogleBooksClient(),
+		option.WithTracing(ctx),
+	)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize provider") //nolint:gocritic
 	}
