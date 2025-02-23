@@ -13,8 +13,8 @@ type AuthInput struct {
 	Password   string `json:"password" validate:"required_without=OAuthToken,omitempty,min=6"`
 	OAuthToken string `json:"oauth_token" validate:"required_without_all=Email Password,omitempty"`
 
-	ClientIP  string `json:"-"`
 	UserAgent string `json:"-"`
+	ClientIP  string `json:"-"`
 
 	Provider            object.AccountProvider `json:"-"`
 	IgnorePasswordCheck bool                   `json:"-"` // used to skip password check in some cases

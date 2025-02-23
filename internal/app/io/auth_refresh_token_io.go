@@ -4,6 +4,9 @@ import "time"
 
 type AuthRefreshInput struct {
 	Token string `json:"token" validate:"required"`
+
+	UserAgent string `json:"-"`
+	ClientIP  string `json:"-"`
 }
 
 type AuthRefreshOutput struct {

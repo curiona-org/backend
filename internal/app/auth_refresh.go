@@ -45,6 +45,8 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 
 		session.Renew(
 			refreshToken,
+			input.UserAgent,
+			input.ClientIP,
 			app.auth.Refresh.ExpiresAt(),
 		)
 		return true, nil

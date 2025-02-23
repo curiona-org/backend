@@ -16,7 +16,9 @@ func (a *API) AuthRefresh(c echo.Context) error {
 	}
 
 	output, err := a.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
-		Token: refreshToken.Value,
+		Token:     refreshToken.Value,
+		UserAgent: c.Request().UserAgent(),
+		ClientIP:  c.RealIP(),
 	})
 	if err != nil {
 		return err

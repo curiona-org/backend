@@ -206,6 +206,8 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 
 		updateOldSessionQuery, updateOldSessionArgs := psql.Update(
 			um.Table(domain.SessionTable),
+			um.SetCol("user_agent").ToArg(session.UserAgent),
+			um.SetCol("client_ip").ToArg(session.ClientIP),
 			um.SetCol("blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)

@@ -46,8 +46,10 @@ func (s *Session) MarkAsBlocked() {
 }
 
 // Renew renews the session with a new refresh token and expiration time.
-func (s *Session) Renew(refreshToken string, expiresAt time.Time) {
+func (s *Session) Renew(refreshToken, userAgent, clientIP string, expiresAt time.Time) {
 	s.RefreshToken = refreshToken
+	s.UserAgent = userAgent
+	s.ClientIP = clientIP
 	s.Blocked = false
 	s.ExpiresAt = expiresAt
 }

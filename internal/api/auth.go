@@ -20,8 +20,8 @@ func (a *API) Auth(c echo.Context) error {
 		return err
 	}
 
-	input.ClientIP = c.RealIP()
 	input.UserAgent = c.Request().UserAgent()
+	input.ClientIP = c.RealIP()
 	output, err := a.application.Auth(c.Request().Context(), input)
 	if err != nil {
 		return err
