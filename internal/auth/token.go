@@ -43,7 +43,12 @@ func NewToken(secret string, accountID int, expiresIn time.Duration) *Token {
 
 // TokenFromContext retrieves the token from a context using the context key
 func TokenFromContext(ctx context.Context) *Token {
-	return ctx.Value(ContextKey).(*Token)
+	token, ok := ctx.Value(ContextKey).(*Token)
+	if !ok {
+		return nil
+	}
+
+	return token
 }
 
 // Marshal generates a JWT token from the token struct
