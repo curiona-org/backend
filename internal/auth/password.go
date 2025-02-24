@@ -69,13 +69,13 @@ func (p Password) Hash() (string, error) {
 // Compare returns wether the plaintext password matches the password digest.
 func (p Password) Compare(digest string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(digest), []byte(p))
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return true
-	case bcrypt.ErrMismatchedHashAndPassword:
+	case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 		return false
 	default:
-		log.Error().Err(err).Msg("there was a problem hashing the password")
+		log.Error().Err(err).Msg("failed to compare password")
 		return false
 	}
 }
