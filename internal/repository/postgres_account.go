@@ -31,6 +31,7 @@ func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "provider"),
 			psql.Quote(domain.AccountTable, "email"),
 			psql.Quote(domain.AccountTable, "password"),
 			psql.Quote(domain.AccountTable, "created_at"),
