@@ -16,7 +16,7 @@ CREATE UNIQUE INDEX idx_accounts_email ON accounts (email);
 CREATE TABLE sessions (
     id SERIAL PRIMARY KEY,
     account_id INTEGER NOT NULL,
-    refresh_token VARCHAR(255) NOT NULL UNIQUE,
+    refresh_token VARCHAR(255) NOT NULL,
     user_agent VARCHAR(255) NOT NULL,
     client_ip VARCHAR(39) NOT NULL,
     blocked BOOLEAN NOT NULL DEFAULT FALSE,
@@ -27,6 +27,7 @@ CREATE TABLE sessions (
     ) REFERENCES accounts (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_sessions_account_id ON sessions (account_id);
+CREATE UNIQUE INDEX idx_sessions_refresh_token ON sessions (refresh_token);
 
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY,
