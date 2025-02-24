@@ -24,6 +24,11 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	if !existingAccount.IsZero() {
 		span.SetAttributes(attribute.Bool("create_account", false))
 
+		// check if user already registered with a different provider
+		if existingAccount.Provider != input.Provider {
+			return registrationResult{}, cerrors.InvalidCredentials()
+		}
+
 		// ignore password check if user is signing in with google
 		if input.IgnorePasswordCheck {
 			return registrationResult{
