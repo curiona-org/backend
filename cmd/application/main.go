@@ -17,7 +17,6 @@ import (
 	"github.com/curiona-org/backend/internal/worker"
 	"github.com/curiona-org/backend/pkg/cache"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -26,7 +25,7 @@ func main() {
 	defer cancel()
 
 	config.Init()
-	logger.Init()
+	log := logger.Get()
 
 	provider, err := provider.New(
 		option.WithLLM(),
@@ -86,6 +85,7 @@ func main() {
 
 	log.Info().Msg("Starting Application Server...")
 
+	ctx = log.WithContext(ctx)
 	group, groupCtx := errgroup.WithContext(ctx)
 
 	group.Go(func() error {

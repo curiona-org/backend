@@ -3,8 +3,6 @@ package llm
 import (
 	"context"
 	"errors"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Client interface {
@@ -23,10 +21,8 @@ func NewClient(provider Provider, authToken, model string) (Client, error) {
 	var client Client
 	switch provider {
 	case OpenAI, Groq:
-		log.Info().Msgf("using %s LLM provider", provider)
 		client = NewOpenAiClient(provider, authToken, model)
 	case DeepSeek:
-		log.Info().Msg("using DeepSeek LLM provider")
 		client = NewDeepSeekClient(authToken, model)
 	default:
 		return nil, errors.New("invalid LLM provider")

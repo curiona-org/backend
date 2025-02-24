@@ -5,8 +5,8 @@ import (
 
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/hibiken/asynq"
-	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -34,6 +34,7 @@ func (w *worker) EnqueueSearchGoogleBooksExternalResources(ctx context.Context, 
 		return err
 	}
 
+	log := logger.FromContext(ctx)
 	log.Info().
 		Str("task", TaskSearchGoogleBooksExternalResources).
 		Str("task_id", info.ID).

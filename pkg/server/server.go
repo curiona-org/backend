@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/labstack/echo/v4"
-	"github.com/rs/zerolog/log"
 )
 
 // Server a http server using echo as the underlying framework.
@@ -34,6 +34,7 @@ func (s *Server) Port() string {
 
 // Listen starts the API server.
 func (s *Server) Listen() chan os.Signal {
+	log := logger.Get()
 	go func() {
 		log.Info().Msgf("Listening on %s", s.port)
 		if err := s.Echo.Start(":" + s.port); err != nil {
@@ -48,6 +49,7 @@ func (s *Server) Listen() chan os.Signal {
 func (s *Server) Shutdown(ctx context.Context, signal os.Signal) {
 	timeout, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
+	log := logger.FromContext(ctx)
 
 	shutdownChan := make(chan error, 1)
 

@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/pressly/goose/v3"
-	"github.com/rs/zerolog/log"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func main() {
 	defer cancel()
 
 	config.Init()
-	logger.Init()
+	log := logger.Get()
 
 	provider, err := provider.New(option.WithPostgresDB(ctx))
 	if err != nil {

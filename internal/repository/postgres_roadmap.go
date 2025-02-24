@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/jackc/pgx/v5"
@@ -364,6 +365,8 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	if err = rows.Err(); err != nil {
 		return err
 	}
+
+	log := logger.FromContext(ctx)
 
 	log.Debug().Any("mergedTopicAndSubtopic", mergedTopicAndSubtopic).Send()
 

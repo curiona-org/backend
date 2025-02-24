@@ -10,8 +10,8 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/llm"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -31,7 +31,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	var output io.GenerateRoadmapOutput
 
 	generated, err := app.chatGeneratePrompt(traceCtx, llm.ChatPrompt{
-		System: app.makeGenerateRoadmapSystemPrompt(),
+		System: app.makeGenerateRoadmapSystemPrompt(traceCtx),
 		User:   app.makeGenerateRoadmapUserPrompt(input),
 	})
 	if err != nil {
@@ -151,8 +151,10 @@ func (app *application) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapIn
 	return sb.String()
 }
 
-func (app *application) makeGenerateRoadmapSystemPrompt() string { //nolint:funlen
+func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) string { //nolint:funlen
 	var sb strings.Builder
+
+	log := logger.FromContext(ctx)
 
 	promptUserPersonalizationOptions := []string{
 		"Daily Time Availability: How much time the user can dedicate daily (e.g., 15 minutes, 30 minutes, 1 hour).",

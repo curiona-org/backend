@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/jackc/pgx/v5"
-	"github.com/rs/zerolog/log"
 )
 
 type TransactionFunc func(tx pgx.Tx) error
@@ -17,6 +17,8 @@ func (db *db) InTx(ctx context.Context, fn TransactionFunc) error {
 		return fmt.Errorf("acquiring connection: %w", err)
 	}
 	defer conn.Release()
+
+	log := logger.FromContext(ctx)
 
 	log.Debug().Msg("starting transaction")
 	tx, err := conn.Begin(ctx)

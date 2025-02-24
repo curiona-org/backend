@@ -1,7 +1,9 @@
 package logger
 
 import (
+	"context"
 	"os"
+	"sync"
 
 	"github.com/curiona-org/backend/internal/config"
 	"github.com/rs/zerolog"
@@ -9,36 +11,50 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
-func Init() {
-	// Setup logger
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+var (
+	once   sync.Once
+	logger zerolog.Logger
+)
 
-	switch {
-	case config.IsDevelopment():
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		log.Logger = log.
-			Output(zerolog.ConsoleWriter{Out: os.Stderr}).
-			With().
-			Caller().
-			Stack().
-			Logger()
-	case config.IsStaging():
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		log.Logger = log.
-			With().
-			Caller().
-			Stack().
-			Logger()
-	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		log.Logger = log.
-			With().
-			Caller().
-			Stack().
-			Logger().
-			Sample(&zerolog.BasicSampler{
-				N: 2,
-			})
-	}
+func Get() zerolog.Logger {
+	once.Do(func() {
+		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+
+		switch {
+		case config.IsDevelopment():
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			logger = log.
+				Output(zerolog.ConsoleWriter{Out: os.Stderr}).
+				With().
+				Caller().
+				Stack().
+				Logger()
+		case config.IsStaging():
+			zerolog.SetGlobalLevel(zerolog.DebugLevel)
+			logger = log.
+				With().
+				Caller().
+				Stack().
+				Logger()
+		default:
+			zerolog.SetGlobalLevel(zerolog.InfoLevel)
+			logger = log.
+				With().
+				Caller().
+				Stack().
+				Logger().
+				Sample(&zerolog.BasicSampler{
+					N: 10,
+				})
+		}
+
+		logger = logger.Hook(TraceHook{})
+	})
+
+	return logger
+}
+
+func FromContext(ctx context.Context) *zerolog.Logger {
+	return zerolog.Ctx(ctx)
 }

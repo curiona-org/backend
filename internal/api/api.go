@@ -2,16 +2,18 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/curiona-org/backend/internal/admin"
 	"github.com/curiona-org/backend/internal/api/middleware"
 	"github.com/curiona-org/backend/internal/app"
 	"github.com/curiona-org/backend/internal/chat"
 	"github.com/curiona-org/backend/internal/config"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/server"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"golang.org/x/time/rate"
 )
@@ -67,26 +69,43 @@ func (a *API) setupRoutes() {
 }
 
 func (a *API) setupMiddlewares() {
+	a.instance.Use(middleware.InjectLogger)
 	a.instance.Use(echoMiddleware.CORS())
 	a.instance.Use(echoMiddleware.Recover())
-	a.instance.Use(echoMiddleware.RequestID())
+	a.instance.Use(middleware.RequestID)
 	a.instance.Use(echoMiddleware.RequestLoggerWithConfig(echoMiddleware.RequestLoggerConfig{
 		LogURI:      true,
 		LogStatus:   true,
 		LogError:    true,
 		HandleError: true,
 		LogValuesFunc: func(c echo.Context, v echoMiddleware.RequestLoggerValues) error { //nolint:revive
+			log := logger.FromContext(c.Request().Context())
+
+			ctx := c.Request().Context()
+			requestID, ok := ctx.Value("request_id").(string)
+			if ok {
+				log.UpdateContext(func(logC zerolog.Context) zerolog.Context {
+					return logC.Str("request_id", requestID)
+				})
+			}
+
 			if v.Error == nil {
-				log.Debug().
+				log.Info().
 					Str("uri", v.URI).
 					Int("status", v.Status).
-					Send()
+					Str("method", v.Method).
+					Str("user_agent", v.UserAgent).
+					Dur("elapsed", time.Since(v.StartTime)).
+					Msg("Incoming request")
 			} else if config.IsProduction() || v.Status >= 500 {
 				log.Error().
 					Err(v.Error).
 					Str("uri", v.URI).
 					Int("status", v.Status).
-					Send()
+					Str("method", v.Method).
+					Str("user_agent", v.UserAgent).
+					Dur("elapsed", time.Since(v.StartTime)).
+					Msg("Incoming request")
 			}
 
 			return nil

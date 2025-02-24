@@ -5,7 +5,6 @@ import (
 	"unicode"
 
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -75,7 +74,7 @@ func (p Password) Compare(digest string) bool {
 	case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
 		return false
 	default:
-		log.Error().Err(err).Msg("failed to compare password")
+		// TODO: log error
 		return false
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
+	t "go.opentelemetry.io/otel/trace"
 )
 
 type ProviderConfig struct {
@@ -45,4 +46,13 @@ func NewProvider(ctx context.Context, cfg ProviderConfig) (*trace.TracerProvider
 	otel.SetTextMapPropagator(prop)
 
 	return tp, nil
+}
+
+func GetTraceID(ctx context.Context) string {
+	spanCtx := t.SpanContextFromContext(ctx)
+	if spanCtx.HasTraceID() {
+		traceID := spanCtx.TraceID()
+		return traceID.String()
+	}
+	return ""
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/config"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/provider"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
@@ -14,7 +15,6 @@ import (
 	"github.com/curiona-org/backend/pkg/tracing"
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 )
 
 // WithLLM provides a LLM client.
@@ -26,7 +26,6 @@ type withLLMProviderOption struct{}
 
 func (o *withLLMProviderOption) Apply(p *provider.Provider) {
 	p.Group.Go(func() error {
-		log.Info().Msg("initializing llm client")
 		var err error
 		p.LLM, err = llm.NewClient(
 			config.LLMProvider(),
@@ -35,6 +34,8 @@ func (o *withLLMProviderOption) Apply(p *provider.Provider) {
 		if err != nil {
 			return errors.Wrap(err, "initializing llm client")
 		}
+		log := logger.Get()
+		log.Info().Msg("initialized llm client")
 		return nil
 	})
 }
@@ -65,6 +66,7 @@ func (o *withPostgresDBProviderOption) Apply(p *provider.Provider) {
 		if err != nil {
 			return errors.Wrap(err, "initializing postgresql")
 		}
+		log := logger.Get()
 		log.Info().Msg("initialized postgresql")
 		return nil
 	})
@@ -103,6 +105,7 @@ func (o *withCacheProviderOption) Apply(p *provider.Provider) {
 		if err != nil {
 			return errors.Wrap(err, "initializing cache")
 		}
+		log := logger.Get()
 		log.Info().Msg("initialized cache")
 		return nil
 	})
@@ -143,7 +146,7 @@ func (*withQueueProviderOption) Apply(p *provider.Provider) {
 				Concurrency: 10,
 			},
 		)
-
+		log := logger.Get()
 		log.Info().Msg("initialized queue")
 		return nil
 	})
@@ -159,6 +162,7 @@ type withYoutubeClientProviderOption struct{}
 func (*withYoutubeClientProviderOption) Apply(p *provider.Provider) {
 	p.Group.Go(func() error {
 		p.Youtube = youtube.New(config.YoutubeAPIKey())
+		log := logger.Get()
 		log.Info().Msg("initialized youtube client")
 		return nil
 	})
@@ -174,6 +178,7 @@ type withGoogleBooksClientProviderOption struct{}
 func (*withGoogleBooksClientProviderOption) Apply(p *provider.Provider) {
 	p.Group.Go(func() error {
 		p.GoogleBooks = book.New(config.GoogleBooksAPIKey())
+		log := logger.Get()
 		log.Info().Msg("initialized google books client")
 		return nil
 	})
@@ -197,6 +202,7 @@ func (o *withTracingProviderOption) Apply(p *provider.Provider) {
 		if err != nil {
 			return errors.Wrap(err, "initializing tracer provider")
 		}
+		log := logger.Get()
 		log.Info().Msg("initialized otel tracing provider")
 		return nil
 	})

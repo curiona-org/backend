@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/curiona-org/backend/pkg/googleapi/book"
@@ -10,7 +11,6 @@ import (
 	"github.com/curiona-org/backend/pkg/llm"
 	"github.com/hibiken/asynq"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -55,6 +55,7 @@ func (p *Provider) init() (*Provider, error) {
 
 // Close closes all the clients.
 func (p *Provider) Close(ctx context.Context) {
+	log := logger.FromContext(ctx)
 	if p.DB != nil {
 		if err := p.DB.Close(); err != nil {
 			log.Warn().Err(err).Msg("failed closing database connection")

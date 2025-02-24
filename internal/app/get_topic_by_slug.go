@@ -9,8 +9,8 @@ import (
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/worker"
-	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -67,6 +67,9 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
 	youtubeSearchCtx, youtubeSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).youtubeSearch")
 	defer youtubeSearchSpan.End()
+
+	log := logger.FromContext(youtubeSearchCtx)
+
 	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
 		log.Warn().Msg("failed to search youtube")
@@ -107,6 +110,9 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 func (app *application) searchGoogleBooksExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
 	bookSearchCtx, bookSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).bookSearch")
 	defer bookSearchSpan.End()
+
+	log := logger.FromContext(bookSearchCtx)
+
 	searchResult, err := app.googleBooks.Search(bookSearchCtx, topic.ExternalSearchQuery)
 	if err != nil {
 		log.Warn().Msg("failed to search google books")
