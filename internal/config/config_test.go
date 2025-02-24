@@ -9,7 +9,6 @@ import (
 )
 
 func TestConfig_Init(t *testing.T) {
-	t.Parallel()
 	t.Setenv("APP_NAME", "test_app")
 	t.Setenv("APP_ENV", "test")
 	t.Setenv("PORT", "8080")
