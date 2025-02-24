@@ -26,7 +26,7 @@ type CurionaApplication interface {
 	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
 	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
 	ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error)
-	// DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) (io.DeleteUserRoadmapOutput, error)
+	DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) error
 	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 
 	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)

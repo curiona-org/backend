@@ -60,6 +60,7 @@ func (a *API) setupRoutes() {
 	a.instance.GET("/roadmaps", a.ListUserRoadmaps, authMiddleware)
 	a.instance.GET("/roadmaps/:slug", a.GetRoadmapBySlug, authMiddleware)
 	a.instance.POST("/roadmaps", a.GenerateRoadmap, authMiddleware)
+	a.instance.DELETE("/roadmaps/:slug", a.DeleteUserRoadmap, authMiddleware)
 	a.instance.GET("/roadmaps/topic/:slug", a.GetTopicBySlug, authMiddleware)
 	a.instance.PATCH("/roadmaps/topic/:slug/finish", a.MarkTopicAsFinished, authMiddleware)
 	a.instance.PATCH("/roadmaps/topic/:slug/incomplete", a.MarkTopicAsIncomplete, authMiddleware)

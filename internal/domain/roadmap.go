@@ -34,6 +34,7 @@ type Roadmap struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	DeletedAt time.Time
 }
 
 func NewRoadmap(accountID int, title, description string) *Roadmap {
@@ -114,6 +115,14 @@ func (e *Roadmap) SetTopics(topics []*Topic) {
 
 func (e *Roadmap) SetPersonalizationOptions(opts *PersonalizationOptions) {
 	e.PersonalizationOptions = opts
+}
+
+func (e *Roadmap) IsDeleted() bool {
+	return !e.DeletedAt.IsZero()
+}
+
+func (e *Roadmap) Delete() {
+	e.DeletedAt = time.Now()
 }
 
 func (e *Roadmap) UpdateChangelog() {

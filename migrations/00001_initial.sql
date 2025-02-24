@@ -44,15 +44,18 @@ CREATE TABLE IF NOT EXISTS roadmaps (
     id SERIAL PRIMARY KEY,
     account_id INTEGER NOT NULL,
     title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL UNIQUE,
+    slug VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT fk_roadmaps_account FOREIGN KEY (
         account_id
     ) REFERENCES accounts (id) ON DELETE CASCADE
 );
 CREATE INDEX idx_roadmaps_account_id ON roadmaps (account_id);
+CREATE UNIQUE INDEX idx_roadmaps_slug ON roadmaps (slug);
+CREATE INDEX idx_roadmaps_deleted_at ON roadmaps (deleted_at);
 
 CREATE TABLE IF NOT EXISTS topics (
     id SERIAL PRIMARY KEY,
@@ -60,7 +63,7 @@ CREATE TABLE IF NOT EXISTS topics (
     roadmap_id INTEGER NOT NULL,
     parent_id INTEGER,
     title VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL UNIQUE,
+    slug VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     "order" INTEGER NOT NULL,
     finished BOOLEAN NOT NULL DEFAULT FALSE,
@@ -76,8 +79,7 @@ CREATE TABLE IF NOT EXISTS topics (
     ) ON DELETE CASCADE
 );
 -- CREATE INDEX idx_topics_account_id ON topics (account_id);
-CREATE INDEX idx_roadmaps_slug ON roadmaps (slug);
-CREATE INDEX idx_topics_slug ON topics (slug);
+CREATE UNIQUE INDEX idx_topics_slug ON topics (slug);
 CREATE INDEX idx_topics_roadmap_id ON topics (roadmap_id);
 CREATE INDEX idx_topics_parent_id ON topics (parent_id);
 

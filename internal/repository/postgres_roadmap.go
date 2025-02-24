@@ -13,9 +13,9 @@ import (
 	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/dialect"
-	"github.com/stephenafamo/bob/dialect/psql/dm"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
+	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -34,6 +34,44 @@ func NewPostgresRoadmapRepository(db database.Connection, cache *cache.Connectio
 		cache:  cache,
 		tracer: tracer,
 	}
+}
+
+func (r *RoadmapRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetch)", query)
+	defer span.End()
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roadmaps []domain.Roadmap
+	for rows.Next() {
+		var roadmap domain.Roadmap
+		err = rows.Scan(
+			&roadmap.ID,
+			&roadmap.AccountID,
+			&roadmap.Title,
+			&roadmap.Slug,
+			&roadmap.Description,
+			&roadmap.CreatedAt,
+			&roadmap.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		roadmaps = append(roadmaps, roadmap)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return roadmaps, nil
 }
 
 func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
@@ -66,10 +104,11 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 		sm.From(domain.RoadmapTable),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).
 			OnEQ(psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"), psql.Quote(domain.RoadmapTable, "id")),
-		sm.Where(psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug))),
+		sm.Where(psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug)).
+			And(psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	roadmaps, err := r.fetch(ctx, query, args...)
+	roadmaps, err := r.fetchWithPersonalizationOptions(ctx, query, args...)
 	if err != nil {
 		return domain.Roadmap{}, err
 	}
@@ -114,10 +153,11 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 		sm.From(domain.RoadmapTable),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).
 			OnEQ(psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"), psql.Quote(domain.RoadmapTable, "id")),
-		sm.Where(psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID))),
+		sm.Where(psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)).
+			And(psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	roadmaps, err := r.fetch(ctx, query, args...)
+	roadmaps, err := r.fetchWithPersonalizationOptions(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +169,8 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 	return roadmaps, nil
 }
 
-func (r *RoadmapRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetch)", query)
+func (r *RoadmapRepository) fetchWithPersonalizationOptions(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetchWithPersonalizationOptions)", query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -395,37 +435,73 @@ func (r *RoadmapRepository) savePersonalizationOptions(ctx context.Context, tx p
 	return nil
 }
 
-func (r *RoadmapRepository) Delete(ctx context.Context, id int) (domain.Roadmap, error) {
-	query, args := psql.Delete(
-		dm.From(domain.RoadmapTable),
-		dm.Where(psql.Quote("id").EQ(psql.Arg(id))),
-	).MustBuild(ctx)
-
-	ctx, span := spanWithDeleteQuery(ctx, r.tracer, "(*RoadmapRepository.Delete)", query)
+func (r *RoadmapRepository) Update(ctx context.Context, slug string, updateFn func(roadmap *domain.Roadmap) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*RoadmapRepository.Update)")
 	defer span.End()
 
-	var roadmap domain.Roadmap
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
-		err := tx.QueryRow(ctx, query, args...).Scan(
-			&roadmap.ID,
-			&roadmap.AccountID,
-			&roadmap.Title,
-			&roadmap.Slug,
-			&roadmap.Description,
-			&roadmap.CreatedAt,
-			&roadmap.UpdatedAt,
-		)
+		fetchRoadmapQuery, fetchRoadmapArgs := psql.Select(
+			sm.Columns(
+				psql.Quote(domain.RoadmapTable, "id"),
+				psql.Quote(domain.RoadmapTable, "account_id"),
+				psql.Quote(domain.RoadmapTable, "title"),
+				psql.Quote(domain.RoadmapTable, "slug"),
+				psql.Quote(domain.RoadmapTable, "description"),
+				psql.Quote(domain.RoadmapTable, "created_at"),
+				psql.Quote(domain.RoadmapTable, "updated_at"),
+			),
+			sm.From(domain.RoadmapTable),
+			sm.Where(
+				psql.Quote("slug").EQ(psql.Arg(slug)).
+					And(psql.Quote("deleted_at").IsNull()),
+			),
+		).MustBuild(ctx)
+
+		roadmaps, err := r.fetch(traceCtx, fetchRoadmapQuery, fetchRoadmapArgs...)
 		if err != nil {
-			span.SetStatus(codes.Error, "failed to delete roadmap")
-			span.RecordError(err)
+			return err
+		}
+
+		if len(roadmaps) == 0 {
+			return domain.ErrRoadmapNotFound
+		}
+
+		roadmap := roadmaps[0]
+		updated, err := updateFn(&roadmap)
+		if err != nil {
+			return err
+		}
+
+		if !updated {
+			return nil
+		}
+
+		mods := make([]bob.Mod[*dialect.UpdateQuery], 0)
+		mods = append(mods, um.Table(domain.RoadmapTable))
+		if roadmap.IsDeleted() {
+			cacher := cache.New[domain.Roadmap](r.cache)
+			cacher.Delete(traceCtx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug})
+			mods = append(mods, um.SetCol("deleted_at").ToArg(roadmap.DeletedAt))
+		}
+		mods = append(mods, um.Where(psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug))))
+
+		updateRoadmapQuery, updateRoadmapArgs := psql.Update(
+			mods...,
+		).MustBuild(ctx)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*RoadmapRepository.Update)", updateRoadmapQuery)
+		defer updateSpan.End()
+
+		if _, err = tx.Exec(ctx, updateRoadmapQuery, updateRoadmapArgs...); err != nil {
+			updateSpan.SetStatus(codes.Error, "failed to update roadmap")
+			updateSpan.RecordError(err)
 			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		return domain.Roadmap{}, err
+		return err
 	}
 
-	return roadmap, nil
+	return nil
 }
