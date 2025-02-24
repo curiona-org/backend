@@ -19,10 +19,10 @@ func TestNewToken(t *testing.T) {
 	token := auth.NewToken(secret, accountID, expiresIn)
 
 	assert.NotNil(t, token)
-	assert.Equal(t, accountID, token.AccountID())
+	assert.Equal(t, accountID, token.AccountID)
 	assert.Equal(t, "https://curiona.com", token.Issuer)
-	assert.WithinDuration(t, time.Now(), token.IssuedAt(), time.Second)
-	assert.WithinDuration(t, time.Now().Add(expiresIn), token.ExpiresAt(), time.Second)
+	assert.WithinDuration(t, time.Now(), token.IssuedAt, time.Second)
+	assert.WithinDuration(t, time.Now().Add(expiresIn), token.ExpiresAt, time.Second)
 }
 
 func TestToken_Marshal(t *testing.T) {
@@ -39,7 +39,7 @@ func TestToken_Marshal(t *testing.T) {
 	assert.NotEmpty(t, tokenStr)
 }
 
-func TestTokenUnmarshal(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	secret := "test_secret"
@@ -50,13 +50,13 @@ func TestTokenUnmarshal(t *testing.T) {
 	tokenStr, err := token.Marshal()
 	require.NoError(t, err)
 
-	unmarshaledToken, err := auth.TokenUnmarshal(secret, tokenStr)
+	unmarshaledToken, err := token.Unmarshal(tokenStr)
 	require.NoError(t, err)
 
-	assert.Equal(t, token.AccountID(), unmarshaledToken.AccountID())
+	assert.Equal(t, token.AccountID, unmarshaledToken.AccountID)
 	assert.Equal(t, token.Issuer, unmarshaledToken.Issuer)
-	assert.WithinDuration(t, token.IssuedAt(), unmarshaledToken.IssuedAt(), time.Second)
-	assert.WithinDuration(t, token.ExpiresAt(), unmarshaledToken.ExpiresAt(), time.Second)
+	assert.WithinDuration(t, token.IssuedAt, unmarshaledToken.IssuedAt, time.Second)
+	assert.WithinDuration(t, token.ExpiresAt, unmarshaledToken.ExpiresAt, time.Second)
 }
 
 func TestToken_IsExpired(t *testing.T) {

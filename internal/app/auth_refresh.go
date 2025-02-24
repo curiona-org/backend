@@ -17,18 +17,18 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	ctx, span := app.tracer.Start(ctx, "(*application.AuthRefresh)")
 	defer span.End()
 
-	payload, err := app.auth.VerifyRefreshToken(input.Token)
+	token, err := app.auth.VerifyRefreshToken(input.Token)
 	if err != nil {
 		return io.AuthRefreshOutput{}, err
 	}
 
-	accessToken := app.auth.NewAccessToken(payload.AccountID())
+	accessToken := app.auth.NewAccessToken(token.AccountID)
 	accessTokenStr, err := accessToken.Marshal()
 	if err != nil {
 		return io.AuthRefreshOutput{}, err
 	}
 
-	refreshToken := app.auth.NewRefreshToken(payload.AccountID())
+	refreshToken := app.auth.NewRefreshToken(token.AccountID)
 	var refreshTokenStr string
 	err = app.repository.Session.Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
 		if session.Blocked {
@@ -49,7 +49,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 			refreshTokenStr,
 			input.UserAgent,
 			input.ClientIP,
-			refreshToken.ExpiresAt(),
+			refreshToken.ExpiresAt,
 		)
 		return true, nil
 	})
@@ -62,9 +62,9 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 
 	return io.AuthRefreshOutput{
 		AccessToken:           accessTokenStr,
-		AccessTokenExpiresAt:  accessToken.ExpiresAt(),
+		AccessTokenExpiresAt:  accessToken.ExpiresAt,
 		RefreshToken:          refreshTokenStr,
 		RefreshTokenExpiresIn: int(refreshToken.ExpiresIn().Seconds()),
-		RefreshTokenExpiresAt: refreshToken.ExpiresAt(),
+		RefreshTokenExpiresAt: refreshToken.ExpiresAt,
 	}, nil
 }

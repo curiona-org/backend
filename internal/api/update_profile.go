@@ -19,8 +19,8 @@ func (a *API) UpdateProfile(c echo.Context) error {
 		return err
 	}
 
-	auth := auth.FromContext(c.Request().Context())
-	input.AccountID = auth.AccountID()
+	auth := auth.TokenFromContext(c.Request().Context())
+	input.AccountID = auth.AccountID
 
 	output, err := a.application.UpdateProfile(c.Request().Context(), input)
 	if err != nil {

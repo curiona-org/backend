@@ -14,10 +14,10 @@ func (a *API) MarkTopicAsIncomplete(c echo.Context) error {
 		return cerrors.NotFound()
 	}
 
-	auth := auth.FromContext(c.Request().Context())
+	auth := auth.TokenFromContext(c.Request().Context())
 	err := a.application.MarkTopicAsIncomplete(c.Request().Context(), io.MarkTopicInput{
 		Slug:      slug,
-		AccountID: auth.AccountID(),
+		AccountID: auth.AccountID,
 	})
 	if err != nil {
 		return err

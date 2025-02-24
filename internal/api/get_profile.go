@@ -7,9 +7,9 @@ import (
 )
 
 func (a *API) GetProfile(c echo.Context) error {
-	auth := auth.FromContext(c.Request().Context())
+	auth := auth.TokenFromContext(c.Request().Context())
 
-	output, err := a.application.GetProfile(c.Request().Context(), auth.AccountID())
+	output, err := a.application.GetProfile(c.Request().Context(), auth.AccountID)
 	if err != nil {
 		return err
 	}

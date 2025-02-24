@@ -46,7 +46,7 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 		refreshTokenStr,
 		input.UserAgent,
 		input.ClientIP,
-		refreshToken.ExpiresAt(),
+		refreshToken.ExpiresAt,
 	)
 
 	_, err = app.repository.Session.Save(ctx, newSession)
@@ -57,10 +57,10 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 	output := io.AuthOutput{
 		Created:               result.created,
 		AccessToken:           accessTokenStr,
-		AccessTokenExpiresAt:  accessToken.ExpiresAt(),
+		AccessTokenExpiresAt:  accessToken.ExpiresAt,
 		RefreshToken:          refreshTokenStr,
 		RefreshTokenExpiresIn: int(refreshToken.ExpiresIn().Seconds()),
-		RefreshTokenExpiresAt: refreshToken.ExpiresAt(),
+		RefreshTokenExpiresAt: refreshToken.ExpiresAt,
 		Account: io.AuthOutputAccount{
 			ID:       result.id,
 			Email:    result.email,
