@@ -17,7 +17,7 @@ func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetPr
 
 	return io.GetProfileOutput{
 		ID:       account.ID,
-		Provider: account.Provider,
+		Method:   account.Method,
 		Email:    account.Email,
 		Name:     account.Profile.Name,
 		Avatar:   account.Profile.Avatar,

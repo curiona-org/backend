@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/domain/object"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -20,7 +20,7 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 	if input.OAuthToken != "" {
 		result, err = app.authGoogle(ctx, input)
 	} else {
-		input.Provider = object.AccountProviderEmail
+		input.Method = auth.MethodEmail
 		result, err = app.authEmailPassword(ctx, input)
 	}
 
@@ -28,24 +28,25 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 		return io.AuthOutput{}, err
 	}
 
-	accessToken, err := app.auth.Access.Generate(result.id)
+	accessToken := app.auth.NewAccessToken(result.id)
+	refreshToken := app.auth.NewRefreshToken(result.id)
+
+	accessTokenStr, err := accessToken.Marshal()
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
 
-	refreshToken, err := app.auth.Refresh.Generate(result.id)
+	refreshTokenStr, err := refreshToken.Marshal()
 	if err != nil {
 		return io.AuthOutput{}, err
 	}
-
-	refreshExpiresAt := app.auth.Refresh.ExpiresAt()
 
 	newSession := domain.NewSession(
 		result.id,
-		refreshToken,
+		refreshTokenStr,
 		input.UserAgent,
 		input.ClientIP,
-		refreshExpiresAt,
+		refreshToken.ExpiresAt(),
 	)
 
 	_, err = app.repository.Session.Save(ctx, newSession)
@@ -55,11 +56,11 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 
 	output := io.AuthOutput{
 		Created:               result.created,
-		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  app.auth.Access.ExpiresAt(),
-		RefreshToken:          refreshToken,
-		RefreshTokenExpiresIn: int(app.auth.Refresh.ExpiresIn().Seconds()),
-		RefreshTokenExpiresAt: app.auth.Refresh.ExpiresAt(),
+		AccessToken:           accessTokenStr,
+		AccessTokenExpiresAt:  accessToken.ExpiresAt(),
+		RefreshToken:          refreshTokenStr,
+		RefreshTokenExpiresIn: int(refreshToken.ExpiresIn().Seconds()),
+		RefreshTokenExpiresAt: refreshToken.ExpiresAt(),
 		Account: io.AuthOutputAccount{
 			ID:       result.id,
 			Email:    result.email,

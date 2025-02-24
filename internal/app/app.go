@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/auth"
+	"github.com/curiona-org/backend/internal/auth/oauth"
 	"github.com/curiona-org/backend/internal/repository"
 	"github.com/curiona-org/backend/internal/worker"
-	"github.com/curiona-org/backend/pkg/auth"
-	"github.com/curiona-org/backend/pkg/auth/oauth"
 	"github.com/curiona-org/backend/pkg/googleapi/book"
 	"github.com/curiona-org/backend/pkg/googleapi/youtube"
 	"github.com/curiona-org/backend/pkg/llm"
@@ -18,7 +18,7 @@ import (
 // CurionaApplication is the main application. Handling authentication, roadmap/topic management, and user profile management.
 type CurionaApplication interface {
 	Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error)
-	AuthVerify(ctx context.Context, token string) (*auth.Payload, error)
+	AuthVerify(ctx context.Context, token string) (auth.Token, error)
 	AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error)
 	GetProfile(ctx context.Context, accountID int) (io.GetProfileOutput, error)
 	UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error)

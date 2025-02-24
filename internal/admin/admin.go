@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/repository"
-	"github.com/curiona-org/backend/pkg/auth"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )

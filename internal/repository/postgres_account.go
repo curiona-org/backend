@@ -109,9 +109,9 @@ func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any
 		var profile domain.Profile
 		err = rows.Scan(
 			&account.ID,
-			&account.Provider,
+			&account.Method,
 			&account.Email,
-			&account.Password,
+			&account.PasswordDigest,
 			&account.CreatedAt,
 			&account.UpdatedAt,
 			&profile.ID,
@@ -141,7 +141,7 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		saveAccountQuery, saveAccountArgs := psql.Insert(
 			im.Into(domain.AccountTable, "email", "password", "provider", "created_at", "updated_at"),
-			im.Values(psql.Arg(input.Email, input.Password, input.Provider, input.CreatedAt, input.UpdatedAt)),
+			im.Values(psql.Arg(input.Email, input.PasswordDigest, input.Method, input.CreatedAt, input.UpdatedAt)),
 			im.Returning("id", "email", "created_at", "updated_at"),
 		).MustBuild(ctx)
 

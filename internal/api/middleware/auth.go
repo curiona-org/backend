@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/curiona-org/backend/internal/app"
-	"github.com/curiona-org/backend/pkg/auth"
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/pkg/cerrors"
 	"github.com/labstack/echo/v4"
 )
@@ -30,7 +30,7 @@ func AuthMiddleware(app app.CurionaApplication) func(next echo.HandlerFunc) echo
 				return cerrors.Unauthorized()
 			}
 
-			ctx := context.WithValue(reqCtx, auth.AuthCtxKey, payload)
+			ctx := context.WithValue(reqCtx, auth.ContextKey, payload)
 			c.SetRequest(c.Request().WithContext(ctx))
 			return next(c)
 		}

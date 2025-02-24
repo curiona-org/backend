@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/pkg/cerrors"
 	"go.opentelemetry.io/otel/attribute"
@@ -24,8 +25,8 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	if !existingAccount.IsZero() {
 		span.SetAttributes(attribute.Bool("create_account", false))
 
-		// check if user already registered with a different provider
-		if existingAccount.Provider != input.Provider {
+		// check if user already registered with a different method
+		if existingAccount.Method != input.Method {
 			return registrationResult{}, cerrors.InvalidCredentials()
 		}
 
@@ -41,7 +42,8 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 			}, nil
 		}
 
-		matched := existingAccount.CheckPassword(input.Password)
+		plainPassword := auth.NewPassword(input.Password)
+		matched := existingAccount.CheckPassword(plainPassword)
 		if !matched {
 			return registrationResult{}, cerrors.InvalidCredentials()
 		}
@@ -57,11 +59,19 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	}
 
 	span.SetAttributes(attribute.Bool("create_account", true))
+
+	password := auth.NewPassword(input.Password)
+
+	if err := password.Validate(); err != nil {
+		return registrationResult{}, err
+	}
+
 	profile := domain.NewProfile(input.Name, input.Avatar)
-	account, err := domain.NewAccount(input.Email, input.Password, input.Provider, profile)
+	account, err := domain.NewAccount(input.Email, password, input.Method, profile)
 	if err != nil {
 		return registrationResult{}, err
 	}
+	account.HashPassword()
 
 	createdAccount, err := app.repository.Account.Save(ctx, account)
 	if err != nil {

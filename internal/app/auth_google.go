@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/app/io"
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/pkg/cerrors"
 	"github.com/curiona-org/backend/pkg/str"
 	"go.opentelemetry.io/otel/codes"
@@ -27,7 +27,7 @@ func (app *application) authGoogle(ctx context.Context, input io.AuthInput) (reg
 		Password: str.Random(32),
 		Avatar:   user.Avatar,
 
-		Provider:            object.AccountProviderGoogle,
+		Method:              auth.MethodGoogle,
 		IgnorePasswordCheck: true,
 	})
 }

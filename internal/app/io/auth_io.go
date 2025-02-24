@@ -3,7 +3,7 @@ package io
 import (
 	"time"
 
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/internal/auth"
 )
 
 type AuthInput struct {
@@ -16,8 +16,8 @@ type AuthInput struct {
 	UserAgent string `json:"-"`
 	ClientIP  string `json:"-"`
 
-	Provider            object.AccountProvider `json:"-"`
-	IgnorePasswordCheck bool                   `json:"-"` // used to skip password check in some cases
+	Method              auth.Method `json:"-"`
+	IgnorePasswordCheck bool        `json:"-"` // used to skip password check in some cases
 }
 
 type AuthOutput struct {

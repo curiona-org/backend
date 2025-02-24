@@ -1,9 +1,9 @@
 package chat
 
 import (
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/repository"
 	"github.com/curiona-org/backend/internal/worker"
-	"github.com/curiona-org/backend/pkg/auth"
 	"github.com/curiona-org/backend/pkg/llm"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"

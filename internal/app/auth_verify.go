@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 
-	"github.com/curiona-org/backend/pkg/auth"
+	"github.com/curiona-org/backend/internal/auth"
 )
 
-func (app *application) AuthVerify(ctx context.Context, token string) (*auth.Payload, error) {
-	return app.auth.Access.Parse(token)
+func (app *application) AuthVerify(ctx context.Context, token string) (auth.Token, error) {
+	return app.auth.VerifyAccessToken(token)
 }

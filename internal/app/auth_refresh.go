@@ -17,12 +17,19 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	ctx, span := app.tracer.Start(ctx, "(*application.AuthRefresh)")
 	defer span.End()
 
-	payload, err := app.auth.Refresh.Parse(input.Token)
+	payload, err := app.auth.VerifyRefreshToken(input.Token)
 	if err != nil {
 		return io.AuthRefreshOutput{}, err
 	}
 
-	var accessToken, refreshToken string
+	accessToken := app.auth.NewAccessToken(payload.AccountID())
+	accessTokenStr, err := accessToken.Marshal()
+	if err != nil {
+		return io.AuthRefreshOutput{}, err
+	}
+
+	refreshToken := app.auth.NewRefreshToken(payload.AccountID())
+	var refreshTokenStr string
 	err = app.repository.Session.Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
 		if session.Blocked {
 			return false, cerrors.Wrap(cerrors.Unauthorized(), domain.ErrSessionIsBlocked)
@@ -32,22 +39,17 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 			return false, cerrors.Wrap(cerrors.Unauthorized(), domain.ErrSessionExpired)
 		}
 
-		accessToken, err = app.auth.Access.Generate(payload.ID)
-		if err != nil {
-			return false, err
-		}
-
 		// Rotate the refresh token
-		refreshToken, err = app.auth.Refresh.Generate(payload.ID)
+		refreshTokenStr, err = refreshToken.Marshal()
 		if err != nil {
 			return false, err
 		}
 
 		session.Renew(
-			refreshToken,
+			refreshTokenStr,
 			input.UserAgent,
 			input.ClientIP,
-			app.auth.Refresh.ExpiresAt(),
+			refreshToken.ExpiresAt(),
 		)
 		return true, nil
 	})
@@ -59,10 +61,10 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	}
 
 	return io.AuthRefreshOutput{
-		AccessToken:           accessToken,
-		AccessTokenExpiresAt:  app.auth.Access.ExpiresAt(),
-		RefreshToken:          refreshToken,
-		RefreshTokenExpiresIn: int(app.auth.Refresh.ExpiresIn().Seconds()),
-		RefreshTokenExpiresAt: app.auth.Refresh.ExpiresAt(),
+		AccessToken:           accessTokenStr,
+		AccessTokenExpiresAt:  accessToken.ExpiresAt(),
+		RefreshToken:          refreshTokenStr,
+		RefreshTokenExpiresIn: int(refreshToken.ExpiresIn().Seconds()),
+		RefreshTokenExpiresAt: refreshToken.ExpiresAt(),
 	}, nil
 }

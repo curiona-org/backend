@@ -6,14 +6,14 @@ import (
 	"github.com/curiona-org/backend/internal/admin"
 	"github.com/curiona-org/backend/internal/api"
 	"github.com/curiona-org/backend/internal/app"
+	"github.com/curiona-org/backend/internal/auth"
+	"github.com/curiona-org/backend/internal/auth/oauth"
 	"github.com/curiona-org/backend/internal/chat"
 	"github.com/curiona-org/backend/internal/config"
 	"github.com/curiona-org/backend/internal/provider"
 	"github.com/curiona-org/backend/internal/provider/option"
 	"github.com/curiona-org/backend/internal/repository"
 	"github.com/curiona-org/backend/internal/worker"
-	"github.com/curiona-org/backend/pkg/auth"
-	"github.com/curiona-org/backend/pkg/auth/oauth"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/logger"
 	_ "github.com/joho/godotenv/autoload"
@@ -54,7 +54,6 @@ func main() {
 	)
 
 	auth := auth.New(
-		auth.StrategyJWT,
 		&auth.Config{
 			AccessSecretKey:  config.AccessSecretKey(),
 			AccessExpiresIn:  config.AccessExpiresIn(),
