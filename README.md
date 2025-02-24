@@ -15,8 +15,12 @@ Technologies used:
 
 - **Language:** Golang
 - **Database:** PostgreSQL
-- **LLM API:** OpenAI / DeepSeek
+- **Cache:** Redis / No-cache
+- **Worker:** Asynq
+- **Auth:** JWT / Google OAuth
+- **LLM API:** OpenAI / DeepSeek / Groq
 - **Tracing:** Jaeger & OpenTelemetry
+- **Load Testing:** K6
 
 
 ## Running Locally
