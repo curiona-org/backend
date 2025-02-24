@@ -31,7 +31,7 @@ func Init() {
 			Stack().
 			Logger()
 	default:
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 		log.Logger = log.
 			With().
 			Caller().
