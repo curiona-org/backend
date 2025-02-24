@@ -4,6 +4,10 @@ help: ## Displays all the available commands
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 .PHONY: help
 
+check: ## Asks for confirmation before running a command
+	@echo -n "Are you sure? [y/N] " && read ans && [ $${ans:-N} = y ]
+.PHONY: check
+
 run: ## Runs the application
 	@go run cmd/application/main.go
 .PHONY: run
@@ -25,9 +29,12 @@ migrate-down: ## Roll back the migration version by 1
 	@go run cmd/migrate/main.go -command down
 .PHONY: migrate-down
 
-migrate-reset: ## Roll back all the migrations
+migrate-reset: check ## Roll back all the migrations
 	@go run cmd/migrate/main.go -command reset
 .PHONY: migrate-reset
+
+migrate-fresh: check migrate-reset migrate## Roll back all the migrations and migrate again
+.PHONY: migrate-fresh
 
 format: ## Runs go fmt and go vet
 	@go fmt ./... && go vet -v ./...
