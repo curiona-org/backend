@@ -77,7 +77,6 @@ func TestConfig_Init(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			assert.Equal(t, tc.expected, tc.actual)
 		})
 	}
