@@ -3,7 +3,7 @@ package api
 import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/auth"
-	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/labstack/echo/v4"
 )

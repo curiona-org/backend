@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"

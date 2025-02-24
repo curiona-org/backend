@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/domain/object"
-	"github.com/curiona-org/backend/pkg/cerrors"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

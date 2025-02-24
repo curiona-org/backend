@@ -6,7 +6,7 @@ import (
 
 	"github.com/curiona-org/backend/internal/app"
 	"github.com/curiona-org/backend/internal/auth"
-	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/labstack/echo/v4"
 )
 

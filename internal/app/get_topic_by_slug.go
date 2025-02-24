@@ -6,10 +6,10 @@ import (
 	"sync"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/curiona-org/backend/internal/worker"
-	"github.com/curiona-org/backend/pkg/cerrors"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"

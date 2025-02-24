@@ -4,7 +4,7 @@ import (
 	"errors"
 	"unicode"
 
-	"github.com/curiona-org/backend/pkg/cerrors"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )

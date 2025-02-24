@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/pkg/cerrors"
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/jackc/pgx/v5"
 	"github.com/stephenafamo/bob/dialect/psql"

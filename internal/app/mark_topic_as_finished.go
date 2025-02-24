@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/pkg/cerrors"
 )
 
 func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTopicInput) error {
