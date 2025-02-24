@@ -480,7 +480,11 @@ func (r *RoadmapRepository) Update(ctx context.Context, slug string, updateFn fu
 		mods = append(mods, um.Table(domain.RoadmapTable))
 		if roadmap.IsDeleted() {
 			cacher := cache.New[domain.Roadmap](r.cache)
-			cacher.Delete(traceCtx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug})
+			err := cacher.Delete(traceCtx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug})
+			if err != nil {
+				// TODO: should retry or log this error
+				log.Error().Err(err).Msg("failed to delete roadmap from cache")
+			}
 			mods = append(mods, um.SetCol("deleted_at").ToArg(roadmap.DeletedAt))
 		}
 		mods = append(mods, um.Where(psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug))))
