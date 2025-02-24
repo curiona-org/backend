@@ -71,7 +71,11 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	if err != nil {
 		return registrationResult{}, err
 	}
-	account.HashPassword()
+
+	// Hash the password before saving
+	if err := account.HashPassword(); err != nil {
+		return registrationResult{}, err
+	}
 
 	createdAccount, err := app.repository.Account.Save(ctx, account)
 	if err != nil {
