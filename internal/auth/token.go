@@ -41,7 +41,7 @@ func NewToken(secret string, accountID int, expiresIn time.Duration) *Token {
 	return token
 }
 
-// TokenFromContext retrieves the token from a context using the context key
+// TokenFromContext retrieves the token from a context using the context key.
 func TokenFromContext(ctx context.Context) *Token {
 	token, ok := ctx.Value(ContextKey).(*Token)
 	if !ok {
@@ -51,7 +51,7 @@ func TokenFromContext(ctx context.Context) *Token {
 	return token
 }
 
-// Marshal generates a JWT token from the token struct
+// Marshal generates a JWT token from the token struct.
 func (t *Token) Marshal() (string, error) {
 	claims := map[string]any{
 		"account_id": t.AccountID,
@@ -63,7 +63,7 @@ func (t *Token) Marshal() (string, error) {
 	return t.encoder.Marshal(claims)
 }
 
-// Unmarshal parses a JWT token and returns a token struct
+// Unmarshal parses a JWT token and returns a token struct.
 func (t *Token) Unmarshal(tokenStr string) (*Token, error) {
 	claims := make(map[string]any)
 	err := t.encoder.Unmarshal(tokenStr, claims)
