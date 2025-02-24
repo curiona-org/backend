@@ -62,6 +62,7 @@ func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domai
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "provider"),
 			psql.Quote(domain.AccountTable, "email"),
 			psql.Quote(domain.AccountTable, "password"),
 			psql.Quote(domain.AccountTable, "created_at"),
@@ -107,6 +108,7 @@ func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any
 		var profile domain.Profile
 		err = rows.Scan(
 			&account.ID,
+			&account.Provider,
 			&account.Email,
 			&account.Password,
 			&account.CreatedAt,

@@ -13,7 +13,6 @@ import (
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
-	"golang.org/x/time/rate"
 )
 
 type API struct {
@@ -92,8 +91,8 @@ func (a *API) setupMiddlewares() {
 			return nil
 		},
 	}))
-	if config.IsProduction() {
-		a.instance.Use(echoMiddleware.RateLimiter(echoMiddleware.NewRateLimiterMemoryStore(rate.Limit(20))))
-	}
+	// if config.IsProduction() {
+	// 	a.instance.Use(echoMiddleware.RateLimiter(echoMiddleware.NewRateLimiterMemoryStore(rate.Limit(20))))
+	// }
 	a.instance.Use(otelecho.Middleware("api"))
 }
