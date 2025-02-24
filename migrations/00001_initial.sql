@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS accounts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now())
 );
-CREATE UNIQUE INDEX idx_accounts_email ON accounts (email);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts (email);
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
     account_id INTEGER NOT NULL,
     refresh_token VARCHAR(255) NOT NULL,
@@ -26,8 +26,8 @@ CREATE TABLE sessions (
         account_id
     ) REFERENCES accounts (id) ON DELETE CASCADE
 );
-CREATE INDEX idx_sessions_account_id ON sessions (account_id);
-CREATE UNIQUE INDEX idx_sessions_refresh_token ON sessions (refresh_token);
+CREATE INDEX IF NOT EXISTS idx_sessions_account_id ON sessions (account_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_refresh_token ON sessions (refresh_token);
 
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS profiles (
         id
     ) ON DELETE CASCADE
 );
-CREATE INDEX idx_profiles_account_id ON profiles (id);
+CREATE INDEX IF NOT EXISTS idx_profiles_account_id ON profiles (id);
 
 CREATE TABLE IF NOT EXISTS roadmaps (
     id SERIAL PRIMARY KEY,
@@ -54,9 +54,9 @@ CREATE TABLE IF NOT EXISTS roadmaps (
         account_id
     ) REFERENCES accounts (id) ON DELETE CASCADE
 );
-CREATE INDEX idx_roadmaps_account_id ON roadmaps (account_id);
-CREATE UNIQUE INDEX idx_roadmaps_slug ON roadmaps (slug);
-CREATE INDEX idx_roadmaps_deleted_at ON roadmaps (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_roadmaps_account_id ON roadmaps (account_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_roadmaps_slug ON roadmaps (slug);
+CREATE INDEX IF NOT EXISTS idx_roadmaps_deleted_at ON roadmaps (deleted_at);
 
 CREATE TABLE IF NOT EXISTS topics (
     id SERIAL PRIMARY KEY,
@@ -80,10 +80,9 @@ CREATE TABLE IF NOT EXISTS topics (
     ) ON DELETE CASCADE
 );
 -- CREATE INDEX idx_topics_account_id ON topics (account_id);
-CREATE UNIQUE INDEX idx_topics_slug ON topics (slug);
-CREATE INDEX idx_topics_roadmap_id ON topics (roadmap_id);
-CREATE INDEX idx_topics_parent_id ON topics (parent_id);
-
+CREATE UNIQUE INDEX IF NOT EXISTS idx_topics_slug ON topics (slug);
+CREATE INDEX IF NOT EXISTS idx_topics_roadmap_id ON topics (roadmap_id);
+CREATE INDEX IF NOT EXISTS idx_topics_parent_id ON topics (parent_id);
 
 CREATE TYPE personalization_option_skill_level AS ENUM (
     'beginner',
@@ -107,12 +106,8 @@ CREATE TABLE IF NOT EXISTS personalization_options (
         roadmap_id
     ) REFERENCES roadmaps (id) ON DELETE CASCADE
 );
-CREATE INDEX idx_personalization_options_account_id ON personalization_options (
-    account_id
-);
-CREATE INDEX idx_personalization_options_roadmap_id ON personalization_options (
-    roadmap_id
-);
+CREATE INDEX IF NOT EXISTS idx_personalization_options_account_id ON personalization_options (account_id);
+CREATE INDEX IF NOT EXISTS idx_personalization_options_roadmap_id ON personalization_options (roadmap_id);
 
 CREATE TYPE external_resource_type AS ENUM (
     'youtube',
@@ -131,7 +126,7 @@ CREATE TABLE IF NOT EXISTS external_resources (
         topic_id
     ) REFERENCES topics (id) ON DELETE CASCADE
 );
-CREATE INDEX idx_external_resources_topic_id ON external_resources (topic_id);
+CREATE INDEX IF NOT EXISTS idx_external_resources_topic_id ON external_resources (topic_id);
 
 -- +goose Down
 DROP TABLE IF EXISTS external_resources;
