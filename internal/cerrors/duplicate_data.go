@@ -2,9 +2,7 @@ package cerrors
 
 import "net/http"
 
-func DuplicateData(label string) *AppError {
-	return &AppError{
-		code:    http.StatusConflict,
-		message: label + " already exists",
-	}
+var DuplicateData = &AppError{
+	code:    http.StatusConflict,
+	message: "data already exists",
 }

@@ -9,7 +9,7 @@ import (
 func (a *API) GetTopicBySlug(c echo.Context) error {
 	slug := c.Param("slug")
 	if slug == "" {
-		return cerrors.NotFound()
+		return cerrors.NotFound
 	}
 
 	output, err := a.application.GetTopicBySlug(c.Request().Context(), slug)

@@ -2,9 +2,7 @@ package cerrors
 
 import "net/http"
 
-func InvalidData() *AppError {
-	return &AppError{
-		code:    http.StatusBadRequest,
-		message: "Invalid Data",
-	}
+var InvalidData = &AppError{
+	code:    http.StatusBadRequest,
+	message: "Invalid Data",
 }

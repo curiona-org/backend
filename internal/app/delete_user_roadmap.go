@@ -15,7 +15,7 @@ func (app *application) DeleteUserRoadmap(ctx context.Context, input io.DeleteUs
 
 	err := app.repository.Roadmap.Update(ctx, input.Slug, func(roadmap *domain.Roadmap) (bool, error) {
 		if roadmap.AccountID != input.AccountID {
-			return false, cerrors.NotFound()
+			return false, cerrors.NotFound
 		}
 
 		roadmap.Delete()
@@ -23,7 +23,7 @@ func (app *application) DeleteUserRoadmap(ctx context.Context, input io.DeleteUs
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
-			return cerrors.Wrap(cerrors.NotFound(), err)
+			return cerrors.Wrap(cerrors.NotFound, err)
 		}
 		return err
 	}

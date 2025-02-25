@@ -12,7 +12,7 @@ func (a *API) UpdateProfile(c echo.Context) error {
 	var input io.UpdateProfileInput
 
 	if err := c.Bind(&input); err != nil {
-		return cerrors.InvalidData()
+		return cerrors.InvalidData
 	}
 
 	if err := c.Validate(&input); err != nil {

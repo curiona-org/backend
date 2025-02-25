@@ -9,7 +9,7 @@ import (
 func (a *API) GetRoadmapBySlug(c echo.Context) error {
 	slug := c.Param("slug")
 	if slug == "" {
-		return cerrors.NotFound()
+		return cerrors.NotFound
 	}
 
 	output, err := a.application.GetRoadmapBySlug(c.Request().Context(), slug)

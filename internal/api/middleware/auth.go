@@ -16,18 +16,18 @@ func AuthMiddleware(app app.CurionaApplication) func(next echo.HandlerFunc) echo
 			reqCtx := c.Request().Context()
 			authorization, ok := c.Request().Header["Authorization"]
 			if !ok {
-				return cerrors.Unauthorized()
+				return cerrors.Unauthorized
 			}
 
 			bearer := strings.Split(authorization[0], " ")
 			if len(bearer) < 2 {
-				return cerrors.Unauthorized()
+				return cerrors.Unauthorized
 			}
 
 			token := bearer[1]
 			payload, err := app.AuthVerify(reqCtx, token)
 			if err != nil {
-				return cerrors.Unauthorized()
+				return cerrors.Unauthorized
 			}
 
 			ctx := context.WithValue(reqCtx, auth.ContextKey, payload)

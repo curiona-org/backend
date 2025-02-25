@@ -12,7 +12,7 @@ func (a *API) GenerateRoadmap(c echo.Context) error {
 	var input io.GenerateRoadmapInput
 
 	if err := c.Bind(&input); err != nil {
-		return cerrors.InvalidData()
+		return cerrors.InvalidData
 	}
 
 	if err := c.Validate(&input); err != nil {

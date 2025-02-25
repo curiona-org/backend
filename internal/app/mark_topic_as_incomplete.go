@@ -15,7 +15,7 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 
 	err := app.repository.Topic.Update(ctx, input.Slug, func(topic *domain.Topic) (bool, error) {
 		if topic.AccountID != input.AccountID {
-			return false, cerrors.NotFound()
+			return false, cerrors.NotFound
 		}
 
 		if !topic.Finished {
@@ -27,7 +27,7 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return cerrors.Wrap(cerrors.NotFound(), err)
+			return cerrors.Wrap(cerrors.NotFound, err)
 		}
 		return err
 	}
