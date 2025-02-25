@@ -1,31 +1,35 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
 )
 
-func (a *API) UpdateProfile(c echo.Context) error {
+func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var input io.UpdateProfileInput
 
-	if err := c.Bind(&input); err != nil {
-		return cerrors.ErrInvalidData
+	if err := a.Bind(r.Body, &input); err != nil {
+		a.handleError(w, r, cerrors.ErrInvalidData)
+		return
 	}
 
-	if err := c.Validate(&input); err != nil {
-		return err
+	if err := a.validator.Validate(&input); err != nil {
+		a.handleError(w, r, err)
+		return
 	}
 
-	ctx := c.Request().Context()
+	ctx := r.Context()
+
 	auth := auth.TokenFromContext(ctx)
 	input.AccountID = auth.AccountID
 	output, err := a.application.UpdateProfile(ctx, input)
 	if err != nil {
-		return err
+		a.handleError(w, r, err)
+		return
 	}
 
-	return render.OK(c, "Profile details.", output)
+	a.render.OK(w, "Profile details.", output)
 }

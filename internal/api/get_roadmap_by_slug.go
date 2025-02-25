@@ -1,21 +1,23 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
 )
 
-func (a *API) GetRoadmapBySlug(c echo.Context) error {
-	slug := c.Param("slug")
+func (a *API) GetRoadmapBySlug(w http.ResponseWriter, r *http.Request) {
+	slug := a.Param(r, "slug")
 	if slug == "" {
-		return cerrors.ErrNotFound
+		a.handleError(w, r, cerrors.ErrNotFound)
+		return
 	}
 
-	output, err := a.application.GetRoadmapBySlug(c.Request().Context(), slug)
+	output, err := a.application.GetRoadmapBySlug(r.Context(), slug)
 	if err != nil {
-		return err
+		a.handleError(w, r, err)
+		return
 	}
 
-	return render.OK(c, "Profile details.", output)
+	a.render.OK(w, "Profile details.", output)
 }

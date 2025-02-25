@@ -5,29 +5,30 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
 )
 
-func (a *API) Auth(c echo.Context) error {
+func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
 	var input io.AuthInput
 
-	if err := c.Bind(&input); err != nil {
-		return cerrors.ErrInvalidData
+	if err := a.Bind(r.Body, &input); err != nil {
+		a.handleError(w, r, cerrors.ErrInvalidData)
+		return
 	}
 
-	if err := c.Validate(&input); err != nil {
-		return err
+	if err := a.validator.Validate(&input); err != nil {
+		a.handleError(w, r, err)
+		return
 	}
 
-	input.UserAgent = c.Request().UserAgent()
-	input.ClientIP = c.RealIP()
-	output, err := a.application.Auth(c.Request().Context(), input)
+	input.UserAgent = r.UserAgent()
+	input.ClientIP = r.RemoteAddr
+	output, err := a.application.Auth(r.Context(), input)
 	if err != nil {
-		return err
+		a.handleError(w, r, err)
+		return
 	}
 
-	c.SetCookie(&http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    output.RefreshToken,
 		Path:     "/",
@@ -39,8 +40,9 @@ func (a *API) Auth(c echo.Context) error {
 	})
 
 	if output.Created {
-		return render.Created(c, "Successfully registered.", output)
+		a.render.Created(w, "Successfully registered.", output)
+		return
 	}
 
-	return render.OK(c, "Successfully logged in.", output)
+	a.render.OK(w, "Successfully logged in.", output)
 }

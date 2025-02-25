@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
 
 	"github.com/curiona-org/backend/internal/admin"
 	"github.com/curiona-org/backend/internal/api"
@@ -20,8 +22,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+func run(ctx context.Context) {
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, os.Kill)
 	defer cancel()
 
 	config.Init()
@@ -77,6 +79,7 @@ func main() {
 	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth)
 
 	api := api.New(
+		ctx,
 		config.Port(),
 		curionaApp,
 		adminApp,
@@ -102,4 +105,9 @@ func main() {
 	}
 
 	log.Info().Msg("Application shutdown")
+}
+
+func main() {
+	ctx := context.Background()
+	run(ctx)
 }
