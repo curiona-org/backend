@@ -74,6 +74,7 @@ func run(ctx context.Context) {
 		),
 		provider.GoogleBooks,
 		provider.Youtube,
+		provider.Tracing,
 	)
 	adminApp := admin.New(postgresRepository, auth)
 	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth)
@@ -84,6 +85,7 @@ func run(ctx context.Context) {
 		curionaApp,
 		adminApp,
 		chatApp,
+		provider.Tracing,
 	)
 
 	log.Info().Msg("Starting Application Server...")

@@ -24,28 +24,36 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/propagation"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type API struct {
-	server    *http.Server
-	router    chi.Router
-	render    *render.Renderer
-	validator validator.Validator
+	server         *http.Server
+	router         chi.Router
+	render         *render.Renderer
+	validator      validator.Validator
+	tracerProvider *tracesdk.TracerProvider
 
 	application app.CurionaApplication
 	adminApp    admin.Application
 	chatApp     chat.Application
 }
 
-func New(ctx context.Context, port string, curionaApp app.CurionaApplication, adminApp admin.Application, chatApp chat.Application) *API {
+func New(ctx context.Context, port string, curionaApp app.CurionaApplication, adminApp admin.Application, chatApp chat.Application, tracer *tracesdk.TracerProvider) *API {
 	router := chi.NewRouter()
 	api := &API{
-		router:      router,
-		render:      render.New(ctx),
-		validator:   validator.NewPlayground(),
-		application: curionaApp,
-		adminApp:    adminApp,
-		chatApp:     chatApp,
+		router:         router,
+		render:         render.New(ctx),
+		validator:      validator.NewPlayground(),
+		application:    curionaApp,
+		adminApp:       adminApp,
+		chatApp:        chatApp,
+		tracerProvider: tracer,
 	}
 
 	api.SetupMiddlewares()
@@ -112,6 +120,7 @@ func (a *API) SetupMiddlewares() {
 			http.MethodHead, http.MethodOptions},
 	}))
 	a.router.Use(middleware.RealIP)
+	a.router.Use(otelhttp.NewMiddleware("api", otelhttp.WithTracerProvider(a.tracerProvider)))
 	a.router.Use(a.requestIDMiddleware)
 	a.router.Use(a.populateLog)
 	a.router.Use(a.loggerMiddleware)
@@ -161,6 +170,10 @@ func (a *API) requestIDMiddleware(next http.Handler) http.Handler {
 		if requestID == "" {
 			requestID = xid.New().String()
 		}
+		w.Header().Set(requestIDHeader, requestID)
+
+		span := trace.SpanFromContext(r.Context())
+		span.SetAttributes(attribute.String("http.request_id", requestID))
 
 		ctx := context.WithValue(r.Context(), requestIDContextKey{}, requestID)
 
@@ -183,8 +196,8 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 
 		requestID, ok := ctx.Value(requestIDContextKey{}).(string)
 		if ok {
-			log.UpdateContext(func(logC zerolog.Context) zerolog.Context {
-				return logC.Str("request_id", requestID)
+			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str("request_id", requestID)
 			})
 		}
 
@@ -199,6 +212,16 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			requestURI = fmt.Sprintf("%s (URL decode failed: %v)", r.RequestURI, err)
 		}
+
+		traceCtx := otel.GetTextMapPropagator().Extract(r.Context(), propagation.HeaderCarrier(r.Header))
+		span := trace.SpanContextFromContext(traceCtx)
+		if span.IsValid() {
+			log.UpdateContext(func(c zerolog.Context) zerolog.Context {
+				return c.Str("trace_id", span.TraceID().String())
+			})
+		}
+
+		// TODO: log internal error messages.
 		if status >= http.StatusInternalServerError {
 			log.Error().
 				Str("uri", requestURI).

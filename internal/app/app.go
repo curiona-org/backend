@@ -11,7 +11,7 @@ import (
 	"github.com/curiona-org/backend/pkg/googleapi/book"
 	"github.com/curiona-org/backend/pkg/googleapi/youtube"
 	"github.com/curiona-org/backend/pkg/llm"
-	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -55,8 +55,8 @@ func New(
 	googleOAuth oauth.Client,
 	googleBooks book.Client,
 	youtube youtube.Client,
+	tracer *tracesdk.TracerProvider,
 ) CurionaApplication {
-	tracer := otel.Tracer("app")
 	return &application{
 		worker:      worker,
 		repository:  repository,
@@ -65,6 +65,6 @@ func New(
 		googleOAuth: googleOAuth,
 		googleBooks: googleBooks,
 		youtube:     youtube,
-		tracer:      tracer,
+		tracer:      tracer.Tracer("app"),
 	}
 }
