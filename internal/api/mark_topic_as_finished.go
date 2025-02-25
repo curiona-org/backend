@@ -14,9 +14,9 @@ func (a *API) MarkTopicAsFinished(c echo.Context) error {
 		return cerrors.ErrNotFound
 	}
 
-	auth := auth.TokenFromContext(c.Request().Context())
-
-	err := a.application.MarkTopicAsFinished(c.Request().Context(), io.MarkTopicInput{
+	ctx := c.Request().Context()
+	auth := auth.TokenFromContext(ctx)
+	err := a.application.MarkTopicAsFinished(ctx, io.MarkTopicInput{
 		Slug:      slug,
 		AccountID: auth.AccountID,
 	})

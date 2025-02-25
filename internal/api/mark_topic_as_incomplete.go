@@ -14,8 +14,9 @@ func (a *API) MarkTopicAsIncomplete(c echo.Context) error {
 		return cerrors.ErrNotFound
 	}
 
-	auth := auth.TokenFromContext(c.Request().Context())
-	err := a.application.MarkTopicAsIncomplete(c.Request().Context(), io.MarkTopicInput{
+	ctx := c.Request().Context()
+	auth := auth.TokenFromContext(ctx)
+	err := a.application.MarkTopicAsIncomplete(ctx, io.MarkTopicInput{
 		Slug:      slug,
 		AccountID: auth.AccountID,
 	})

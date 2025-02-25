@@ -14,8 +14,9 @@ func (a *API) DeleteUserRoadmap(c echo.Context) error {
 		return cerrors.ErrNotFound
 	}
 
-	auth := auth.TokenFromContext(c.Request().Context())
-	err := a.application.DeleteUserRoadmap(c.Request().Context(), io.DeleteUserRoadmapInput{
+	ctx := c.Request().Context()
+	auth := auth.TokenFromContext(ctx)
+	err := a.application.DeleteUserRoadmap(ctx, io.DeleteUserRoadmapInput{
 		AccountID: auth.AccountID,
 		Slug:      slug,
 	})

@@ -19,10 +19,11 @@ func (a *API) GenerateRoadmap(c echo.Context) error {
 		return err
 	}
 
-	auth := auth.TokenFromContext(c.Request().Context())
+	ctx := c.Request().Context()
+	auth := auth.TokenFromContext(ctx)
 	input.AccountID = auth.AccountID
 
-	output, err := a.application.GenerateRoadmap(c.Request().Context(), input)
+	output, err := a.application.GenerateRoadmap(ctx, input)
 	if err != nil {
 		return err
 	}
