@@ -117,6 +117,7 @@ func (a *API) SetupMiddlewares() {
 	a.router.Use(a.populateLog)
 	a.router.Use(a.loggerMiddleware)
 	a.router.Use(middleware.Recoverer)
+	a.router.Use(middleware.Compress(5))
 }
 
 type Middleware func(next http.Handler) http.Handler
