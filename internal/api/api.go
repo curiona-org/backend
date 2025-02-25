@@ -78,7 +78,7 @@ func (a *API) setupMiddlewares() {
 		LogStatus:   true,
 		LogError:    true,
 		HandleError: true,
-		LogValuesFunc: func(c echo.Context, v echoMiddleware.RequestLoggerValues) error { //nolint:revive
+		LogValuesFunc: func(c echo.Context, v echoMiddleware.RequestLoggerValues) error {
 			log := logger.FromContext(c.Request().Context())
 
 			ctx := c.Request().Context()
