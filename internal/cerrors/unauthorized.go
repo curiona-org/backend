@@ -2,7 +2,7 @@ package cerrors
 
 import "net/http"
 
-var Unauthorized = &AppError{
+var ErrUnauthorized = &AppError{
 	code:    http.StatusUnauthorized,
 	message: "Unauthorized",
 }

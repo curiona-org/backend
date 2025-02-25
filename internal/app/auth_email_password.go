@@ -27,7 +27,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 
 		// check if user already registered with a different method
 		if existingAccount.Method != input.Method {
-			return registrationResult{}, cerrors.InvalidCredentials
+			return registrationResult{}, cerrors.ErrInvalidCredentials
 		}
 
 		// ignore password check if user is signing in with google
@@ -45,7 +45,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		plainPassword := auth.NewPassword(input.Password)
 		matched := existingAccount.CheckPassword(plainPassword)
 		if !matched {
-			return registrationResult{}, cerrors.InvalidCredentials
+			return registrationResult{}, cerrors.ErrInvalidCredentials
 		}
 
 		return registrationResult{

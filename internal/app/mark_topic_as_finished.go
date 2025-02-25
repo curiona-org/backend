@@ -15,7 +15,7 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 
 	err := app.repository.Topic.Update(ctx, input.Slug, func(topic *domain.Topic) (bool, error) {
 		if topic.AccountID != input.AccountID {
-			return false, cerrors.NotFound
+			return false, cerrors.ErrNotFound
 		}
 
 		if topic.Finished {
@@ -27,7 +27,7 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return cerrors.Wrap(cerrors.NotFound, err)
+			return cerrors.Wrap(cerrors.ErrNotFound, err)
 		}
 		return err
 	}

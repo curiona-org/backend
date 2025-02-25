@@ -12,7 +12,7 @@ import (
 func (a *API) AuthRefresh(c echo.Context) error {
 	refreshToken, err := c.Cookie("refresh_token")
 	if err != nil {
-		return cerrors.Unauthorized
+		return cerrors.ErrUnauthorized
 	}
 
 	output, err := a.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{

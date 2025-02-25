@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-var InvalidCredentials = &AppError{
+var ErrInvalidCredentials = &AppError{
 	code:    http.StatusUnauthorized,
 	message: "Invalid Credentials",
 }

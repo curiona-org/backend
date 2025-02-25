@@ -25,7 +25,7 @@ func (a *API) ErrorHandler(err error, c echo.Context) {
 		code = appErr.Code()
 	case errors.As(err, &httpErr):
 		if httpErr.Code == http.StatusNotFound {
-			err = cerrors.NotFound
+			err = cerrors.ErrNotFound
 		}
 		code = httpErr.Code
 	}

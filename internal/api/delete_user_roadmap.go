@@ -11,7 +11,7 @@ import (
 func (a *API) DeleteUserRoadmap(c echo.Context) error {
 	slug := c.Param("slug")
 	if slug == "" {
-		return cerrors.NotFound
+		return cerrors.ErrNotFound
 	}
 
 	auth := auth.TokenFromContext(c.Request().Context())

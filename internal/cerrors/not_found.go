@@ -2,7 +2,7 @@ package cerrors
 
 import "net/http"
 
-var NotFound = &AppError{
+var ErrNotFound = &AppError{
 	code:    http.StatusNotFound,
 	message: "Not found",
 }
