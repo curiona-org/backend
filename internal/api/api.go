@@ -18,11 +18,10 @@ import (
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/chat"
 	"github.com/curiona-org/backend/internal/logger"
-	"github.com/curiona-org/backend/pkg/validation"
+	"github.com/curiona-org/backend/pkg/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/go-playground/validator/v10"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
 )
@@ -31,7 +30,7 @@ type API struct {
 	server    *http.Server
 	router    chi.Router
 	render    *render.Renderer
-	validator *validation.CustomValidator
+	validator validator.Validator
 
 	application app.CurionaApplication
 	adminApp    admin.Application
@@ -43,7 +42,7 @@ func New(ctx context.Context, port string, curionaApp app.CurionaApplication, ad
 	api := &API{
 		router:      router,
 		render:      render.New(ctx),
-		validator:   validation.New(),
+		validator:   validator.NewPlayground(),
 		application: curionaApp,
 		adminApp:    adminApp,
 		chatApp:     chatApp,
@@ -241,19 +240,10 @@ func (a *API) handleError(w http.ResponseWriter, _ *http.Request, err error) {
 		msg = appErr.Message()
 	}
 
-	var validationErrMsgs []validationErrMsg
-	var validationErrs validator.ValidationErrors
-	if isValidationErr := errors.As(err, &validationErrs); isValidationErr {
-		code = http.StatusUnprocessableEntity
-
-		validationErrMsgs = make([]validationErrMsg, 0)
-		for _, err := range validationErrs {
-			validationErrMsgs = append(validationErrMsgs, getValidationErrMsg(err))
-		}
-	}
-
-	if len(validationErrMsgs) > 0 {
-		a.render.Error(w, code, "Validation failed.", validationErrMsgs)
+	// check if the error is a validation error
+	validationErrs := a.validator.ParseErrors(err)
+	if len(validationErrs) > 0 {
+		a.render.Error(w, http.StatusUnprocessableEntity, "Validation failed.", validationErrs)
 		return
 	}
 
@@ -262,27 +252,4 @@ func (a *API) handleError(w http.ResponseWriter, _ *http.Request, err error) {
 	}
 
 	a.render.Error(w, code, msg, nil)
-}
-
-type validationErrMsg struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
-}
-
-func getValidationErrMsg(err validator.FieldError) validationErrMsg {
-	errMsg := validationErrMsg{
-		Field: err.Field(),
-	}
-
-	errMsg.Message = map[string]string{
-		"required":         err.Field() + " is required.",
-		"required_without": err.Field() + " is required.",
-		"email":            "Must be a valid email address.",
-		"min":              err.Field() + " must be at least " + err.Param() + " characters long.",
-		"max":              err.Field() + " must not exceed " + err.Param() + " characters.",
-		"url":              "Must be a valid URL.",
-		"oneof":            err.Field() + " must be one of the following: " + err.Param() + ".",
-	}[err.Tag()]
-
-	return errMsg
 }
