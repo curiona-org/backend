@@ -32,11 +32,11 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	var refreshTokenStr string
 	err = app.repository.Session.Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
 		if session.Blocked {
-			return false, cerrors.Wrap(cerrors.ErrUnauthorized, domain.ErrSessionIsBlocked)
+			return false, cerrors.ErrUnauthorized.With(domain.ErrSessionIsBlocked)
 		}
 
 		if time.Now().After(session.ExpiresAt) {
-			return false, cerrors.Wrap(cerrors.ErrUnauthorized, domain.ErrSessionExpired)
+			return false, cerrors.ErrUnauthorized.With(domain.ErrSessionExpired)
 		}
 
 		// Rotate the refresh token
@@ -55,7 +55,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrSessionNotFound) {
-			return io.AuthRefreshOutput{}, cerrors.Wrap(cerrors.ErrUnauthorized, err)
+			return io.AuthRefreshOutput{}, cerrors.ErrUnauthorized.With(err)
 		}
 		return io.AuthRefreshOutput{}, err
 	}

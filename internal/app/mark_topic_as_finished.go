@@ -27,7 +27,7 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return cerrors.Wrap(cerrors.ErrNotFound, err)
+			return cerrors.ErrNotFound.Msg("topic")
 		}
 		return err
 	}

@@ -19,7 +19,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
-			return io.GetRoadmapOutput{}, cerrors.ResourceNotFound("roadmap")
+			return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
 		}
 		return io.GetRoadmapOutput{}, err
 	}

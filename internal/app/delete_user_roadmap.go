@@ -23,7 +23,7 @@ func (app *application) DeleteUserRoadmap(ctx context.Context, input io.DeleteUs
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
-			return cerrors.Wrap(cerrors.ErrNotFound, err)
+			return cerrors.ErrNotFound.Msg("roadmap")
 		}
 		return err
 	}

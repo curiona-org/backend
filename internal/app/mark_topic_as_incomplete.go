@@ -27,7 +27,7 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 	})
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return cerrors.Wrap(cerrors.ErrNotFound, err)
+			return cerrors.ErrNotFound.Msg("topic")
 		}
 		return err
 	}

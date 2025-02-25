@@ -10,10 +10,10 @@ import (
 
 var (
 	// ErrPasswordInvalidCharacters is returned when the password contains invalid characters.
-	ErrPasswordInvalidCharacters = cerrors.Wrap(cerrors.ErrInvalidData, errors.New("password invalid characters"))
+	ErrPasswordInvalidCharacters = cerrors.ErrInvalidData.Msg("password invalid characters")
 
 	// ErrPasswordEmpty is returned when the password is empty.
-	ErrPasswordEmpty = cerrors.Wrap(cerrors.ErrInvalidData, errors.New("password empty"))
+	ErrPasswordEmpty = cerrors.ErrInvalidData.Msg("password empty")
 )
 
 const (

@@ -5,6 +5,6 @@ import (
 )
 
 var ErrInvalidCredentials = &AppError{
-	code:    http.StatusUnauthorized,
-	message: "Invalid Credentials",
+	ErrorCode:       http.StatusUnauthorized,
+	ExternalMessage: "Invalid Credentials",
 }

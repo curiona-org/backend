@@ -18,7 +18,7 @@ func (app *application) authGoogle(ctx context.Context, input io.AuthInput) (reg
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return registrationResult{}, cerrors.Wrap(cerrors.ErrUnauthorized, err)
+		return registrationResult{}, cerrors.ErrUnauthorized.With(err)
 	}
 
 	return app.authEmailPassword(ctx, io.AuthInput{

@@ -8,11 +8,13 @@ import (
 	"strings"
 
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/llm"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -30,8 +32,13 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 
 	var output io.GenerateRoadmapOutput
 
+	systemPrompt := app.makeGenerateRoadmapSystemPrompt(traceCtx)
+	if systemPrompt == "" {
+		return io.GenerateRoadmapOutput{}, cerrors.ErrPromptGenerationFailed
+	}
+
 	generated, err := app.chatGeneratePrompt(traceCtx, llm.ChatPrompt{
-		System: app.makeGenerateRoadmapSystemPrompt(traceCtx),
+		System: systemPrompt,
 		User:   app.makeGenerateRoadmapUserPrompt(input),
 	})
 	if err != nil {
@@ -103,14 +110,15 @@ func (app *application) chatGeneratePrompt(ctx context.Context, prompt llm.ChatP
 	content, err := app.llm.Chat(ctx, prompt)
 	if err != nil {
 		span.RecordError(err)
-		return chatGeneratePromptPromptResult{}, err
+		return chatGeneratePromptPromptResult{}, cerrors.ErrLLMProviderUnavailable.With(err)
 	}
 
 	var result chatGeneratePromptPromptResult
 
 	if err = json.Unmarshal([]byte(content), &result); err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
-		return chatGeneratePromptPromptResult{}, err
+		return chatGeneratePromptPromptResult{}, cerrors.ErrLLMInvalidData.With(err)
 	}
 
 	return result, nil

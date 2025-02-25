@@ -23,7 +23,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 	topic, err := app.repository.Topic.GetBySlug(traceCtx, slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
-			return io.GetTopicOutput{}, cerrors.ResourceNotFound("topic")
+			return io.GetTopicOutput{}, cerrors.ErrNotFound.Msg("topic")
 		}
 		return io.GetTopicOutput{}, err
 	}

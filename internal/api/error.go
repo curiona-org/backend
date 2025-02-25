@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/internal/config"
 	"github.com/curiona-org/backend/pkg/server/render"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -20,9 +19,11 @@ func (a *API) ErrorHandler(err error, c echo.Context) {
 	var appErr *cerrors.AppError
 	var httpErr *echo.HTTPError
 	code := http.StatusInternalServerError
+	var msg string
 	switch {
 	case errors.As(err, &appErr):
 		code = appErr.Code()
+		msg = appErr.Message()
 	case errors.As(err, &httpErr):
 		if httpErr.Code == http.StatusNotFound {
 			err = cerrors.ErrNotFound
@@ -50,12 +51,12 @@ func (a *API) ErrorHandler(err error, c echo.Context) {
 		return
 	}
 
-	if config.IsStaging() || config.IsProduction() {
-		err = render.Error(c, code, "Internal Error", nil)
+	if msg == "" {
+		err = render.Error(c, code, cerrors.DefaultErrorMessage, nil)
 		return
 	}
 
-	err = render.Error(c, code, err.Error(), nil)
+	err = render.Error(c, code, msg, nil)
 }
 
 type validationErrMsg struct {
