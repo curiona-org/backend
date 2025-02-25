@@ -7,11 +7,11 @@ import (
 
 type TraceHook struct{}
 
-func (h TraceHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
+func (h TraceHook) Run(e *zerolog.Event, _ zerolog.Level, _ string) {
 	ctx := e.GetCtx()
-	spanId := tracing.GetTraceID(ctx)
-	if spanId == "" {
+	spanID := tracing.GetTraceID(ctx)
+	if spanID == "" {
 		return
 	}
-	e.Str("span_id", spanId)
+	e.Str("span_id", spanID)
 }
