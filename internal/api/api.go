@@ -168,27 +168,6 @@ func (a *API) requestIDMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type LoggingResponseWriter struct {
-	w          http.ResponseWriter
-	statusCode int
-	bytes      int
-}
-
-func (lrw *LoggingResponseWriter) Header() http.Header {
-	return lrw.w.Header()
-}
-
-func (lrw *LoggingResponseWriter) Write(bb []byte) (int, error) {
-	wb, err := lrw.w.Write(bb)
-	lrw.bytes += wb
-	return wb, err
-}
-
-func (lrw *LoggingResponseWriter) WriteHeader(statusCode int) {
-	lrw.w.WriteHeader(statusCode)
-	lrw.statusCode = statusCode
-}
-
 func (a *API) populateLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log := logger.Get()
