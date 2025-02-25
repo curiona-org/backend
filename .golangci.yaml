@@ -356,6 +356,11 @@ issues:
       linters: [ govet ]
     - text: "unused-parameter: parameter 'ctx' seems to be unused"
       linters: [ revive ]
+
+    # disable lint errors for http.HandlerFunc unused request parameter
+    - text: "unused-parameter: parameter 'r' seems to be unused"
+      linters: [ revive ]
+
     - path: "_test\\.go"
       linters:
         - bodyclose

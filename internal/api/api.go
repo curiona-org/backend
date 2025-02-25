@@ -195,13 +195,13 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(lrw, r)
 
 		status := lrw.Status()
-		requestUri, err := url.QueryUnescape(r.RequestURI)
+		requestURI, err := url.QueryUnescape(r.RequestURI)
 		if err != nil {
-			requestUri = fmt.Sprintf("%s (URL decode failed: %v)", r.RequestURI, err)
+			requestURI = fmt.Sprintf("%s (URL decode failed: %v)", r.RequestURI, err)
 		}
 		if status >= http.StatusInternalServerError {
 			log.Error().
-				Str("uri", requestUri).
+				Str("uri", requestURI).
 				Int("status", status).
 				Str("remote_addr", r.RemoteAddr).
 				Int("bytes", lrw.BytesWritten()).
@@ -211,7 +211,7 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 				Msg("Incoming request")
 		} else {
 			log.Info().
-				Str("uri", requestUri).
+				Str("uri", requestURI).
 				Int("status", status).
 				Str("remote_addr", r.RemoteAddr).
 				Int("bytes", lrw.BytesWritten()).
