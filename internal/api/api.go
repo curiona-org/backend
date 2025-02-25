@@ -82,7 +82,7 @@ func (a *API) setupMiddlewares() {
 			log := logger.FromContext(c.Request().Context())
 
 			ctx := c.Request().Context()
-			requestID, ok := ctx.Value("request_id").(string)
+			requestID, ok := ctx.Value(middleware.RequestIDContextKey).(string)
 			if ok {
 				log.UpdateContext(func(logC zerolog.Context) zerolog.Context {
 					return logC.Str("request_id", requestID)

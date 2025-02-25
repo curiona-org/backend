@@ -11,6 +11,10 @@ var (
 	requestLoggerHeader = echo.HeaderXRequestID
 )
 
+type requestIDContextKey struct{}
+
+var RequestIDContextKey = requestIDContextKey{}
+
 func RequestID(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		req := c.Request()
@@ -21,7 +25,7 @@ func RequestID(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		res.Header().Set(requestLoggerHeader, requestID)
 
-		ctx := context.WithValue(c.Request().Context(), "request_id", requestID)
+		ctx := context.WithValue(c.Request().Context(), RequestIDContextKey, requestID)
 		c.SetRequest(c.Request().WithContext(ctx))
 
 		return next(c)
