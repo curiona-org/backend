@@ -48,8 +48,8 @@ func (r *Renderer) JSON(w http.ResponseWriter, code int, data Response) {
 	defer bytebufferpool.Put(b)
 
 	if data == (Response{}) {
-		w.WriteHeader(code)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
 
 		if code >= http.StatusOK && code < http.StatusMultipleChoices {
 			fmt.Fprint(w, jsonOK)
@@ -65,8 +65,8 @@ func (r *Renderer) JSON(w http.ResponseWriter, code int, data Response) {
 		r.logger.Error().Err(err).Msg("failed to marshal json")
 		msg := escapeJSON(cerrors.DefaultErrorMessage)
 
-		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, jsonErrFormat, msg)
 		return
 	}
@@ -83,5 +83,5 @@ const jsonErrFormat = `{"success":false,"message":"%s"}`
 
 // escapeJSON does primitive JSON escaping.
 func escapeJSON(s string) string {
-	return strings.Replace(s, `"`, `\"`, -1)
+	return strings.ReplaceAll(s, `"`, `\"`)
 }
