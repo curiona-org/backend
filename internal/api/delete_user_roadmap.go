@@ -1,28 +1,30 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
 )
 
-func (a *API) DeleteUserRoadmap(c echo.Context) error {
-	slug := c.Param("slug")
+func (a *API) DeleteUserRoadmap(w http.ResponseWriter, r *http.Request) {
+	slug := a.Param(r, "slug")
 	if slug == "" {
-		return cerrors.ErrNotFound
+		a.handleError(w, r, cerrors.ErrNotFound)
+		return
 	}
 
-	ctx := c.Request().Context()
+	ctx := r.Context()
 	auth := auth.TokenFromContext(ctx)
 	err := a.application.DeleteUserRoadmap(ctx, io.DeleteUserRoadmapInput{
 		AccountID: auth.AccountID,
 		Slug:      slug,
 	})
 	if err != nil {
-		return err
+		a.handleError(w, r, err)
+		return
 	}
 
-	return render.OK(c, "Roadmap deleted.", nil)
+	a.render.OK(w, "Roadmap deleted.", nil)
 }

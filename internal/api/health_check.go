@@ -1,10 +1,7 @@
 package api
 
-import (
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
-)
+import "net/http"
 
-func (a *API) HealthCheck(c echo.Context) error {
-	return render.OK(c, "OK", nil)
+func (a *API) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	a.render.OK(w, "OK", nil)
 }

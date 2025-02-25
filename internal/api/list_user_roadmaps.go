@@ -1,18 +1,20 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/curiona-org/backend/internal/auth"
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
 )
 
-func (a *API) ListUserRoadmaps(c echo.Context) error {
-	auth := auth.TokenFromContext(c.Request().Context())
+func (a *API) ListUserRoadmaps(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-	output, err := a.application.ListUserRoadmaps(c.Request().Context(), auth.AccountID)
+	auth := auth.TokenFromContext(ctx)
+	output, err := a.application.ListUserRoadmaps(ctx, auth.AccountID)
 	if err != nil {
-		return err
+		a.handleError(w, r, err)
+		return
 	}
 
-	return render.OK(c, "List User Roadmaps.", output)
+	a.render.OK(w, "List User Roadmaps.", output)
 }

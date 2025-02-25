@@ -5,26 +5,26 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/server/render"
-	"github.com/labstack/echo/v4"
 )
 
-func (a *API) AuthRefresh(c echo.Context) error {
-	refreshToken, err := c.Cookie("refresh_token")
+func (a *API) AuthRefresh(w http.ResponseWriter, r *http.Request) {
+	refreshToken, err := r.Cookie("refresh_token")
 	if err != nil {
-		return cerrors.ErrUnauthorized
+		a.handleError(w, r, cerrors.ErrUnauthorized)
+		return
 	}
 
-	output, err := a.application.AuthRefresh(c.Request().Context(), io.AuthRefreshInput{
+	output, err := a.application.AuthRefresh(r.Context(), io.AuthRefreshInput{
 		Token:     refreshToken.Value,
-		UserAgent: c.Request().UserAgent(),
-		ClientIP:  c.RealIP(),
+		UserAgent: r.UserAgent(),
+		ClientIP:  r.RemoteAddr,
 	})
 	if err != nil {
-		return err
+		a.handleError(w, r, err)
+		return
 	}
 
-	c.SetCookie(&http.Cookie{
+	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    output.RefreshToken,
 		Path:     "/",
@@ -35,5 +35,5 @@ func (a *API) AuthRefresh(c echo.Context) error {
 		SameSite: http.SameSiteNoneMode,
 	})
 
-	return render.OK(c, "Successfully refreshed token.", output)
+	a.render.OK(w, "Successfully refreshed token.", output)
 }
