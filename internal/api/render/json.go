@@ -1,13 +1,13 @@
 package render
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/valyala/bytebufferpool"
 )
 
 type Response struct {
@@ -43,9 +43,9 @@ func (r *Renderer) Error(w http.ResponseWriter, code int, msg string, err any) {
 }
 
 func (r *Renderer) JSON(w http.ResponseWriter, code int, data Response) {
-	b := r.pool.Get().(*bytes.Buffer)
+	b := bytebufferpool.Get()
 	b.Reset()
-	defer r.pool.Put(b)
+	defer bytebufferpool.Put(b)
 
 	if data == (Response{}) {
 		w.WriteHeader(code)
