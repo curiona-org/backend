@@ -44,7 +44,7 @@ func TestCerror_Wrap(t *testing.T) {
 
 func TestCerror_WrapNilError(t *testing.T) {
 	err := cerrors.Wrap(nil)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 }
 
 func TestCerror_Unwrap(t *testing.T) {

@@ -232,7 +232,7 @@ func (a *API) Param(r *http.Request, key string) string {
 	return chi.URLParam(r, key)
 }
 
-func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
+func (a *API) handleError(w http.ResponseWriter, _ *http.Request, err error) {
 	var appErr *cerrors.AppError
 	var msg string
 	code := http.StatusInternalServerError
@@ -242,7 +242,8 @@ func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	var validationErrMsgs []validationErrMsg
-	if validationErrs, isValidationErr := err.(validator.ValidationErrors); isValidationErr {
+	var validationErrs validator.ValidationErrors
+	if isValidationErr := errors.As(err, &validationErrs); isValidationErr {
 		code = http.StatusUnprocessableEntity
 
 		validationErrMsgs = make([]validationErrMsg, 0)

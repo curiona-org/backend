@@ -19,7 +19,7 @@ var (
 		ExternalMessage: "Oops! We encountered an unexpected error while generating the prompt for you. Please try again later.",
 	}
 
-	// ErrLLMInvalidData is an error that occurs when the user provides invalid data
+	// ErrLLMInvalidData is an error that occurs when the user provides invalid data.
 	ErrLLMInvalidData = &AppError{
 		ErrorCode:       http.StatusBadRequest,
 		InternalMessage: "LLM Invalid Data Provided",

@@ -366,6 +366,7 @@ issues:
         - bodyclose
         - dupl
         - errcheck
+        - errorlint
         - funlen
         - goconst
         - gosec
