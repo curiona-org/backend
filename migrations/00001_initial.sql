@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS topics (
     slug VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     "order" INTEGER NOT NULL,
-    finished BOOLEAN NOT NULL DEFAULT FALSE,
+    is_finished BOOLEAN NOT NULL DEFAULT FALSE,
     completed_at TIMESTAMPTZ,
     external_search_query TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
