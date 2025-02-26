@@ -40,7 +40,7 @@ func (r *SessionRepository) GetByAccountID(ctx context.Context, accountID int) (
 			psql.Quote(domain.SessionTable, "refresh_token"),
 			psql.Quote(domain.SessionTable, "user_agent"),
 			psql.Quote(domain.SessionTable, "client_ip"),
-			psql.Quote(domain.SessionTable, "blocked"),
+			psql.Quote(domain.SessionTable, "is_blocked"),
 			psql.Quote(domain.SessionTable, "expires_at"),
 			psql.Quote(domain.SessionTable, "created_at"),
 		),
@@ -81,7 +81,7 @@ func (r *SessionRepository) fetch(ctx context.Context, query string, args ...any
 			&s.RefreshToken,
 			&s.UserAgent,
 			&s.ClientIP,
-			&s.Blocked,
+			&s.IsBlocked,
 			&s.ExpiresAt,
 			&s.CreatedAt,
 		); err != nil {
@@ -95,8 +95,8 @@ func (r *SessionRepository) fetch(ctx context.Context, query string, args ...any
 
 func (r *SessionRepository) Save(ctx context.Context, input *domain.Session) (domain.Session, error) {
 	query, args := psql.Insert(
-		im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
-		im.Values(psql.Arg(input.AccountID, input.RefreshToken, input.UserAgent, input.ClientIP, input.Blocked, input.ExpiresAt)),
+		im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "is_blocked", "expires_at"),
+		im.Values(psql.Arg(input.AccountID, input.RefreshToken, input.UserAgent, input.ClientIP, input.IsBlocked, input.ExpiresAt)),
 		im.Returning("id", "created_at"),
 	).MustBuild(ctx)
 
@@ -156,7 +156,7 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 				psql.Quote(domain.SessionTable, "refresh_token"),
 				psql.Quote(domain.SessionTable, "user_agent"),
 				psql.Quote(domain.SessionTable, "client_ip"),
-				psql.Quote(domain.SessionTable, "blocked"),
+				psql.Quote(domain.SessionTable, "is_blocked"),
 				psql.Quote(domain.SessionTable, "expires_at"),
 				psql.Quote(domain.SessionTable, "created_at"),
 			),
@@ -208,7 +208,7 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 			um.Table(domain.SessionTable),
 			um.SetCol("user_agent").ToArg(session.UserAgent),
 			um.SetCol("client_ip").ToArg(session.ClientIP),
-			um.SetCol("blocked").ToArg(true),
+			um.SetCol("is_blocked").ToArg(true),
 			um.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
 		updateTraceCtx, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*SessionRepository.Renew)", updateOldSessionQuery)
@@ -221,8 +221,8 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 		}
 
 		newSessionQuery, newSessionArgs := psql.Insert(
-			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "blocked", "expires_at"),
-			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.Blocked, session.ExpiresAt)),
+			im.Into(domain.SessionTable, "account_id", "refresh_token", "user_agent", "client_ip", "is_blocked", "expires_at"),
+			im.Values(psql.Arg(session.AccountID, session.RefreshToken, session.UserAgent, session.ClientIP, session.IsBlocked, session.ExpiresAt)),
 		).MustBuild(ctx)
 		_, insertSpan := spanWithInsertQuery(updateTraceCtx, r.tracer, "(*SessionRepository.Renew)", newSessionQuery)
 		defer insertSpan.End()

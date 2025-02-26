@@ -22,7 +22,7 @@ type Session struct {
 	RefreshToken string
 	UserAgent    string
 	ClientIP     string
-	Blocked      bool
+	IsBlocked    bool
 	ExpiresAt    time.Time
 	CreatedAt    time.Time
 }
@@ -34,7 +34,7 @@ func NewSession(accountID int, refreshToken, userAgent, clientIP string, expires
 		RefreshToken: refreshToken,
 		UserAgent:    userAgent,
 		ClientIP:     clientIP,
-		Blocked:      false,
+		IsBlocked:    false,
 		ExpiresAt:    expiresAt,
 		CreatedAt:    time.Now(),
 	}
@@ -42,7 +42,7 @@ func NewSession(accountID int, refreshToken, userAgent, clientIP string, expires
 
 // MarkAsBlocked marks the session as blocked.
 func (s *Session) MarkAsBlocked() {
-	s.Blocked = true
+	s.IsBlocked = true
 }
 
 // Renew renews the session with a new refresh token and expiration time.
@@ -50,6 +50,6 @@ func (s *Session) Renew(refreshToken, userAgent, clientIP string, expiresAt time
 	s.RefreshToken = refreshToken
 	s.UserAgent = userAgent
 	s.ClientIP = clientIP
-	s.Blocked = false
+	s.IsBlocked = false
 	s.ExpiresAt = expiresAt
 }

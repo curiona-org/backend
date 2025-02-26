@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     refresh_token VARCHAR(255) NOT NULL,
     user_agent VARCHAR(255) NOT NULL,
     client_ip VARCHAR(39) NOT NULL,
-    blocked BOOLEAN NOT NULL DEFAULT FALSE,
+    is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     CONSTRAINT fk_sessions_account FOREIGN KEY (

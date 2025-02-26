@@ -21,6 +21,7 @@ type Account struct {
 	password       auth.Password
 	PasswordDigest string
 	Method         auth.Method
+	IsSuspended    bool
 
 	Profile  *Profile
 	Roadmaps []*Roadmap

@@ -31,7 +31,7 @@ func (app *application) AuthRefresh(ctx context.Context, input io.AuthRefreshInp
 	refreshToken := app.auth.NewRefreshToken(token.AccountID)
 	var refreshTokenStr string
 	err = app.repository.Session.Renew(ctx, input.Token, func(session *domain.Session) (bool, error) {
-		if session.Blocked {
+		if session.IsBlocked {
 			return false, cerrors.ErrUnauthorized.With(domain.ErrSessionIsBlocked)
 		}
 
