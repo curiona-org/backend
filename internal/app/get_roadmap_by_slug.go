@@ -63,7 +63,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 			Slug:                topic.Slug,
 			Description:         topic.Description,
 			Order:               topic.Order,
-			Finished:            topic.Finished,
+			Finished:            topic.IsFinished,
 			ExternalSearchQuery: topic.ExternalSearchQuery,
 			CreatedAt:           topic.CreatedAt,
 			UpdatedAt:           topic.UpdatedAt,

@@ -25,7 +25,7 @@ type Topic struct {
 	Slug                string
 	Description         string
 	Order               int
-	Finished            bool
+	IsFinished          bool
 	ExternalSearchQuery string
 
 	Subtopics []*Topic
@@ -41,7 +41,7 @@ func NewTopic(accountID int, title, description, externalSearchQuery string) *To
 		Title:               title,
 		Slug:                slug.Make(title + " " + str.Random(5)),
 		Description:         description,
-		Finished:            false,
+		IsFinished:          false,
 		ExternalSearchQuery: externalSearchQuery,
 		CreatedAt:           time.Now(),
 		UpdatedAt:           time.Now(),
@@ -57,7 +57,7 @@ func (e *Topic) IsZero() bool {
 		e.Slug == "" &&
 		e.Description == "" &&
 		e.Order == 0 &&
-		!e.Finished &&
+		!e.IsFinished &&
 		len(e.Subtopics) == 0 &&
 		len(e.Resources) == 0 &&
 		e.CreatedAt.IsZero() &&
@@ -153,12 +153,12 @@ func (e *Topic) Update(title, description, slug string) {
 }
 
 func (e *Topic) MarkAsFinished() {
-	e.Finished = true
+	e.IsFinished = true
 	e.UpdateChangelog()
 }
 
 func (e *Topic) MarkAsIncomplete() {
-	e.Finished = false
+	e.IsFinished = false
 	e.UpdateChangelog()
 }
 

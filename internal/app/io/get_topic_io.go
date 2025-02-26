@@ -11,7 +11,7 @@ type GetTopicOutput struct {
 	Slug        string `json:"slug"`
 	Description string `json:"description"`
 	Order       int    `json:"order"`
-	Finished    bool   `json:"finished"`
+	IsFinished  bool   `json:"is_finished"`
 
 	ExternalResources GetTopicOutputExternalResource `json:"external_resources"`
 

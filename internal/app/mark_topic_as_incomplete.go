@@ -18,7 +18,7 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 			return false, cerrors.ErrNotFound
 		}
 
-		if !topic.Finished {
+		if !topic.IsFinished {
 			return false, nil
 		}
 

@@ -18,7 +18,7 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 			return false, cerrors.ErrNotFound
 		}
 
-		if topic.Finished {
+		if topic.IsFinished {
 			return false, nil
 		}
 

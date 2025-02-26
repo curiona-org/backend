@@ -37,7 +37,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 		Slug:        topic.Slug,
 		Description: topic.Description,
 		Order:       topic.Order,
-		Finished:    topic.Finished,
+		IsFinished:  topic.IsFinished,
 		CreatedAt:   topic.CreatedAt,
 		UpdatedAt:   topic.UpdatedAt,
 	}

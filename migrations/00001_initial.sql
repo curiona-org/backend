@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     provider account_provider NOT NULL DEFAULT 'email',
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    is_suspended boolean NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now())
 );

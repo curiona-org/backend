@@ -251,7 +251,7 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 			&topic.Slug,
 			&topic.Description,
 			&topic.Order,
-			&topic.Finished,
+			&topic.IsFinished,
 			&externalSearchQuery,
 			&topic.CreatedAt,
 			&topic.UpdatedAt,
@@ -329,7 +329,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	}
 	for _, topic := range topics {
 		subTopicMap[topic.Slug] = topic.Subtopics
-		arg := psql.Arg(topic.AccountID, roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.Finished, topic.ExternalSearchQuery, topic.CreatedAt, topic.UpdatedAt)
+		arg := psql.Arg(topic.AccountID, roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.IsFinished, topic.ExternalSearchQuery, topic.CreatedAt, topic.UpdatedAt)
 		insertTopicMods = append(insertTopicMods, im.Values(arg))
 	}
 	insertTopicMods = append(insertTopicMods, im.Returning("id", "slug"))
@@ -385,7 +385,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 		// Link the subtopic
 		linkedSubtopics = append(linkedSubtopics, []any{
 			item.AccountID, roadmapID, parentID,
-			item.Title, item.Slug, item.Description, item.Order, item.Finished, item.ExternalSearchQuery,
+			item.Title, item.Slug, item.Description, item.Order, item.IsFinished, item.ExternalSearchQuery,
 			item.CreatedAt, item.UpdatedAt,
 		})
 	}

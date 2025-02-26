@@ -62,7 +62,7 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 				psql.Quote(domain.TopicTable, "slug"),
 				psql.Quote(domain.TopicTable, "description"),
 				psql.Quote(domain.TopicTable, "order"),
-				psql.Quote(domain.TopicTable, "finished"),
+				psql.Quote(domain.TopicTable, "is_finished"),
 				psql.Quote(domain.TopicTable, "external_search_query"),
 				psql.Quote(domain.TopicTable, "created_at"),
 				psql.Quote(domain.TopicTable, "updated_at"),
@@ -139,7 +139,7 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 			&topic.Slug,
 			&topic.Description,
 			&topic.Order,
-			&topic.Finished,
+			&topic.IsFinished,
 			&externalSearchQuery,
 			&topic.CreatedAt,
 			&topic.UpdatedAt,
@@ -251,7 +251,7 @@ func (r *TopicRepository) Update(ctx context.Context, slug string, updateFn func
 				psql.Quote(domain.TopicTable, "slug"),
 				psql.Quote(domain.TopicTable, "description"),
 				psql.Quote(domain.TopicTable, "order"),
-				psql.Quote(domain.TopicTable, "finished"),
+				psql.Quote(domain.TopicTable, "is_finished"),
 				psql.Quote(domain.TopicTable, "external_search_query"),
 				psql.Quote(domain.TopicTable, "created_at"),
 				psql.Quote(domain.TopicTable, "updated_at"),
@@ -281,7 +281,7 @@ func (r *TopicRepository) Update(ctx context.Context, slug string, updateFn func
 
 		updateTopicQuery, updateTopicArgs := psql.Update(
 			um.Table(domain.TopicTable),
-			um.SetCol("finished").ToArg(topic.Finished),
+			um.SetCol("is_finished").ToArg(topic.IsFinished),
 			um.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
 		).MustBuild(ctx)
 		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateTopicQuery)

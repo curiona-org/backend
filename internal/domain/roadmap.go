@@ -97,7 +97,7 @@ func (e *Roadmap) calculateCompletionPercentage(topics []*Topic, totalTopics int
 			totalTopicsFinished += e.calculateCompletionPercentage(topic.Subtopics, totalTopics)
 		}
 
-		if topic.Finished {
+		if topic.IsFinished {
 			totalTopicsFinished++
 		}
 	}
