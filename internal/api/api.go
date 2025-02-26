@@ -116,8 +116,9 @@ func (a *API) SetupMiddlewares() {
 	a.router.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{
-			http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete,
-			http.MethodHead, http.MethodOptions},
+			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
+			http.MethodDelete, http.MethodHead, http.MethodOptions,
+		},
 	}))
 	a.router.Use(middleware.RealIP)
 	a.router.Use(otelhttp.NewMiddleware("api", otelhttp.WithTracerProvider(a.tracerProvider)))
