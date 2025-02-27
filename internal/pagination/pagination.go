@@ -26,12 +26,10 @@ type Paginator struct {
 
 func NewOffsetPaginator(page, pageSize, total uint64) Paginator {
 	var paginator Paginator
-	if pageSize > 0 {
+	if pageSize > 0 || pageSize < MaxPageSize {
 		paginator.Limit = pageSize
-	}
-
-	if paginator.Limit > MaxPageSize {
-		paginator.Limit = MaxPageSize
+	} else {
+		paginator.Limit = DefaultPageSize
 	}
 
 	totalPages := uint64(math.Ceil(float64(total) / float64(paginator.Limit)))
