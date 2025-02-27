@@ -5,7 +5,7 @@ import (
 	"github.com/curiona-org/backend/internal/repository"
 	"github.com/curiona-org/backend/internal/worker"
 	"github.com/curiona-org/backend/pkg/llm"
-	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,13 +24,18 @@ type application struct {
 
 var _ Application = (*application)(nil)
 
-func New(worker worker.Worker, repository *repository.Repository, llm llm.Client, auth *auth.Auth) Application {
-	tracer := otel.Tracer("chat")
+func New(
+	worker worker.Worker,
+	repository *repository.Repository,
+	llm llm.Client,
+	auth *auth.Auth,
+	tracer *tracesdk.TracerProvider,
+) Application {
 	return &application{
 		repository: repository,
 		llm:        llm,
 		auth:       auth,
 		worker:     worker,
-		tracer:     tracer,
+		tracer:     tracer.Tracer("chat"),
 	}
 }

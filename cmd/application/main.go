@@ -76,8 +76,8 @@ func run(ctx context.Context) {
 		provider.Youtube,
 		provider.Tracing,
 	)
-	adminApp := admin.New(postgresRepository, auth)
-	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth)
+	adminApp := admin.New(postgresRepository, auth, provider.Tracing)
+	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth, provider.Tracing)
 
 	api := api.New(
 		ctx,
