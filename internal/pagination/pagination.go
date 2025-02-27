@@ -44,18 +44,18 @@ func NewOffsetPaginator(page, pageSize, total uint64) Paginator {
 	return paginator
 }
 
-type PaginationParams struct {
+type Params struct {
 	CurrentPage uint64
 	Limit       uint64
 }
 
-func FromRequest(r *http.Request) (PaginationParams, error) {
+func FromRequest(r *http.Request) (Params, error) {
 	page := uint64(1)
 	if v := strings.TrimSpace(r.FormValue(QueryKeyPage)); v != "" {
 		var err error
 		page, err = strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			return PaginationParams{}, cerrors.ErrInvalidData.Msg("invalid query provided")
+			return Params{}, cerrors.ErrInvalidData.Msg("invalid query provided")
 		}
 	}
 
@@ -64,7 +64,7 @@ func FromRequest(r *http.Request) (PaginationParams, error) {
 		var err error
 		limit, err = strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			return PaginationParams{}, cerrors.ErrInvalidData.Msg("invalid limit provided")
+			return Params{}, cerrors.ErrInvalidData.Msg("invalid limit provided")
 		}
 	}
 
@@ -73,7 +73,7 @@ func FromRequest(r *http.Request) (PaginationParams, error) {
 		limit = MaxPageSize
 	}
 
-	params := PaginationParams{
+	params := Params{
 		CurrentPage: page,
 		Limit:       limit,
 	}
