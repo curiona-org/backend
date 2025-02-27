@@ -107,7 +107,6 @@ func (a *API) SetupRoutes() {
 		r.Get("/roadmaps/topic/{slug}", a.GetTopicBySlug)
 		r.Patch("/roadmaps/topic/{slug}/finish", a.MarkTopicAsFinished)
 		r.Patch("/roadmaps/topic/{slug}/incomplete", a.MarkTopicAsIncomplete)
-
 	})
 
 	// admin routes
