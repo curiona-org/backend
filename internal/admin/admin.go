@@ -16,7 +16,6 @@ type Application interface {
 
 	IsAdmin(ctx context.Context, accountID int) (bool, error)
 	ListUsers(ctx context.Context, input io.ListUsersInput) (io.ListUsersOutput, error)
-	EditUser(ctx context.Context, input io.EditUserInput) (io.EditUserOutput, error)
 	DeleteUser(ctx context.Context, input io.DeleteUserInput) (io.DeleteUserOutput, error)
 
 	ListRoadmaps(ctx context.Context, input io.ListRoadmapsInput) (io.ListRoadmapsOutput, error)
