@@ -1,12 +1,11 @@
 package pagination
 
 import (
+	"errors"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/curiona-org/backend/internal/cerrors"
 )
 
 const (
@@ -55,7 +54,7 @@ func FromRequest(r *http.Request) (Params, error) {
 		var err error
 		page, err = strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			return Params{}, cerrors.ErrInvalidData.Msg("invalid query provided")
+			return Params{}, errors.New("invalid query provided")
 		}
 	}
 
@@ -64,7 +63,7 @@ func FromRequest(r *http.Request) (Params, error) {
 		var err error
 		limit, err = strconv.ParseUint(v, 10, 64)
 		if err != nil {
-			return Params{}, cerrors.ErrInvalidData.Msg("invalid limit provided")
+			return Params{}, errors.New("invalid limit provided")
 		}
 	}
 

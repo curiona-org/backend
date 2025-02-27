@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/curiona-org/backend/internal/admin/io"
-	"github.com/curiona-org/backend/internal/pagination"
+	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/pkg/pagination"
 )
 
 func (a *API) AdminListUsers(w http.ResponseWriter, r *http.Request) {
@@ -12,7 +13,7 @@ func (a *API) AdminListUsers(w http.ResponseWriter, r *http.Request) {
 
 	pagination, err := pagination.FromRequest(r)
 	if err != nil {
-		a.handleError(w, r, err)
+		a.handleError(w, r, cerrors.ErrInvalidData.Msg(err.Error()))
 		return
 	}
 

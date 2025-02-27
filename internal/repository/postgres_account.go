@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/pagination"
 	"github.com/curiona-org/backend/pkg/database"
+	"github.com/curiona-org/backend/pkg/pagination"
 	"github.com/jackc/pgx/v5"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/im"

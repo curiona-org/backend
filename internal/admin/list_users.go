@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/admin/io"
-	"github.com/curiona-org/backend/internal/pagination"
+	"github.com/curiona-org/backend/pkg/pagination"
 )
 
 func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersInput) (io.ListUsersOutput, error) {
