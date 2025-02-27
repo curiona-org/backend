@@ -17,7 +17,7 @@ func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersIn
 	}
 
 	pagination := pagination.NewOffsetPaginator(input.Page, input.Limit, count)
-	users, err := app.repository.Account.GetAll(ctx, pagination)
+	users, err := app.repository.Account.ListAll(ctx, pagination)
 	if err != nil {
 		return io.ListUsersOutput{}, err
 	}

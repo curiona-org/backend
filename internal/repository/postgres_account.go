@@ -28,7 +28,7 @@ func NewPostgresAccountRepository(db database.Connection) *AccountRepository {
 	}
 }
 
-func (r *AccountRepository) GetAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Account, error) {
+func (r *AccountRepository) ListAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Account, error) {
 	query, args := psql.Select(
 		sm.Columns(
 			psql.Quote(domain.AccountTable, "id"),
