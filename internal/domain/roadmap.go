@@ -28,7 +28,7 @@ type Roadmap struct {
 	Slug        string
 	Description string
 
-	Account                Account
+	Account                *Account
 	Topics                 []*Topic
 	PersonalizationOptions *PersonalizationOptions
 
@@ -94,7 +94,11 @@ func (e *Roadmap) calculateCompletionPercentage(topics []*Topic, totalTopics int
 	totalTopicsFinished := float64(0)
 	for _, topic := range topics {
 		if len(topic.Subtopics) > 0 {
-			totalTopicsFinished += e.calculateCompletionPercentage(topic.Subtopics, totalTopics)
+			for _, subtopic := range topic.Subtopics {
+				if subtopic.IsFinished {
+					totalTopicsFinished++
+				}
+			}
 		}
 
 		if topic.IsFinished {
@@ -105,7 +109,7 @@ func (e *Roadmap) calculateCompletionPercentage(topics []*Topic, totalTopics int
 	return totalTopicsFinished / float64(totalTopics)
 }
 
-func (e *Roadmap) SetCreator(acc Account) {
+func (e *Roadmap) SetCreator(acc *Account) {
 	e.Account = acc
 }
 

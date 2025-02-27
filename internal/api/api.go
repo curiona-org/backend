@@ -116,6 +116,7 @@ func (a *API) SetupRoutes() {
 		r.Use(a.authMiddleware)
 		r.Use(a.adminMiddleware)
 		r.Get("/admin/users", a.AdminListUsers)
+		r.Get("/admin/roadmaps", a.AdminListRoadmaps)
 	})
 }
 
@@ -283,7 +284,9 @@ func (a *API) Param(r *http.Request, key string) string {
 	return chi.URLParam(r, key)
 }
 
-func (a *API) handleError(w http.ResponseWriter, _ *http.Request, err error) {
+func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := r.Context()
+	log := logger.FromContext(ctx)
 	var appErr *cerrors.AppError
 	var msg string
 	code := http.StatusInternalServerError
@@ -303,5 +306,6 @@ func (a *API) handleError(w http.ResponseWriter, _ *http.Request, err error) {
 		msg = cerrors.DefaultErrorMessage
 	}
 
+	log.Error().Ctx(ctx).Err(err).Send()
 	a.render.Error(w, code, msg, nil)
 }

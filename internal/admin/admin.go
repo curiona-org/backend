@@ -19,7 +19,7 @@ type Application interface {
 	EditUser(ctx context.Context, input io.EditUserInput) (io.EditUserOutput, error)
 	DeleteUser(ctx context.Context, input io.DeleteUserInput) (io.DeleteUserOutput, error)
 
-	ListRoadmaps(ctx context.Context) (io.ListRoadmapsOutput, error)
+	ListRoadmaps(ctx context.Context, input io.ListRoadmapsInput) (io.ListRoadmapsOutput, error)
 	DeleteRoadmap(ctx context.Context, input io.DeleteRoadmapInput) (io.DeleteRoadmapOutput, error)
 }
 

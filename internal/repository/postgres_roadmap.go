@@ -8,6 +8,7 @@ import (
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
+	"github.com/curiona-org/backend/pkg/pagination"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
@@ -221,7 +222,7 @@ func (r *RoadmapRepository) fetchWithPersonalizationOptions(ctx context.Context,
 
 func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {
 	query, args := psql.Select(
-		sm.Columns("id", "roadmap_id", "parent_id", "title", "slug", "description", psql.Quote("order"), "finished", "external_search_query", "created_at", "updated_at"),
+		sm.Columns("id", "roadmap_id", "parent_id", "title", "slug", "description", psql.Quote("order"), "is_finished", "external_search_query", "created_at", "updated_at"),
 		sm.From(domain.TopicTable),
 		sm.Where(psql.Quote("roadmap_id").EQ(psql.Arg(roadmapID))),
 		sm.OrderBy(psql.Quote("order")),
@@ -282,6 +283,144 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 	return topics, nil
 }
 
+func (r *RoadmapRepository) ListAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Roadmap, error) {
+	query, args := psql.Select(
+		sm.Columns(
+			psql.Quote(domain.RoadmapTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id"),
+			psql.Quote(domain.RoadmapTable, "title"),
+			psql.Quote(domain.RoadmapTable, "slug"),
+			psql.Quote(domain.RoadmapTable, "description"),
+			psql.Quote(domain.RoadmapTable, "created_at"),
+			psql.Quote(domain.RoadmapTable, "updated_at"),
+			psql.Quote(domain.RoadmapTable, "deleted_at"),
+			psql.Quote(domain.PersonalizationOptionsTable, "id"),
+			psql.Quote(domain.PersonalizationOptionsTable, "account_id"),
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.PersonalizationOptionsTable, "daily_time_availability"),
+			psql.Quote(domain.PersonalizationOptionsTable, "total_duration"),
+			psql.Quote(domain.PersonalizationOptionsTable, "skill_level"),
+			psql.Quote(domain.PersonalizationOptionsTable, "additional_info"),
+			psql.Quote(domain.PersonalizationOptionsTable, "created_at"),
+			psql.Quote(domain.PersonalizationOptionsTable, "updated_at"),
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "provider"),
+			psql.Quote(domain.AccountTable, "email"),
+			psql.Quote(domain.AccountTable, "is_suspended"),
+			psql.Quote(domain.AccountTable, "is_admin"),
+			psql.Quote(domain.AccountTable, "created_at"),
+			psql.Quote(domain.AccountTable, "updated_at"),
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.ProfileTable, "name"),
+			psql.Quote(domain.ProfileTable, "avatar"),
+			psql.Quote(domain.ProfileTable, "created_at"),
+			psql.Quote(domain.ProfileTable, "updated_at"),
+		),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"), psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"), psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"), psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc(),
+		sm.Offset(psql.Arg(pagination.Skip)),
+		sm.Limit(psql.Arg(pagination.Limit)),
+	).MustBuild(ctx)
+
+	return r.fetchAll(ctx, query, args...)
+}
+
+// fetchAll gets all roadmap related entities (accounts and profiles)
+// TODO: aggregate topic too
+func (r *RoadmapRepository) fetchAll(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetchAll)", query)
+	defer span.End()
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roadmaps []domain.Roadmap
+	for rows.Next() {
+		var roadmap domain.Roadmap
+		var roadmapDeletedAt pgtype.Timestamp
+		var personalizationOptions domain.PersonalizationOptions
+		var account domain.Account
+		var profile domain.Profile
+		err = rows.Scan(
+			&roadmap.ID,
+			&roadmap.AccountID,
+			&roadmap.Title,
+			&roadmap.Slug,
+			&roadmap.Description,
+			&roadmap.CreatedAt,
+			&roadmap.UpdatedAt,
+			&roadmapDeletedAt,
+			&personalizationOptions.ID,
+			&personalizationOptions.AccountID,
+			&personalizationOptions.RoadmapID,
+			&personalizationOptions.DailyTimeAvailability,
+			&personalizationOptions.TotalDuration,
+			&personalizationOptions.SkillLevel,
+			&personalizationOptions.AdditionalInfo,
+			&personalizationOptions.CreatedAt,
+			&personalizationOptions.UpdatedAt,
+			&account.ID,
+			&account.Method,
+			&account.Email,
+			&account.IsSuspended,
+			&account.IsAdmin,
+			&account.CreatedAt,
+			&account.UpdatedAt,
+			&profile.ID,
+			&profile.Name,
+			&profile.Avatar,
+			&profile.CreatedAt,
+			&profile.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if roadmapDeletedAt.Valid {
+			roadmap.DeletedAt = roadmapDeletedAt.Time
+		}
+
+		account.SetProfile(&profile)
+		roadmap.SetCreator(&account)
+		roadmap.SetPersonalizationOptions(&personalizationOptions)
+		roadmaps = append(roadmaps, roadmap)
+	}
+
+	if err = rows.Err(); err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return nil, err
+	}
+
+	return roadmaps, nil
+}
+
+func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+	).MustBuild(ctx)
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *RoadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (domain.Roadmap, error) {
 	query, args := psql.Insert(
 		im.Into(domain.RoadmapTable, "account_id", "title", "slug", "description", "created_at", "updated_at"),
@@ -325,7 +464,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 
 	// Insert the topics
 	insertTopicMods := []bob.Mod[*dialect.InsertQuery]{
-		im.Into(domain.TopicTable, "account_id", "roadmap_id", "title", "slug", "description", "order", "finished", "external_search_query", "created_at", "updated_at"),
+		im.Into(domain.TopicTable, "account_id", "roadmap_id", "title", "slug", "description", "order", "is_finished", "external_search_query", "created_at", "updated_at"),
 	}
 	for _, topic := range topics {
 		subTopicMap[topic.Slug] = topic.Subtopics
@@ -395,7 +534,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	_, err = tx.CopyFrom(ctx,
 		pgx.Identifier{domain.TopicTable},
 		[]string{"account_id", "roadmap_id", "parent_id",
-			"title", "slug", "description", "order", "finished", "external_search_query",
+			"title", "slug", "description", "order", "is_finished", "external_search_query",
 			"created_at", "updated_at"},
 		pgx.CopyFromRows(linkedSubtopics),
 	)
