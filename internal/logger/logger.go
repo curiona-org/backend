@@ -48,8 +48,6 @@ func Get() zerolog.Logger {
 					N: 10,
 				})
 		}
-
-		logger = logger.Hook(TraceHook{})
 	})
 
 	return logger
