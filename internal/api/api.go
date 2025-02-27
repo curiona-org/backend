@@ -17,11 +17,13 @@ import (
 	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/chat"
+	"github.com/curiona-org/backend/internal/config"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -132,6 +134,9 @@ func (a *API) SetupMiddlewares() {
 	a.router.Use(a.loggerMiddleware)
 	a.router.Use(middleware.Recoverer)
 	a.router.Use(middleware.Compress(5))
+	if config.IsProduction() {
+		a.router.Use(httprate.LimitByIP(100, time.Minute))
+	}
 }
 
 func (a *API) authMiddleware(next http.Handler) http.Handler {
