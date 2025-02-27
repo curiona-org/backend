@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/pagination"
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/jackc/pgx/v5"
 	"github.com/stephenafamo/bob/dialect/psql"
@@ -27,6 +28,33 @@ func NewPostgresAccountRepository(db database.Connection) *AccountRepository {
 	}
 }
 
+func (r *AccountRepository) GetAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Account, error) {
+	query, args := psql.Select(
+		sm.Columns(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "provider"),
+			psql.Quote(domain.AccountTable, "email"),
+			psql.Quote(domain.AccountTable, "password"),
+			psql.Quote(domain.AccountTable, "is_suspended"),
+			psql.Quote(domain.AccountTable, "is_admin"),
+			psql.Quote(domain.AccountTable, "created_at"),
+			psql.Quote(domain.AccountTable, "updated_at"),
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.ProfileTable, "name"),
+			psql.Quote(domain.ProfileTable, "avatar"),
+			psql.Quote(domain.ProfileTable, "created_at"),
+			psql.Quote(domain.ProfileTable, "updated_at"),
+		),
+		sm.From(domain.AccountTable),
+		sm.LeftJoin(domain.ProfileTable).Using("id"),
+		sm.OrderBy(psql.Quote(domain.ProfileTable, "created_at")).Desc(),
+		sm.Offset(psql.Arg(pagination.Skip)),
+		sm.Limit(psql.Arg(pagination.Limit)),
+	).MustBuild(ctx)
+
+	return r.fetch(ctx, query, args...)
+}
+
 func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account, error) {
 	query, args := psql.Select(
 		sm.Columns(
@@ -34,6 +62,8 @@ func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account
 			psql.Quote(domain.AccountTable, "provider"),
 			psql.Quote(domain.AccountTable, "email"),
 			psql.Quote(domain.AccountTable, "password"),
+			psql.Quote(domain.AccountTable, "is_suspended"),
+			psql.Quote(domain.AccountTable, "is_admin"),
 			psql.Quote(domain.AccountTable, "created_at"),
 			psql.Quote(domain.AccountTable, "updated_at"),
 			psql.Quote(domain.ProfileTable, "id"),
@@ -66,6 +96,8 @@ func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domai
 			psql.Quote(domain.AccountTable, "provider"),
 			psql.Quote(domain.AccountTable, "email"),
 			psql.Quote(domain.AccountTable, "password"),
+			psql.Quote(domain.AccountTable, "is_suspended"),
+			psql.Quote(domain.AccountTable, "is_admin"),
 			psql.Quote(domain.AccountTable, "created_at"),
 			psql.Quote(domain.AccountTable, "updated_at"),
 			psql.Quote(domain.ProfileTable, "id"),
@@ -112,6 +144,8 @@ func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any
 			&account.Method,
 			&account.Email,
 			&account.PasswordDigest,
+			&account.IsSuspended,
+			&account.IsAdmin,
 			&account.CreatedAt,
 			&account.UpdatedAt,
 			&profile.ID,
@@ -133,6 +167,21 @@ func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any
 	}
 
 	return accounts, nil
+}
+
+func (r *AccountRepository) Count(ctx context.Context) (int, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.AccountTable),
+	).MustBuild(ctx)
+
+	var count int
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (domain.Account, error) {

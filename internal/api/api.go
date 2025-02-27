@@ -93,11 +93,9 @@ func (a *API) SetupRoutes() {
 	a.router.Post("/auth", a.Auth)
 	a.router.Post("/auth/refresh", a.AuthRefresh)
 
-	authMiddleware := a.authMiddleware(a.application)
-
 	// authenticated routes
 	a.router.Group(func(r chi.Router) {
-		r.Use(authMiddleware)
+		r.Use(a.authMiddleware)
 		r.Get("/profile", a.GetProfile)
 		r.Patch("/profile", a.UpdateProfile)
 
@@ -109,6 +107,14 @@ func (a *API) SetupRoutes() {
 		r.Get("/roadmaps/topic/{slug}", a.GetTopicBySlug)
 		r.Patch("/roadmaps/topic/{slug}/finish", a.MarkTopicAsFinished)
 		r.Patch("/roadmaps/topic/{slug}/incomplete", a.MarkTopicAsIncomplete)
+
+	})
+
+	// admin routes
+	a.router.Group(func(r chi.Router) {
+		r.Use(a.authMiddleware)
+		r.Use(a.adminMiddleware)
+		r.Get("/admin/users", a.AdminListUsers)
 	})
 }
 
@@ -129,36 +135,54 @@ func (a *API) SetupMiddlewares() {
 	a.router.Use(middleware.Compress(5))
 }
 
-type Middleware func(next http.Handler) http.Handler
+func (a *API) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqCtx := r.Context()
 
-func (a *API) authMiddleware(app app.CurionaApplication) Middleware {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			reqCtx := r.Context()
+		authorization := r.Header.Get("Authorization")
+		if authorization == "" {
+			a.handleError(w, r, cerrors.ErrUnauthorized)
+			return
+		}
 
-			authorization := r.Header.Get("Authorization")
-			if authorization == "" {
-				a.handleError(w, r, cerrors.ErrUnauthorized)
-				return
-			}
+		bearer := strings.Split(authorization, " ")
+		if len(bearer) < 2 {
+			a.handleError(w, r, cerrors.ErrUnauthorized)
+			return
+		}
 
-			bearer := strings.Split(authorization, " ")
-			if len(bearer) < 2 {
-				a.handleError(w, r, cerrors.ErrUnauthorized)
-				return
-			}
+		t := bearer[1]
+		token, err := a.application.AuthVerify(reqCtx, t)
+		if err != nil {
+			a.handleError(w, r, cerrors.ErrUnauthorized)
+			return
+		}
 
-			t := bearer[1]
-			token, err := app.AuthVerify(reqCtx, t)
-			if err != nil {
-				a.handleError(w, r, cerrors.ErrUnauthorized)
-				return
-			}
+		ctx := context.WithValue(reqCtx, auth.ContextKey, token)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
 
-			ctx := context.WithValue(reqCtx, auth.ContextKey, token)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
+func (a *API) adminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		log := logger.FromContext(ctx)
+		auth := auth.TokenFromContext(ctx)
+
+		isAdmin, err := a.adminApp.IsAdmin(ctx, auth.AccountID)
+		if err != nil {
+			log.Error().Err(err).Msg("failed checking if account is admin or not")
+			a.handleError(w, r, cerrors.ErrUnauthorized)
+			return
+		}
+
+		if !isAdmin {
+			a.handleError(w, r, cerrors.ErrUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 const requestIDHeader = "X-Request-Id"

@@ -22,6 +22,7 @@ type Account struct {
 	PasswordDigest string
 	Method         auth.Method
 	IsSuspended    bool
+	IsAdmin        bool
 
 	Profile  *Profile
 	Roadmaps []*Roadmap

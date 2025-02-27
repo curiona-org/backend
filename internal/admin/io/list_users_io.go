@@ -1,3 +1,20 @@
 package io
 
-type ListUsersOutput struct{}
+import (
+	"time"
+
+	"github.com/curiona-org/backend/internal/auth"
+)
+
+type ListUsersInput = PaginatedListInput
+type ListUsersOutput = PaginatedListOutput[ListUsersOutputItem]
+
+type ListUsersOutputItem struct {
+	ID          int         `json:"id"`
+	Method      auth.Method `json:"method"`
+	Email       string      `json:"email"`
+	Name        string      `json:"name"`
+	Avatar      string      `json:"avatar"`
+	IsSuspended bool        `json:"is_suspended"`
+	JoinedAt    time.Time   `json:"joined_at"`
+}

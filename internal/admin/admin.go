@@ -14,7 +14,8 @@ import (
 type Application interface {
 	Statistics(ctx context.Context) (io.StatisticsOutput, error)
 
-	ListUsers(ctx context.Context) (io.ListUsersOutput, error)
+	IsAdmin(ctx context.Context, accountID int) (bool, error)
+	ListUsers(ctx context.Context, input io.ListUsersInput) (io.ListUsersOutput, error)
 	EditUser(ctx context.Context, input io.EditUserInput) (io.EditUserOutput, error)
 	DeleteUser(ctx context.Context, input io.DeleteUserInput) (io.DeleteUserOutput, error)
 
@@ -22,17 +23,17 @@ type Application interface {
 	DeleteRoadmap(ctx context.Context, input io.DeleteRoadmapInput) (io.DeleteRoadmapOutput, error)
 }
 
-type application struct {
+type adminApplication struct {
 	repository *repository.Repository
 	auth       *auth.Auth
 	tracer     trace.Tracer
 }
 
-var _ Application = (*application)(nil)
+var _ Application = (*adminApplication)(nil)
 
 func New(repository *repository.Repository, auth *auth.Auth) Application {
 	tracer := otel.Tracer("admin")
-	return &application{
+	return &adminApplication{
 		repository: repository,
 		auth:       auth,
 		tracer:     tracer,
