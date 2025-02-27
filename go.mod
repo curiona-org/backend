@@ -20,7 +20,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.33.0
 	github.com/sashabaranov/go-openai v1.36.0
-	github.com/stephenafamo/bob v0.29.0
+	github.com/stephenafamo/bob v0.30.0
 	github.com/stretchr/testify v1.10.0
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/vmihailenco/msgpack/v5 v5.4.1
