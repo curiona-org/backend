@@ -169,13 +169,13 @@ func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any
 	return accounts, nil
 }
 
-func (r *AccountRepository) Count(ctx context.Context) (int, error) {
+func (r *AccountRepository) Count(ctx context.Context) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.AccountTable),
 	).MustBuild(ctx)
 
-	var count int
+	var count uint64
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		return 0, err
