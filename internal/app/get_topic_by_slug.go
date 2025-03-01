@@ -166,11 +166,12 @@ func (app *application) mapExternalResourcesOutput(topic domain.Topic, output *i
 			CoverURL: resource.CoverURL,
 		}
 
-		if resource.IsYoutube() {
+		switch {
+		case resource.IsYoutube():
 			output.ExternalResources.YoutubeVideos = append(output.ExternalResources.YoutubeVideos, item)
-		} else if resource.IsBook() {
+		case resource.IsBook():
 			output.ExternalResources.Books = append(output.ExternalResources.Books, item)
-		} else if resource.IsArticle() {
+		case resource.IsArticle():
 			output.ExternalResources.Articles = append(output.ExternalResources.Articles, item)
 		}
 	}
