@@ -17,8 +17,8 @@ type GetRoadmapOutput struct {
 	CreatedAt            time.Time                              `json:"created_at"`
 	UpdatedAt            time.Time                              `json:"updated_at"`
 	Creator              GetRoadmapOutputCreator                `json:"creator"`
-	Topics               []GetRoadmapOutputTopics               `json:"topics"`
 	PersonalizationOpts  GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`
+	Topics               []GetRoadmapOutputTopics               `json:"topics"`
 }
 type GetRoadmapOutputCreator struct {
 	ID     int    `json:"id"`

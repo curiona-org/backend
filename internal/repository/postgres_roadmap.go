@@ -90,6 +90,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 			psql.Quote(domain.RoadmapTable, "total_finished_topics"),
 			psql.Quote(domain.RoadmapTable, "created_at"),
 			psql.Quote(domain.RoadmapTable, "updated_at"),
+			psql.Quote(domain.RoadmapTable, "deleted_at"),
 			psql.Quote(domain.PersonalizationOptionsTable, "id"),
 			psql.Quote(domain.PersonalizationOptionsTable, "account_id"),
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
@@ -99,15 +100,31 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 			psql.Quote(domain.PersonalizationOptionsTable, "additional_info"),
 			psql.Quote(domain.PersonalizationOptionsTable, "created_at"),
 			psql.Quote(domain.PersonalizationOptionsTable, "updated_at"),
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "provider"),
+			psql.Quote(domain.AccountTable, "email"),
+			psql.Quote(domain.AccountTable, "is_suspended"),
+			psql.Quote(domain.AccountTable, "is_admin"),
+			psql.Quote(domain.AccountTable, "created_at"),
+			psql.Quote(domain.AccountTable, "updated_at"),
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.ProfileTable, "name"),
+			psql.Quote(domain.ProfileTable, "avatar"),
+			psql.Quote(domain.ProfileTable, "created_at"),
+			psql.Quote(domain.ProfileTable, "updated_at"),
 		),
 		sm.From(domain.RoadmapTable),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).
 			OnEQ(psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"), psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"), psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"), psql.Quote(domain.RoadmapTable, "account_id")),
 		sm.Where(psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug)).
 			And(psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	roadmaps, err := r.fetchWithPersonalizationOptions(ctx, query, args...)
+	roadmaps, err := r.fetchAll(ctx, query, args...)
 	if err != nil {
 		return domain.Roadmap{}, err
 	}

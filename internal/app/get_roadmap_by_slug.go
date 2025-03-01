@@ -24,12 +24,6 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 		return io.GetRoadmapOutput{}, err
 	}
 
-	account, err := app.repository.Account.GetByID(ctx, roadmap.AccountID)
-	if err != nil {
-		return io.GetRoadmapOutput{}, err
-	}
-	roadmap.SetCreator(&account)
-
 	output := io.GetRoadmapOutput{
 		ID:                   roadmap.ID,
 		Title:                roadmap.Title,
