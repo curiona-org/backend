@@ -163,7 +163,7 @@ func (app *application) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapIn
 	return sb.String()
 }
 
-func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) string { //nolint:funlen
+func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) string {
 	var sb strings.Builder
 
 	log := logger.FromContext(ctx)
