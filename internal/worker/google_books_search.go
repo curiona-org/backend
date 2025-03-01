@@ -53,7 +53,7 @@ func (w *worker) searchGoogleBooksExternalResources(ctx context.Context, task *a
 		return err
 	}
 
-	searchResult, err := w.youtube.Search(traceCtx, payload.SearchQuery)
+	searchResult, err := w.googleBooks.Search(traceCtx, payload.SearchQuery)
 	if err != nil {
 		return err
 	}
@@ -63,8 +63,10 @@ func (w *worker) searchGoogleBooksExternalResources(ctx context.Context, task *a
 		externalResource := domain.NewExternalResource(
 			payload.TopicID,
 			result.Title,
+			result.Authors,
 			result.URL,
-			domain.ExternalResourceTypeYoutube,
+			result.Cover,
+			domain.ExternalResourceTypeBook,
 		)
 
 		externalResources = append(externalResources, externalResource)

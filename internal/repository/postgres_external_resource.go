@@ -48,7 +48,9 @@ func (r *ExternalResourceRepository) GetByTopicID(ctx context.Context, topicID i
 			psql.Quote(domain.ExternalResourceTable, "id"),
 			psql.Quote(domain.ExternalResourceTable, "topic_id"),
 			psql.Quote(domain.ExternalResourceTable, "title"),
+			psql.Quote(domain.ExternalResourceTable, "author"),
 			psql.Quote(domain.ExternalResourceTable, "url"),
+			psql.Quote(domain.ExternalResourceTable, "cover_url"),
 			psql.Quote(domain.ExternalResourceTable, "type"),
 			psql.Quote(domain.ExternalResourceTable, "created_at"),
 			psql.Quote(domain.ExternalResourceTable, "updated_at"),
@@ -89,7 +91,9 @@ func (r *ExternalResourceRepository) fetch(ctx context.Context, query string, ar
 			&externalResource.ID,
 			&externalResource.TopicID,
 			&externalResource.Title,
+			&externalResource.Author,
 			&externalResource.URL,
+			&externalResource.CoverURL,
 			&externalResource.Type,
 			&externalResource.CreatedAt,
 			&externalResource.UpdatedAt,
@@ -124,7 +128,7 @@ func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, 
 
 		for _, res := range resource {
 			resources = append(resources, []any{
-				topicID, res.Title, res.URL, res.Type, res.CreatedAt, res.UpdatedAt,
+				topicID, res.Title, res.Author, res.URL, res.CoverURL, res.Type, res.CreatedAt, res.UpdatedAt,
 			})
 		}
 
@@ -135,7 +139,7 @@ func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, 
 
 		_, err := tx.CopyFrom(ctx,
 			pgx.Identifier{domain.ExternalResourceTable},
-			[]string{"topic_id", "title", "url", "type", "created_at", "updated_at"},
+			[]string{"topic_id", "title", "author", "url", "cover_url", "type", "created_at", "updated_at"},
 			pgx.CopyFromRows(resources),
 		)
 		return err

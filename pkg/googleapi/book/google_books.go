@@ -2,12 +2,17 @@ package book
 
 import (
 	"context"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/api/books/v1"
 	"google.golang.org/api/option"
+)
+
+const (
+	maxResults = 2
 )
 
 type Client interface {
@@ -27,6 +32,13 @@ func New(secret string) Client {
 	}
 }
 
+type Volume struct {
+	Title   string
+	URL     string
+	Authors string
+	Cover   string
+}
+
 func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume, error) {
 	traceCtx, span := b.tracer.Start(ctx, "(*googleBooksClient).Search", trace.WithAttributes(attribute.String("query", query)))
 	defer span.End()
@@ -40,8 +52,8 @@ func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume
 
 	call := service.Volumes.
 		List(query).
-		Fields("items(volumeInfo(title,description,pageCount))").
-		MaxResults(2)
+		Fields("items(volumeInfo(title,authors,imageLinks(thumbnail),canonicalVolumeLink))").
+		MaxResults(maxResults)
 
 	result, err := call.Do()
 	if err != nil {
@@ -53,13 +65,22 @@ func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume
 	items := result.Items
 
 	volumes := make([]*Volume, 0, len(items))
-	for _, item := range items {
-		volume := Volume{
-			Title:       item.VolumeInfo.Title,
-			Description: item.VolumeInfo.Description,
-			Pages:       int(item.VolumeInfo.PageCount),
+	for i, item := range items {
+		// To make sure we don't exceed the maxResults if the API returns more than expected
+		if i >= maxResults {
+			break
 		}
-		span.AddEvent("book:google_books:search", trace.WithAttributes(attribute.String("title", volume.Title)))
+
+		volume := Volume{
+			Title:   item.VolumeInfo.Title,
+			Authors: strings.Join(item.VolumeInfo.Authors, ", "),
+			Cover:   item.VolumeInfo.ImageLinks.Thumbnail,
+			URL:     item.VolumeInfo.CanonicalVolumeLink,
+		}
+		span.AddEvent("book:google_books:search", trace.WithAttributes(
+			attribute.String("title", volume.Title),
+			attribute.String("authors", volume.Authors),
+			attribute.String("url", volume.URL)))
 		volumes = append(volumes, &volume)
 	}
 

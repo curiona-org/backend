@@ -22,21 +22,25 @@ const (
 )
 
 type ExternalResource struct {
-	ID      int
-	TopicID int
-	Title   string
-	URL     string
-	Type    ExternalResourceType
+	ID       int
+	TopicID  int
+	Title    string
+	Author   string
+	URL      string
+	CoverURL string
+	Type     ExternalResourceType
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-func NewExternalResource(topicID int, title, url string, resourceType ExternalResourceType) *ExternalResource {
+func NewExternalResource(topicID int, title, author, url, coverURL string, resourceType ExternalResourceType) *ExternalResource {
 	return &ExternalResource{
 		TopicID:   topicID,
 		Title:     title,
+		Author:    author,
 		URL:       url,
+		CoverURL:  coverURL,
 		Type:      resourceType,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

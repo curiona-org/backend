@@ -89,7 +89,9 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 		externalResource := domain.NewExternalResource(
 			topic.ID,
 			result.Title,
+			result.Channel,
 			result.URL,
+			result.Thumbnail,
 			domain.ExternalResourceTypeYoutube,
 		)
 
@@ -132,7 +134,9 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 		externalResource := domain.NewExternalResource(
 			topic.ID,
 			result.Title,
-			"",
+			result.Authors,
+			result.URL,
+			result.Cover,
 			domain.ExternalResourceTypeBook,
 		)
 
@@ -150,42 +154,24 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 }
 
 func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, topic domain.Topic) {
-	for _, resource := range topic.GetYoutubeResources() {
-		if len(output.ExternalResources.YoutubeVideos) == 0 {
-			output.ExternalResources.YoutubeVideos = make([]io.GetTopicOutputExternalResourceItem, 0)
-		}
+	output.ExternalResources.YoutubeVideos = make([]io.GetTopicOutputExternalResourceItem, 0)
+	output.ExternalResources.Books = make([]io.GetTopicOutputExternalResourceItem, 0)
+	output.ExternalResources.Articles = make([]io.GetTopicOutputExternalResourceItem, 0)
 
+	for _, resource := range topic.Resources {
 		item := io.GetTopicOutputExternalResourceItem{
-			Title: resource.Title,
-			URL:   resource.URL,
+			Title:    resource.Title,
+			Author:   resource.Author,
+			URL:      resource.URL,
+			CoverURL: resource.CoverURL,
 		}
 
-		output.ExternalResources.YoutubeVideos = append(output.ExternalResources.YoutubeVideos, item)
-	}
-
-	for _, resource := range topic.GetBookResources() {
-		if len(output.ExternalResources.Books) == 0 {
-			output.ExternalResources.Books = make([]io.GetTopicOutputExternalResourceItem, 0)
+		if resource.IsYoutube() {
+			output.ExternalResources.YoutubeVideos = append(output.ExternalResources.YoutubeVideos, item)
+		} else if resource.IsBook() {
+			output.ExternalResources.Books = append(output.ExternalResources.Books, item)
+		} else if resource.IsArticle() {
+			output.ExternalResources.Articles = append(output.ExternalResources.Articles, item)
 		}
-
-		item := io.GetTopicOutputExternalResourceItem{
-			Title: resource.Title,
-			URL:   resource.URL,
-		}
-
-		output.ExternalResources.Books = append(output.ExternalResources.Books, item)
-	}
-
-	for _, resource := range topic.GetArticleResources() {
-		if len(output.ExternalResources.Articles) == 0 {
-			output.ExternalResources.Articles = make([]io.GetTopicOutputExternalResourceItem, 0)
-		}
-
-		item := io.GetTopicOutputExternalResourceItem{
-			Title: resource.Title,
-			URL:   resource.URL,
-		}
-
-		output.ExternalResources.Articles = append(output.ExternalResources.Articles, item)
 	}
 }

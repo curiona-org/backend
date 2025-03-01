@@ -63,7 +63,9 @@ func (w *worker) searchYoutubeExternalResources(ctx context.Context, task *asynq
 		externalResource := domain.NewExternalResource(
 			payload.TopicID,
 			result.Title,
+			result.Channel,
 			result.URL,
+			result.Thumbnail,
 			domain.ExternalResourceTypeYoutube,
 		)
 

@@ -33,8 +33,10 @@ func New(secret string) Client {
 }
 
 type SearchResult struct {
-	Title string
-	URL   string
+	Title     string
+	URL       string
+	Channel   string
+	Thumbnail string
 }
 
 func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, error) {
@@ -62,18 +64,24 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 
 	videos := make([]*SearchResult, 0, len(items))
 	for i, item := range items {
+		// To make sure we don't exceed the maxResults if the API returns more than expected
+		if i >= maxResults {
+			break
+		}
+
 		if item.Id.Kind == "youtube#video" {
 			videoURL := "https://www.youtube.com/watch?v=" + item.Id.VideoId
 			video := SearchResult{
-				Title: item.Snippet.Title,
-				URL:   videoURL,
+				Title:     item.Snippet.Title,
+				URL:       videoURL,
+				Channel:   item.Snippet.ChannelTitle,
+				Thumbnail: item.Snippet.Thumbnails.High.Url,
 			}
-			span.AddEvent("video", trace.WithAttributes(attribute.String("title", video.Title), attribute.String("url", video.URL)))
+			span.AddEvent("video", trace.WithAttributes(
+				attribute.String("title", video.Title),
+				attribute.String("channel", video.Channel),
+				attribute.String("url", video.URL)))
 			videos = append(videos, &video)
-		}
-
-		if i >= maxResults {
-			break
 		}
 	}
 
