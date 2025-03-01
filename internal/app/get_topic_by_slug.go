@@ -58,7 +58,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 		}
 	}
 
-	app.mapExternalResourcesOutput(&output, topic)
+	app.mapExternalResourcesOutput(topic, &output)
 
 	return output, nil
 }
@@ -153,7 +153,7 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 	return app.repository.ExternalResource.BulkSave(bookSearchCtx, topic.ID, externalResources)
 }
 
-func (app *application) mapExternalResourcesOutput(output *io.GetTopicOutput, topic domain.Topic) {
+func (app *application) mapExternalResourcesOutput(topic domain.Topic, output *io.GetTopicOutput) {
 	output.ExternalResources.YoutubeVideos = make([]io.GetTopicOutputExternalResourceItem, 0)
 	output.ExternalResources.Books = make([]io.GetTopicOutputExternalResourceItem, 0)
 	output.ExternalResources.Articles = make([]io.GetTopicOutputExternalResourceItem, 0)
