@@ -287,7 +287,7 @@ func (a *API) Param(r *http.Request, key string) string {
 func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	log := logger.FromContext(ctx)
-	var appErr *cerrors.AppError
+	var appErr *cerrors.CurionaError
 	var msg string
 	code := http.StatusInternalServerError
 	if errors.As(err, &appErr) {

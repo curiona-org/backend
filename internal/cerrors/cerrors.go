@@ -11,7 +11,7 @@ var (
 	DefaultErrorMessage = "Oops! We encountered an unexpected error. Please try again."
 )
 
-type AppError struct {
+type CurionaError struct {
 	// ErrorCode is the HTTP status code that is returned to the end user.
 	ErrorCode int
 	// InternalMessage is the message that is logged in the application logs.
@@ -23,7 +23,7 @@ type AppError struct {
 
 // New creates a new application error with the provided error string.
 func New(errString string) error {
-	return &AppError{
+	return &CurionaError{
 		ErrorCode:       DefaultErrorCode,
 		InternalMessage: errString,
 		ExternalMessage: DefaultErrorMessage,
@@ -36,7 +36,7 @@ func Wrap(err error) error {
 		return nil
 	}
 
-	return &AppError{
+	return &CurionaError{
 		ErrorCode:       DefaultErrorCode,
 		InternalMessage: err.Error(),
 		ExternalMessage: DefaultErrorMessage,
@@ -46,23 +46,23 @@ func Wrap(err error) error {
 // Unwrap converts the application error to the underlying error.
 // If the error is not an application error, it returns the original error.
 func Unwrap(err error) error {
-	var ae *AppError
+	var ae *CurionaError
 	if errors.As(err, &ae) {
 		return ae
 	}
 	return err
 }
 
-func (e *AppError) Code() int {
+func (e *CurionaError) Code() int {
 	return e.ErrorCode
 }
 
 // Error implements the error interface.
-func (e *AppError) Error() string {
+func (e *CurionaError) Error() string {
 	return e.InternalMessage
 }
 
-func (e *AppError) Message() string {
+func (e *CurionaError) Message() string {
 	if e.ExternalMessage == "" {
 		return DefaultErrorMessage
 	}
@@ -71,12 +71,12 @@ func (e *AppError) Message() string {
 }
 
 // With creates a new wrapped application error with the provided error.
-func (e *AppError) With(err error) error {
+func (e *CurionaError) With(err error) error {
 	if err == nil {
 		return e
 	}
 
-	return &AppError{
+	return &CurionaError{
 		ErrorCode:       e.ErrorCode,
 		InternalMessage: e.InternalMessage + ": " + err.Error(),
 		ExternalMessage: e.ExternalMessage,
@@ -84,8 +84,8 @@ func (e *AppError) With(err error) error {
 }
 
 // Msg creates a new wrapped application error with the provided message.
-func (e *AppError) Msg(errorString string) error {
-	return &AppError{
+func (e *CurionaError) Msg(errorString string) error {
+	return &CurionaError{
 		ErrorCode:       e.ErrorCode,
 		InternalMessage: e.InternalMessage,
 		ExternalMessage: e.ExternalMessage + ": " + errorString,
@@ -93,9 +93,9 @@ func (e *AppError) Msg(errorString string) error {
 }
 
 // Msgf creates a new wrapped application error with the provided formatted message.
-func (e *AppError) Msgf(format string, a ...any) error {
+func (e *CurionaError) Msgf(format string, a ...any) error {
 	format = fmt.Sprintf(format, a...)
-	return &AppError{
+	return &CurionaError{
 		ErrorCode:       e.ErrorCode,
 		InternalMessage: e.InternalMessage,
 		ExternalMessage: e.ExternalMessage + ": " + format,
