@@ -31,10 +31,15 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 	roadmap.SetCreator(&account)
 
 	output := io.GetRoadmapOutput{
-		ID:          roadmap.ID,
-		Title:       roadmap.Title,
-		Slug:        roadmap.Slug,
-		Description: roadmap.Description,
+		ID:                   roadmap.ID,
+		Title:                roadmap.Title,
+		Slug:                 roadmap.Slug,
+		Description:          roadmap.Description,
+		TotalTopics:          roadmap.TotalTopics,
+		TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+		CompletionPercentage: roadmap.CompletionPercentage(),
+		CreatedAt:            roadmap.CreatedAt,
+		UpdatedAt:            roadmap.UpdatedAt,
 		Creator: io.GetRoadmapOutputCreator{
 			ID:     roadmap.Account.ID,
 			Name:   roadmap.Account.Profile.Name,
@@ -46,10 +51,6 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 		},
-		TotalTopics:          roadmap.TotalTopics(),
-		CompletionPercentage: roadmap.CompletionPercentage(),
-		CreatedAt:            roadmap.CreatedAt,
-		UpdatedAt:            roadmap.UpdatedAt,
 	}
 
 	topicMap := make(map[int][]io.GetRoadmapOutputTopics)

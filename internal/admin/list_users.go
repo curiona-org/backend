@@ -37,6 +37,7 @@ func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersIn
 			Name:        user.Profile.Name,
 			Avatar:      user.Profile.Avatar,
 			IsSuspended: user.IsSuspended,
+			IsAdmin:     user.IsAdmin,
 			JoinedAt:    user.CreatedAt,
 		}
 	}

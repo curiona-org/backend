@@ -33,16 +33,17 @@ func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io
 			Title:                roadmap.Title,
 			Description:          roadmap.Description,
 			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics(),
+			TotalTopics:          roadmap.TotalTopics,
+			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
 			CompletionPercentage: roadmap.CompletionPercentage(),
+			CreatedAt:            roadmap.CreatedAt,
+			UpdatedAt:            roadmap.UpdatedAt,
 			PersonalizationOpts: io.ListUserRoadmapsOutputPersonalizationOptions{
 				DailyTimeAvailability: object.NewIntervalFromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         object.NewIntervalFromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},
-			CreatedAt: roadmap.CreatedAt,
-			UpdatedAt: roadmap.UpdatedAt,
 		}
 
 		output.Roadmaps = append(output.Roadmaps, outputRoadmap)

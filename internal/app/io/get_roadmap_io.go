@@ -11,13 +11,14 @@ type GetRoadmapOutput struct {
 	Title                string                                 `json:"title"`
 	Slug                 string                                 `json:"slug"`
 	Description          string                                 `json:"description"`
-	Creator              GetRoadmapOutputCreator                `json:"creator"`
-	Topics               []GetRoadmapOutputTopics               `json:"topics"`
 	TotalTopics          int                                    `json:"total_topics"`
-	PersonalizationOpts  GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`
+	TotalFinishedTopics  int                                    `json:"finished_topics"`
 	CompletionPercentage float64                                `json:"completion_percentage"`
 	CreatedAt            time.Time                              `json:"created_at"`
 	UpdatedAt            time.Time                              `json:"updated_at"`
+	Creator              GetRoadmapOutputCreator                `json:"creator"`
+	Topics               []GetRoadmapOutputTopics               `json:"topics"`
+	PersonalizationOpts  GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`
 }
 type GetRoadmapOutputCreator struct {
 	ID     int    `json:"id"`

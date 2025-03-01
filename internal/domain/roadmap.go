@@ -22,11 +22,13 @@ var (
 )
 
 type Roadmap struct {
-	ID          int
-	AccountID   int
-	Title       string
-	Slug        string
-	Description string
+	ID                  int
+	AccountID           int
+	Title               string
+	Slug                string
+	Description         string
+	TotalTopics         int
+	TotalFinishedTopics int
 
 	Account                *Account
 	Topics                 []*Topic
@@ -54,22 +56,13 @@ func (e *Roadmap) IsZero() bool {
 		e.Title == "" &&
 		e.Slug == "" &&
 		e.Description == "" &&
+		e.TotalFinishedTopics == 0 &&
+		e.TotalTopics == 0 &&
 		e.Account.IsZero() &&
 		len(e.Topics) == 0 &&
 		e.PersonalizationOptions.IsZero() &&
 		e.CreatedAt.IsZero() &&
 		e.UpdatedAt.IsZero()
-}
-
-func (e *Roadmap) TotalTopics() int {
-	total := len(e.Topics)
-	for _, topic := range e.Topics {
-		subtopicsTotal := len(topic.Subtopics)
-		if subtopicsTotal > 0 {
-			total += subtopicsTotal
-		}
-	}
-	return total
 }
 
 func (e *Roadmap) AddTopic(topic *Topic) {
@@ -83,30 +76,19 @@ func (e *Roadmap) AddTopic(topic *Topic) {
 }
 
 func (e *Roadmap) CompletionPercentage() float64 {
-	return e.calculateCompletionPercentage(e.Topics, e.TotalTopics())
-}
-
-func (e *Roadmap) calculateCompletionPercentage(topics []*Topic, totalTopics int) float64 {
-	if totalTopics == 0 {
+	if e.TotalTopics == 0 {
 		return 0
 	}
 
-	totalTopicsFinished := float64(0)
-	for _, topic := range topics {
-		if len(topic.Subtopics) > 0 {
-			for _, subtopic := range topic.Subtopics {
-				if subtopic.IsFinished {
-					totalTopicsFinished++
-				}
-			}
-		}
+	return float64(e.TotalFinishedTopics) / float64(e.TotalTopics) * 100
+}
 
-		if topic.IsFinished {
-			totalTopicsFinished++
-		}
-	}
+func (e *Roadmap) AddFinishedTopic() {
+	e.TotalFinishedTopics++
+}
 
-	return totalTopicsFinished / float64(totalTopics)
+func (e *Roadmap) RemoveFinishedTopic() {
+	e.TotalFinishedTopics--
 }
 
 func (e *Roadmap) SetCreator(acc *Account) {

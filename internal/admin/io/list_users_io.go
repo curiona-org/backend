@@ -16,5 +16,6 @@ type ListUsersOutputItem struct {
 	Name        string      `json:"name"`
 	Avatar      string      `json:"avatar"`
 	IsSuspended bool        `json:"is_suspended"`
+	IsAdmin     bool        `json:"is_admin"`
 	JoinedAt    time.Time   `json:"joined_at"`
 }

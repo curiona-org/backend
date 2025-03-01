@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/logger"
@@ -59,6 +58,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, query string, args ...any
 			&roadmap.Title,
 			&roadmap.Slug,
 			&roadmap.Description,
+			&roadmap.TotalTopics,
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 		)
@@ -77,12 +77,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, query string, args ...any
 }
 
 func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
-	cacher := cache.New[domain.Roadmap](r.cache)
 	var roadmap domain.Roadmap
-	ok := cacher.Read(ctx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug}, &roadmap)
-	if ok {
-		return roadmap, nil
-	}
 
 	query, args := psql.Select(
 		sm.Columns(
@@ -91,6 +86,8 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 			psql.Quote(domain.RoadmapTable, "title"),
 			psql.Quote(domain.RoadmapTable, "slug"),
 			psql.Quote(domain.RoadmapTable, "description"),
+			psql.Quote(domain.RoadmapTable, "total_topics"),
+			psql.Quote(domain.RoadmapTable, "total_finished_topics"),
 			psql.Quote(domain.RoadmapTable, "created_at"),
 			psql.Quote(domain.RoadmapTable, "updated_at"),
 			psql.Quote(domain.PersonalizationOptionsTable, "id"),
@@ -127,8 +124,6 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 
 	roadmap.SetTopics(topics)
 
-	cacher.Write(ctx, &cache.Key{Namespace: domain.RoadmapTable, Key: slug}, roadmap, time.Hour)
-
 	return roadmap, nil
 }
 
@@ -140,6 +135,8 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 			psql.Quote(domain.RoadmapTable, "title"),
 			psql.Quote(domain.RoadmapTable, "slug"),
 			psql.Quote(domain.RoadmapTable, "description"),
+			psql.Quote(domain.RoadmapTable, "total_topics"),
+			psql.Quote(domain.RoadmapTable, "total_finished_topics"),
 			psql.Quote(domain.RoadmapTable, "created_at"),
 			psql.Quote(domain.RoadmapTable, "updated_at"),
 			psql.Quote(domain.PersonalizationOptionsTable, "id"),
@@ -193,6 +190,8 @@ func (r *RoadmapRepository) fetchWithPersonalizationOptions(ctx context.Context,
 			&roadmap.Title,
 			&roadmap.Slug,
 			&roadmap.Description,
+			&roadmap.TotalTopics,
+			&roadmap.TotalFinishedTopics,
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 			&personalizationOptions.ID,
@@ -291,6 +290,7 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, pagination pagination.P
 			psql.Quote(domain.RoadmapTable, "title"),
 			psql.Quote(domain.RoadmapTable, "slug"),
 			psql.Quote(domain.RoadmapTable, "description"),
+			psql.Quote(domain.RoadmapTable, "total_topics"),
 			psql.Quote(domain.RoadmapTable, "created_at"),
 			psql.Quote(domain.RoadmapTable, "updated_at"),
 			psql.Quote(domain.RoadmapTable, "deleted_at"),
@@ -358,6 +358,7 @@ func (r *RoadmapRepository) fetchAll(ctx context.Context, query string, args ...
 			&roadmap.Title,
 			&roadmap.Slug,
 			&roadmap.Description,
+			&roadmap.TotalTopics,
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 			&roadmapDeletedAt,
@@ -423,8 +424,8 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 
 func (r *RoadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (domain.Roadmap, error) {
 	query, args := psql.Insert(
-		im.Into(domain.RoadmapTable, "account_id", "title", "slug", "description", "created_at", "updated_at"),
-		im.Values(psql.Arg(input.AccountID, input.Title, input.Slug, input.Description, input.CreatedAt, input.UpdatedAt)),
+		im.Into(domain.RoadmapTable, "account_id", "title", "slug", "description", "total_topics", "created_at", "updated_at"),
+		im.Values(psql.Arg(input.AccountID, input.Title, input.Slug, input.Description, input.TotalTopics, input.CreatedAt, input.UpdatedAt)),
 		im.Returning("id", "slug"),
 	).MustBuild(ctx)
 
@@ -589,6 +590,8 @@ func (r *RoadmapRepository) Update(ctx context.Context, slug string, updateFn fu
 				psql.Quote(domain.RoadmapTable, "title"),
 				psql.Quote(domain.RoadmapTable, "slug"),
 				psql.Quote(domain.RoadmapTable, "description"),
+				psql.Quote(domain.RoadmapTable, "total_topics"),
+				psql.Quote(domain.RoadmapTable, "completion_percentage"),
 				psql.Quote(domain.RoadmapTable, "created_at"),
 				psql.Quote(domain.RoadmapTable, "updated_at"),
 			),

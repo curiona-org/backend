@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS roadmaps (
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
+    total_topics INTEGER NOT NULL DEFAULT 0,
+    total_finished_topics INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     deleted_at TIMESTAMPTZ,

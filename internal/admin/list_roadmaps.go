@@ -36,7 +36,7 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 			Title:                roadmap.Title,
 			Description:          roadmap.Description,
 			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics(),
+			TotalTopics:          roadmap.TotalTopics,
 			CompletionPercentage: roadmap.CompletionPercentage(),
 			PersonalizationOpts: io.ListRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: object.NewIntervalFromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),

@@ -26,5 +26,5 @@ func (a *API) MarkTopicAsIncomplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.render.OK(w, "Roadmap deleted.", nil)
+	a.render.OK(w, "topic marked as incomplete", nil)
 }
