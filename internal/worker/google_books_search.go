@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/hibiken/asynq"
 	"github.com/vmihailenco/msgpack/v5"
@@ -65,7 +64,7 @@ func (w *worker) searchGoogleBooksExternalResources(ctx context.Context, task *a
 			payload.TopicID,
 			result.Title,
 			result.URL,
-			object.ExternalResourceTypeYoutube,
+			domain.ExternalResourceTypeYoutube,
 		)
 
 		externalResources = append(externalResources, externalResource)

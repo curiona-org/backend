@@ -3,7 +3,7 @@ package io
 import (
 	"time"
 
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/interval"
 )
 
 type ListUserRoadmapsOutput struct {
@@ -25,8 +25,8 @@ type ListUserRoadmapsOutputRoadmap struct {
 }
 
 type ListUserRoadmapsOutputPersonalizationOptions struct {
-	DailyTimeAvailability object.Interval `json:"daily_time_availability"`
-	TotalDuration         object.Interval `json:"total_duration"`
-	SkillLevel            string          `json:"skill_level"`
-	AdditionalInfo        string          `json:"additional_info"`
+	DailyTimeAvailability interval.Interval `json:"daily_time_availability"`
+	TotalDuration         interval.Interval `json:"total_duration"`
+	SkillLevel            string            `json:"skill_level"`
+	AdditionalInfo        string            `json:"additional_info"`
 }

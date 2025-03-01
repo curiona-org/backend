@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/admin/io"
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/interval"
 	"github.com/curiona-org/backend/pkg/pagination"
 )
 
@@ -40,8 +40,8 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
 			CompletionPercentage: roadmap.CompletionPercentage(),
 			PersonalizationOpts: io.ListRoadmapsOutputItemPersonalizationOptions{
-				DailyTimeAvailability: object.NewIntervalFromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
-				TotalDuration:         object.NewIntervalFromDuration(roadmap.PersonalizationOptions.TotalDuration),
+				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
+				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},

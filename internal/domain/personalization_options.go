@@ -3,8 +3,6 @@ package domain
 import (
 	"errors"
 	"time"
-
-	"github.com/curiona-org/backend/internal/domain/object"
 )
 
 const (
@@ -15,19 +13,31 @@ var (
 	ErrPersonalizationOptionsNotFound = errors.New("personalization options not found")
 )
 
+type SkillLevel string
+
+const (
+	SkillLevelBeginner     SkillLevel = "beginner"
+	SkillLevelIntermediate SkillLevel = "intermediate"
+	SkillLevelAdvanced     SkillLevel = "advanced"
+)
+
+func (s SkillLevel) String() string {
+	return string(s)
+}
+
 type PersonalizationOptions struct {
 	ID                    int
 	AccountID             int
 	RoadmapID             int
 	DailyTimeAvailability time.Duration
 	TotalDuration         time.Duration
-	SkillLevel            object.SkillLevel
+	SkillLevel            SkillLevel
 	AdditionalInfo        string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 }
 
-func NewPersonalizationOptions(accountID, roadmapID int, dailyTimeAvailability, totalDuration time.Duration, skillLevel object.SkillLevel, additionalInfo string) *PersonalizationOptions {
+func NewPersonalizationOptions(accountID, roadmapID int, dailyTimeAvailability, totalDuration time.Duration, skillLevel SkillLevel, additionalInfo string) *PersonalizationOptions {
 	return &PersonalizationOptions{
 		AccountID:             accountID,
 		RoadmapID:             roadmapID,

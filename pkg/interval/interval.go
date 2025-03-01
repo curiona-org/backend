@@ -1,38 +1,38 @@
-package object
+package interval
 
 import "time"
 
 type Interval struct {
-	Value int          `json:"value"`
-	Unit  IntervalUnit `json:"unit"`
+	Value int  `json:"value"`
+	Unit  Unit `json:"unit"`
 }
 
-func NewInterval(value int, unit IntervalUnit) Interval {
+func New(value int, unit Unit) Interval {
 	return Interval{
 		Value: value,
 		Unit:  unit,
 	}
 }
 
-func NewIntervalFromDuration(duration time.Duration) Interval {
+func FromDuration(duration time.Duration) Interval {
 	value := int(duration.Minutes())
-	unit := IntervalUnitMinutes
+	unit := UnitMinutes
 
 	if value >= 60 {
 		value = int(duration.Hours())
-		unit = IntervalUnitHours
+		unit = UnitHours
 	}
-	if value >= 24 && unit == IntervalUnitHours {
+	if value >= 24 && unit == UnitHours {
 		value = int(duration.Hours() / 24)
-		unit = IntervalUnitDays
+		unit = UnitDays
 	}
-	if value >= 7 && unit == IntervalUnitDays {
+	if value >= 7 && unit == UnitDays {
 		value = int(duration.Hours() / (24 * 7))
-		unit = IntervalUnitWeeks
+		unit = UnitWeeks
 	}
-	if value >= 4 && unit == IntervalUnitWeeks {
+	if value >= 4 && unit == UnitWeeks {
 		value = int(duration.Hours() / (24 * 30))
-		unit = IntervalUnitMonths
+		unit = UnitMonths
 	}
 
 	return Interval{
@@ -43,15 +43,15 @@ func NewIntervalFromDuration(duration time.Duration) Interval {
 
 func (t Interval) Duration() time.Duration {
 	switch t.Unit {
-	case IntervalUnitMinutes:
+	case UnitMinutes:
 		return time.Duration(t.Value) * time.Minute
-	case IntervalUnitHours:
+	case UnitHours:
 		return time.Duration(t.Value) * time.Hour
-	case IntervalUnitDays:
+	case UnitDays:
 		return time.Duration(t.Value) * 24 * time.Hour
-	case IntervalUnitWeeks:
+	case UnitWeeks:
 		return time.Duration(t.Value) * 24 * 7 * time.Hour
-	case IntervalUnitMonths:
+	case UnitMonths:
 		return time.Duration(t.Value) * 24 * 30 * time.Hour
 	default:
 		return 0

@@ -7,7 +7,7 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/interval"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -46,8 +46,8 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 			Avatar: roadmap.Account.Profile.Avatar,
 		},
 		PersonalizationOpts: io.GetRoadmapOutputPersonalizationOptions{
-			DailyTimeAvailability: object.NewIntervalFromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
-			TotalDuration:         object.NewIntervalFromDuration(roadmap.PersonalizationOptions.TotalDuration),
+			DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
+			TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 		},

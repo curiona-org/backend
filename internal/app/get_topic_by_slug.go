@@ -8,7 +8,6 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/worker"
 	"go.opentelemetry.io/otel/attribute"
@@ -91,7 +90,7 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 			topic.ID,
 			result.Title,
 			result.URL,
-			object.ExternalResourceTypeYoutube,
+			domain.ExternalResourceTypeYoutube,
 		)
 
 		mu.Lock()
@@ -134,7 +133,7 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 			topic.ID,
 			result.Title,
 			"",
-			object.ExternalResourceTypeBook,
+			domain.ExternalResourceTypeBook,
 		)
 
 		mu.Lock()

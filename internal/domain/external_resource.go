@@ -3,8 +3,6 @@ package domain
 import (
 	"errors"
 	"time"
-
-	"github.com/curiona-org/backend/internal/domain/object"
 )
 
 const (
@@ -15,18 +13,26 @@ var (
 	ErrExternalResourcesNotFound = errors.New("external resources not found")
 )
 
+type ExternalResourceType string
+
+const (
+	ExternalResourceTypeYoutube ExternalResourceType = "youtube"
+	ExternalResourceTypeBook    ExternalResourceType = "book"
+	ExternalResourceTypeArticle ExternalResourceType = "article"
+)
+
 type ExternalResource struct {
 	ID      int
 	TopicID int
 	Title   string
 	URL     string
-	Type    object.ExternalResourceType
+	Type    ExternalResourceType
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-func NewExternalResource(topicID int, title, url string, resourceType object.ExternalResourceType) *ExternalResource {
+func NewExternalResource(topicID int, title, url string, resourceType ExternalResourceType) *ExternalResource {
 	return &ExternalResource{
 		TopicID:   topicID,
 		Title:     title,
@@ -38,15 +44,15 @@ func NewExternalResource(topicID int, title, url string, resourceType object.Ext
 }
 
 func (e *ExternalResource) IsYoutube() bool {
-	return e.Type == object.ExternalResourceTypeYoutube
+	return e.Type == ExternalResourceTypeYoutube
 }
 
 func (e *ExternalResource) IsBook() bool {
-	return e.Type == object.ExternalResourceTypeBook
+	return e.Type == ExternalResourceTypeBook
 }
 
 func (e *ExternalResource) IsArticle() bool {
-	return e.Type == object.ExternalResourceTypeArticle
+	return e.Type == ExternalResourceTypeArticle
 }
 
 func (e *ExternalResource) IsZero() bool {

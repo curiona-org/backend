@@ -10,8 +10,8 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/domain/object"
 	"github.com/curiona-org/backend/internal/logger"
+	"github.com/curiona-org/backend/pkg/interval"
 	"github.com/curiona-org/backend/pkg/llm"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -25,7 +25,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 		attribute.String("personalization_options.daily_time_availability.unit", input.PersonalizationOptions.DailyTimeAvailability.Unit.String()),
 		attribute.Int("personalization_options.total_duration.value", input.PersonalizationOptions.TotalDuration.Value),
 		attribute.String("personalization_options.total_duration.unit", input.PersonalizationOptions.TotalDuration.Unit.String()),
-		attribute.String("skill_level", input.PersonalizationOptions.SkillLevel.String()),
+		attribute.String("skill_level", input.PersonalizationOptions.SkillLevel),
 		attribute.String("additional_info", input.PersonalizationOptions.AdditionalInfo),
 	))
 	defer span.End()
@@ -65,15 +65,15 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	personalizationOpt := domain.NewPersonalizationOptions(
 		input.AccountID,
 		0,
-		object.NewInterval(
+		interval.New(
 			input.PersonalizationOptions.DailyTimeAvailability.Value,
 			input.PersonalizationOptions.DailyTimeAvailability.Unit,
 		).Duration(),
-		object.NewInterval(
+		interval.New(
 			input.PersonalizationOptions.TotalDuration.Value,
 			input.PersonalizationOptions.TotalDuration.Unit,
 		).Duration(),
-		input.PersonalizationOptions.SkillLevel,
+		domain.SkillLevel(input.PersonalizationOptions.SkillLevel),
 		input.PersonalizationOptions.AdditionalInfo,
 	)
 	roadmap.SetPersonalizationOptions(personalizationOpt)
@@ -151,7 +151,7 @@ func (app *application) makeGenerateRoadmapUserPrompt(input io.GenerateRoadmapIn
 	sb.WriteString("\n")
 
 	sb.WriteString("- Skill Level: ")
-	sb.WriteString(input.PersonalizationOptions.SkillLevel.String())
+	sb.WriteString(input.PersonalizationOptions.SkillLevel)
 	sb.WriteString("\n")
 
 	if input.PersonalizationOptions.AdditionalInfo != "" {

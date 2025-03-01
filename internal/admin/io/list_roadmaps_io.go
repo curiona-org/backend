@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/auth"
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/interval"
 )
 
 type ListRoadmapsInput = PaginatedListInput
@@ -25,10 +25,10 @@ type ListRoadmapsOutputItem struct {
 }
 
 type ListRoadmapsOutputItemPersonalizationOptions struct {
-	DailyTimeAvailability object.Interval `json:"daily_time_availability"`
-	TotalDuration         object.Interval `json:"total_duration"`
-	SkillLevel            string          `json:"skill_level"`
-	AdditionalInfo        string          `json:"additional_info"`
+	DailyTimeAvailability interval.Interval `json:"daily_time_availability"`
+	TotalDuration         interval.Interval `json:"total_duration"`
+	SkillLevel            string            `json:"skill_level"`
+	AdditionalInfo        string            `json:"additional_info"`
 }
 
 type ListRoadmapsOutputItemUser struct {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/internal/domain/object"
+	"github.com/curiona-org/backend/pkg/interval"
 )
 
 func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error) {
@@ -39,8 +39,8 @@ func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io
 			CreatedAt:            roadmap.CreatedAt,
 			UpdatedAt:            roadmap.UpdatedAt,
 			PersonalizationOpts: io.ListUserRoadmapsOutputPersonalizationOptions{
-				DailyTimeAvailability: object.NewIntervalFromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
-				TotalDuration:         object.NewIntervalFromDuration(roadmap.PersonalizationOptions.TotalDuration),
+				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
+				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},
