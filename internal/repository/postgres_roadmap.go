@@ -332,8 +332,7 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, pagination pagination.P
 	return r.fetchAll(ctx, query, args...)
 }
 
-// fetchAll gets all roadmap related entities (accounts and profiles)
-// TODO: aggregate topic too
+// fetchAll gets all roadmap related entities (accounts and profiles).
 func (r *RoadmapRepository) fetchAll(ctx context.Context, query string, args ...any) ([]domain.Roadmap, error) {
 	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetchAll)", query)
 	defer span.End()
