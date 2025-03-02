@@ -7,6 +7,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	baseyoutube "google.golang.org/api/youtube/v3"
 )
@@ -57,6 +58,8 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 
 	response, err := call.Do()
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch youtube videos")
+		span.RecordError(err)
 		return nil, err
 	}
 

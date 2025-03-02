@@ -43,10 +43,7 @@ func Get() zerolog.Logger {
 				With().
 				Caller().
 				Stack().
-				Logger().
-				Sample(&zerolog.BasicSampler{
-					N: 10,
-				})
+				Logger()
 		}
 	})
 
