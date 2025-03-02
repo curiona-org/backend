@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/cohesion-org/deepseek-go"
-	"github.com/cohesion-org/deepseek-go/constants"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -38,14 +37,8 @@ func (d *deepSeekClient) Chat(ctx context.Context, prompt ChatPrompt) (string, e
 	response, err := d.client.CreateChatCompletion(ctx, &deepseek.ChatCompletionRequest{
 		Model: d.model,
 		Messages: []deepseek.ChatCompletionMessage{
-			{
-				Role:    constants.ChatMessageRoleSystem,
-				Content: prompt.System,
-			},
-			{
-				Role:    constants.ChatMessageRoleUser,
-				Content: prompt.User,
-			},
+			{Role: deepseek.ChatMessageRoleSystem, Content: prompt.System},
+			{Role: deepseek.ChatMessageRoleUser, Content: prompt.User},
 		},
 	})
 	if err != nil {
