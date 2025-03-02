@@ -71,8 +71,8 @@ func run(ctx context.Context) {
 		)
 	}
 
-	auth := auth.New(
-		&auth.Config{
+	auth := auth.NewManager(
+		&auth.ManagerConfig{
 			AccessSecretKey:  config.AccessSecretKey(),
 			AccessExpiresIn:  config.AccessExpiresIn(),
 			RefreshSecretKey: config.RefreshSecretKey(),

@@ -38,7 +38,7 @@ type application struct {
 	worker      worker.Worker
 	repository  *repository.Repository
 	llm         llm.Client
-	auth        *auth.Auth
+	auth        *auth.Manager
 	googleOAuth oauth.Client
 	googleBooks book.Client
 	youtube     youtube.Client
@@ -51,7 +51,7 @@ func New(
 	worker worker.Worker,
 	repository *repository.Repository,
 	llm llm.Client,
-	auth *auth.Auth,
+	auth *auth.Manager,
 	googleOAuth oauth.Client,
 	googleBooks book.Client,
 	youtube youtube.Client,

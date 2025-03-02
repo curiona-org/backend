@@ -18,7 +18,7 @@ type application struct {
 	worker     worker.Worker
 	repository *repository.Repository
 	llm        llm.Client
-	auth       *auth.Auth
+	auth       *auth.Manager
 	tracer     trace.Tracer
 }
 
@@ -28,7 +28,7 @@ func New(
 	worker worker.Worker,
 	repository *repository.Repository,
 	llm llm.Client,
-	auth *auth.Auth,
+	auth *auth.Manager,
 	tracer *tracesdk.TracerProvider,
 ) Application {
 	return &application{

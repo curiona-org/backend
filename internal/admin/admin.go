@@ -24,7 +24,7 @@ type Application interface {
 
 type adminApplication struct {
 	repository *repository.Repository
-	auth       *auth.Auth
+	auth       *auth.Manager
 	tracer     trace.Tracer
 }
 
@@ -32,7 +32,7 @@ var _ Application = (*adminApplication)(nil)
 
 func New(
 	repository *repository.Repository,
-	auth *auth.Auth,
+	auth *auth.Manager,
 	tracer *tracesdk.TracerProvider,
 ) Application {
 	return &adminApplication{
