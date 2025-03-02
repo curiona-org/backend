@@ -6,6 +6,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/api/books/v1"
 	"google.golang.org/api/option"
@@ -57,6 +58,8 @@ func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume
 
 	result, err := call.Do()
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch google books")
+		span.RecordError(err)
 		return nil, err
 	}
 

@@ -46,6 +46,10 @@ func New[V any](conn *Connection) Cache[V] {
 		return NewRedisCache[V](conn.Redis)
 	}
 
+	if conn.Config.Type == TypeInMemory {
+		return NewInMemoryCache[V]()
+	}
+
 	return NewNoopCache[V]()
 }
 
@@ -58,7 +62,7 @@ func NewConnection(ctx context.Context, cfg *Config) (*Connection, error) {
 			return nil, err
 		}
 		conn.Redis = rdb
-	case TypeNoop:
+	case TypeNoop, TypeInMemory:
 		// noop
 	default:
 		return nil, errors.New("invalid cache type")
