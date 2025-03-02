@@ -8,6 +8,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"slices"
+
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
@@ -202,22 +204,27 @@ func (c *inMemoryCache[V]) lookup(key string) (inMemoryEntry[V], bool) {
 }
 
 func (c *inMemoryCache[V]) lookupIndex(key string) ([]inMemoryEntry[V], bool) {
-	c.mtx.RLock()
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
 	keys, ok := inMemoryIndexStore[key]
 	if !ok {
 		return nil, false
 	}
 
 	entries := make([]inMemoryEntry[V], 0, len(keys))
-	for _, key := range keys {
-		entry, ok := c.lookup(key)
-		if !ok {
+	for idx, key := range keys {
+		entry, entryExists := c.lookup(key)
+		if !entryExists {
+			// key still exists in secondary index but not in the primary store
+			// remove it from the secondary index array
+			keys = slices.Delete(keys, idx, idx+1)
+			inMemoryIndexStore[key] = keys
 			continue
 		}
 
 		entries = append(entries, entry)
 	}
-	c.mtx.RUnlock()
 
 	return entries, true
 }
@@ -241,5 +248,4 @@ func (c *inMemoryCache[V]) runJanitor() {
 		}
 		c.mtx.Unlock()
 	}
-
 }
