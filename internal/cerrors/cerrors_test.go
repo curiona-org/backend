@@ -9,6 +9,7 @@ import (
 )
 
 func TestCerror_New(t *testing.T) {
+	t.Parallel()
 	errString := "internal error"
 	err := cerrors.New(errString)
 
@@ -20,6 +21,7 @@ func TestCerror_New(t *testing.T) {
 }
 
 func TestCerror_NewEmptyMessage(t *testing.T) {
+	t.Parallel()
 	errString := "internal error"
 	err := cerrors.New(errString)
 
@@ -32,6 +34,7 @@ func TestCerror_NewEmptyMessage(t *testing.T) {
 }
 
 func TestCerror_Wrap(t *testing.T) {
+	t.Parallel()
 	originalErr := errors.New("original error")
 	err := cerrors.Wrap(originalErr)
 
@@ -43,11 +46,13 @@ func TestCerror_Wrap(t *testing.T) {
 }
 
 func TestCerror_WrapNilError(t *testing.T) {
+	t.Parallel()
 	err := cerrors.Wrap(nil)
 	assert.NoError(t, err)
 }
 
 func TestCerror_Unwrap(t *testing.T) {
+	t.Parallel()
 	originalErr := errors.New("original error")
 	err := cerrors.Wrap(originalErr)
 
@@ -60,6 +65,7 @@ func TestCerror_Unwrap(t *testing.T) {
 }
 
 func TestCerror_With(t *testing.T) {
+	t.Parallel()
 	appErr := &cerrors.CurionaError{
 		ErrorCode:       cerrors.DefaultErrorCode,
 		InternalMessage: "internal error",
@@ -75,6 +81,7 @@ func TestCerror_With(t *testing.T) {
 }
 
 func TestCerror_WithNil(t *testing.T) {
+	t.Parallel()
 	appErr := &cerrors.CurionaError{
 		ErrorCode:       cerrors.DefaultErrorCode,
 		InternalMessage: "internal error",
@@ -90,6 +97,7 @@ func TestCerror_WithNil(t *testing.T) {
 }
 
 func TestCerror_Msg(t *testing.T) {
+	t.Parallel()
 	appErr := &cerrors.CurionaError{
 		ErrorCode:       cerrors.DefaultErrorCode,
 		InternalMessage: "internal error",
@@ -105,6 +113,7 @@ func TestCerror_Msg(t *testing.T) {
 }
 
 func TestCerror_Msgf(t *testing.T) {
+	t.Parallel()
 	appErr := &cerrors.CurionaError{
 		ErrorCode:       cerrors.DefaultErrorCode,
 		InternalMessage: "internal error",

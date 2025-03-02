@@ -11,6 +11,7 @@ import (
 )
 
 func TestRenderer_OK(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 	msg := "Success"
@@ -29,6 +30,7 @@ func TestRenderer_OK(t *testing.T) {
 }
 
 func TestRenderer_Created(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 	msg := "Resource created"
@@ -47,6 +49,7 @@ func TestRenderer_Created(t *testing.T) {
 }
 
 func TestRenderer_Error(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 	msg := "An error occurred"
@@ -66,6 +69,7 @@ func TestRenderer_Error(t *testing.T) {
 }
 
 func TestRenderer_JSON(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 	data := render.Response{
@@ -87,6 +91,7 @@ func TestRenderer_JSON(t *testing.T) {
 }
 
 func TestRenderer_JSON_EmptyResponse(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 
@@ -103,6 +108,7 @@ func TestRenderer_JSON_EmptyResponse(t *testing.T) {
 }
 
 func TestRenderer_JSON_EmptyResponseError(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 
@@ -119,6 +125,7 @@ func TestRenderer_JSON_EmptyResponseError(t *testing.T) {
 }
 
 func TestRenderer_JSON_ErrorEncoding(t *testing.T) {
+	t.Parallel()
 	renderer := render.New(context.Background())
 	w := httptest.NewRecorder()
 

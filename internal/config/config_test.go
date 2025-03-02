@@ -9,6 +9,7 @@ import (
 )
 
 func TestConfig_Init(t *testing.T) {
+	t.Parallel()
 	t.Setenv("APP_NAME", "test_app")
 	t.Setenv("APP_ENV", "test")
 	t.Setenv("PORT", "8080")
@@ -77,6 +78,7 @@ func TestConfig_Init(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			assert.Equal(t, tc.expected, tc.actual)
 		})
 	}
