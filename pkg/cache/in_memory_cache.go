@@ -46,7 +46,7 @@ func NewInMemoryCache[V any]() Cache[V] {
 func (c *inMemoryCache[V]) Read(ctx context.Context, k *Key, out *V) bool {
 	key := k.String()
 
-	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Read", key)
+	_, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Read", key)
 	defer span.End()
 
 	entry, ok := c.lookup(key)
@@ -61,7 +61,7 @@ func (c *inMemoryCache[V]) Read(ctx context.Context, k *Key, out *V) bool {
 func (c *inMemoryCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
 	key := k.String()
 
-	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).List", key)
+	_, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).List", key)
 	defer span.End()
 
 	entries, ok := c.lookupIndex(key)
@@ -81,7 +81,7 @@ func (c *inMemoryCache[V]) Write(ctx context.Context, k *Key, value V, TTL time.
 	key := k.String()
 	namespace := k.Namespace
 
-	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Write", key)
+	_, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Write", key)
 	defer span.End()
 
 	entry := inMemoryEntry[V]{
@@ -107,7 +107,7 @@ func (c *inMemoryCache[V]) Exists(ctx context.Context, k *Key) bool {
 	if key == "" {
 		key = k.Namespace // check if the namespace exists
 	}
-	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Exists", key)
+	_, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Exists", key)
 	defer span.End()
 
 	c.mtx.RLock()
@@ -131,7 +131,7 @@ func (c *inMemoryCache[V]) Delete(ctx context.Context, ks ...*Key) error {
 		keys = append(keys, k.String())
 	}
 
-	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Delete", strings.Join(keys, ", "))
+	_, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Delete", strings.Join(keys, ", "))
 	defer span.End()
 
 	c.mtx.Lock()
@@ -168,7 +168,7 @@ func (c *inMemoryCache[V]) Delete(ctx context.Context, ks ...*Key) error {
 }
 
 func (c *inMemoryCache[V]) Truncate(ctx context.Context) error {
-	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Truncate", "")
+	_, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Truncate", "")
 	defer span.End()
 
 	c.mtx.Lock()
