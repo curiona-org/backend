@@ -225,23 +225,21 @@ func (c *inMemoryCache[V]) lookupIndex(key string) ([]inMemoryEntry[V], bool) {
 func (c *inMemoryCache[V]) runJanitor() {
 	log := logger.Get()
 	ticker := time.NewTicker(time.Minute)
-	for {
-		select {
-		case <-ticker.C:
-			c.mtx.Lock()
-			for key, data := range inMemoryStore {
-				var entry inMemoryEntry[V]
-				if err := msgpack.Unmarshal(data, &entry); err != nil {
-					log.Error().Err(err).Msg("failed to unmarshal data for key: " + key)
-					continue
-				}
-
-				if entry.TTL > 0 && time.Since(entry.CreatedAt) > entry.TTL {
-					delete(inMemoryStore, key)
-					c.nSize.Add(-1)
-				}
+	for range ticker.C {
+		c.mtx.Lock()
+		for key, data := range inMemoryStore {
+			var entry inMemoryEntry[V]
+			if err := msgpack.Unmarshal(data, &entry); err != nil {
+				log.Error().Err(err).Msg("failed to unmarshal data for key: " + key)
+				continue
 			}
-			c.mtx.Unlock()
+
+			if entry.TTL > 0 && time.Since(entry.CreatedAt) > entry.TTL {
+				delete(inMemoryStore, key)
+				c.nSize.Add(-1)
+			}
 		}
+		c.mtx.Unlock()
 	}
+
 }
