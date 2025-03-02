@@ -37,6 +37,9 @@ type Option interface {
 func New(opts ...Option) (*Provider, error) {
 	p := &Provider{}
 	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
 		opt.Apply(p)
 	}
 

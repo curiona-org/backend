@@ -29,10 +29,23 @@ func run(ctx context.Context) {
 	config.Init()
 	log := logger.Get()
 
+	var cacheType cache.Type
+	if config.IsDevelopment() {
+		cacheType = cache.TypeInMemory
+	} else {
+		cacheType = cache.TypeRedis
+	}
+
+	withQueueOpt := provider.Option(nil)
+	if cacheType == cache.TypeRedis {
+		withQueueOpt = option.WithQueue()
+	}
+
 	provider, err := provider.New(
 		option.WithLLM(),
 		option.WithPostgresDB(ctx),
-		option.WithCache(ctx, cache.TypeInMemory),
+		option.WithCache(ctx, cacheType),
+		withQueueOpt,
 		option.WithYoutubeClient(),
 		option.WithGoogleBooksClient(),
 		option.WithTracing(ctx),
@@ -92,9 +105,11 @@ func run(ctx context.Context) {
 	ctx = log.WithContext(ctx)
 	group, groupCtx := errgroup.WithContext(ctx)
 
-	// group.Go(func() error {
-	// 	return worker.Start(groupCtx)
-	// })
+	if cacheType == cache.TypeRedis {
+		group.Go(func() error {
+			return worker.Start(groupCtx)
+		})
+	}
 
 	group.Go(func() error {
 		api.Start(groupCtx)

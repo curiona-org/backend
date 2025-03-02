@@ -110,7 +110,7 @@ func (o *withCacheProviderOption) Apply(p *provider.Provider) {
 			return errors.Wrap(err, "initializing cache")
 		}
 		log := logger.Get()
-		log.Info().Msg("initialized cache")
+		log.Info().Msgf("initialized cache: %s", o.cacheType)
 		return nil
 	})
 }
