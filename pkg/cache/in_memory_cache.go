@@ -128,7 +128,8 @@ func (c *inMemoryCache[V]) Delete(ctx context.Context, ks ...*Key) error {
 	if len(ks) == 0 {
 		return nil
 	}
-	var keys []string
+
+	keys := make([]string, 0, len(ks))
 	for _, k := range ks {
 		keys = append(keys, k.String())
 	}

@@ -68,7 +68,6 @@ func (c *redisCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
 		return nil, false
 	}
 
-	var values []V
 	results, err := c.conn.Pipelined(ctx, func(pipe baseredis.Pipeliner) error {
 		for _, key := range keys {
 			pipe.HGet(ctx, key, "data")
@@ -81,6 +80,7 @@ func (c *redisCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
 		return nil, false
 	}
 
+	values := make([]V, 0, len(results))
 	for _, result := range results {
 		hget, ok := result.(*baseredis.StringCmd)
 		if !ok {
@@ -165,7 +165,7 @@ func (c *redisCache[V]) Exists(ctx context.Context, k *Key) bool {
 }
 
 func (c *redisCache[V]) Delete(ctx context.Context, ks ...*Key) error {
-	var keys []string
+	keys := make([]string, 0, len(ks))
 	for _, k := range ks {
 		keys = append(keys, k.String())
 	}
