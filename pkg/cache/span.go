@@ -9,6 +9,15 @@ import (
 )
 
 //nolint:spancheck
+func spanWithKey(ctx context.Context, tracer trace.Tracer, method, key string) (context.Context, trace.Span) {
+	ctx, span := tracer.Start(ctx, method)
+	span.SetAttributes(
+		attribute.String("db.operation.parameter", key),
+	)
+	return ctx, span
+}
+
+//nolint:spancheck
 func spanWithOperationKey(ctx context.Context, tracer trace.Tracer, method, operation, key string) (context.Context, trace.Span) {
 	ctx, span := tracer.Start(ctx, method)
 	span.SetAttributes(

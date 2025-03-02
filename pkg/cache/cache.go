@@ -36,6 +36,12 @@ type Cache[V any] interface {
 	Truncate(ctx context.Context) error
 }
 
+type Entry[V any] struct {
+	value     V
+	ttl       time.Duration
+	createdAt time.Time
+}
+
 type Connection struct {
 	Config *Config
 	Redis  *redis.Client
@@ -44,6 +50,10 @@ type Connection struct {
 func New[V any](conn *Connection) Cache[V] {
 	if conn != nil && conn.Config.Type == TypeRedis && conn.Redis != nil {
 		return NewRedisCache[V](conn.Redis)
+	}
+
+	if conn.Config.Type == TypeInMemory {
+		return NewInMemoryCache[V]()
 	}
 
 	return NewNoopCache[V]()
@@ -58,7 +68,7 @@ func NewConnection(ctx context.Context, cfg *Config) (*Connection, error) {
 			return nil, err
 		}
 		conn.Redis = rdb
-	case TypeNoop:
+	case TypeNoop, TypeInMemory:
 		// noop
 	default:
 		return nil, errors.New("invalid cache type")

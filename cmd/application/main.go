@@ -32,8 +32,7 @@ func run(ctx context.Context) {
 	provider, err := provider.New(
 		option.WithLLM(),
 		option.WithPostgresDB(ctx),
-		option.WithCache(ctx, cache.TypeRedis),
-		option.WithQueue(),
+		option.WithCache(ctx, cache.TypeInMemory),
 		option.WithYoutubeClient(),
 		option.WithGoogleBooksClient(),
 		option.WithTracing(ctx),
@@ -93,9 +92,9 @@ func run(ctx context.Context) {
 	ctx = log.WithContext(ctx)
 	group, groupCtx := errgroup.WithContext(ctx)
 
-	group.Go(func() error {
-		return worker.Start(groupCtx)
-	})
+	// group.Go(func() error {
+	// 	return worker.Start(groupCtx)
+	// })
 
 	group.Go(func() error {
 		api.Start(groupCtx)

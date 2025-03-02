@@ -101,6 +101,10 @@ func (o *withCacheProviderOption) Apply(p *provider.Provider) {
 			p.Cache, err = cache.NewConnection(o.ctx, &cache.Config{
 				Type: cache.TypeNoop,
 			})
+		case cache.TypeInMemory:
+			p.Cache, err = cache.NewConnection(o.ctx, &cache.Config{
+				Type: cache.TypeInMemory,
+			})
 		}
 		if err != nil {
 			return errors.Wrap(err, "initializing cache")
