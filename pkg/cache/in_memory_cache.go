@@ -11,14 +11,22 @@ import (
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/vmihailenco/msgpack/v5"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
+var (
+	inMemoryStore      = make(map[string][]byte)
+	inMemoryIndexStore = make(map[string][]string)
+)
+
+type inMemoryEntry[V any] struct {
+	Value     V
+	TTL       time.Duration
+	CreatedAt time.Time
+}
+
 type inMemoryCache[V any] struct {
 	mtx    sync.RWMutex
-	cache  map[string][]byte
-	index  map[string][]string
 	nSize  atomic.Int64
 	tracer trace.Tracer
 }
@@ -28,8 +36,6 @@ var _ Cache[any] = (*inMemoryCache[any])(nil)
 func NewInMemoryCache[V any]() Cache[V] {
 	tracer := otel.Tracer("cache:in_memory")
 	cacher := &inMemoryCache[V]{
-		cache:  make(map[string][]byte),
-		index:  make(map[string][]string),
 		tracer: tracer,
 	}
 
@@ -43,31 +49,13 @@ func (c *inMemoryCache[V]) Read(ctx context.Context, k *Key, out *V) bool {
 	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Read", key)
 	defer span.End()
 
-	c.mtx.RLock()
-	data, ok := c.cache[key]
-	c.mtx.RUnlock()
-
+	entry, ok := c.lookup(key)
 	if !ok {
 		return false
 	}
 
-	var entry Entry[V]
-	if err := msgpack.Unmarshal([]byte(data), &entry); err != nil {
-		span.SetStatus(codes.Error, "failed to unmarshal data for key: "+key)
-		span.RecordError(err)
-		return false
-	}
-
-	if entry.ttl > 0 && time.Since(entry.createdAt) > entry.ttl {
-		c.mtx.Lock()
-		delete(c.cache, key)
-		c.nSize.Add(-1)
-		c.mtx.Unlock()
-		return false
-	}
-
-	out = &entry.value
-	return ok
+	*out = entry.Value
+	return true
 }
 
 func (c *inMemoryCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
@@ -76,54 +64,30 @@ func (c *inMemoryCache[V]) List(ctx context.Context, k *Key) ([]V, bool) {
 	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).List", key)
 	defer span.End()
 
-	c.mtx.RLock()
-	keys, ok := c.index[key]
-	c.mtx.RUnlock()
-
+	entries, ok := c.lookupIndex(key)
 	if !ok {
 		return nil, false
 	}
 
-	values := make([]V, 0, len(keys))
-	c.mtx.Lock()
-	for _, key := range keys {
-		data, ok := c.cache[key]
-		if !ok {
-			continue
-		}
-
-		var entry Entry[V]
-		if err := msgpack.Unmarshal([]byte(data), &entry); err != nil {
-			span.SetStatus(codes.Error, "failed to unmarshal data for key: "+key)
-			span.RecordError(err)
-			continue
-		}
-
-		if entry.ttl > 0 && time.Since(entry.createdAt) > entry.ttl {
-			c.mtx.Lock()
-			delete(c.cache, key)
-			c.nSize.Add(-1)
-			c.mtx.Unlock()
-			continue
-		}
-
-		values = append(values, entry.value)
+	values := make([]V, 0, len(entries))
+	for _, entry := range entries {
+		values = append(values, entry.Value)
 	}
-	c.mtx.Unlock()
 
 	return values, true
 }
 
-func (c *inMemoryCache[V]) Write(ctx context.Context, k *Key, value V, ttl time.Duration) {
+func (c *inMemoryCache[V]) Write(ctx context.Context, k *Key, value V, TTL time.Duration) {
 	key := k.String()
+	namespace := k.Namespace
 
 	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Write", key)
 	defer span.End()
 
-	entry := Entry[V]{
-		value:     value,
-		ttl:       ttl,
-		createdAt: time.Now(),
+	entry := inMemoryEntry[V]{
+		Value:     value,
+		TTL:       TTL,
+		CreatedAt: time.Now(),
 	}
 
 	data, err := msgpack.Marshal(entry)
@@ -132,20 +96,29 @@ func (c *inMemoryCache[V]) Write(ctx context.Context, k *Key, value V, ttl time.
 	}
 
 	c.mtx.Lock()
-	c.cache[key] = data
+	inMemoryStore[key] = data
+	inMemoryIndexStore[namespace] = append(inMemoryIndexStore[namespace], key)
 	c.nSize.Add(1)
 	c.mtx.Unlock()
 }
 
 func (c *inMemoryCache[V]) Exists(ctx context.Context, k *Key) bool {
 	key := k.String()
+	if key == "" {
+		key = k.Namespace // check if the namespace exists
+	}
 	ctx, span := spanWithKey(ctx, c.tracer, "(*inMemoryCache[V]).Exists", key)
 	defer span.End()
 
 	c.mtx.RLock()
 	defer c.mtx.RUnlock()
 
-	_, ok := c.cache[key]
+	_, ok := inMemoryStore[key]
+	if ok {
+		return true
+	}
+
+	_, ok = inMemoryIndexStore[key]
 	return ok
 }
 
@@ -166,23 +139,30 @@ func (c *inMemoryCache[V]) Delete(ctx context.Context, ks ...*Key) error {
 
 	for _, key := range keys {
 		if key == "*" {
-			clear(c.cache)
+			clear(inMemoryStore)
+			clear(inMemoryIndexStore)
 			return nil
 		}
 
-		_, ok := c.cache[key]
+		_, ok := inMemoryStore[key]
 		if !ok {
 			// try deletion if the provided key uses a pattern
-
-			// check if it's a valid pattern first
-			matched, err := filepath.Match(key, "")
-			if !matched || err != nil {
-				continue
+			for k := range inMemoryStore {
+				if matched, _ := filepath.Match(key, k); matched {
+					delete(inMemoryStore, k)
+					c.nSize.Add(-1)
+				}
 			}
 
-			delete(c.cache, key)
-			c.nSize.Add(-1)
+			for k := range inMemoryIndexStore {
+				if matched, _ := filepath.Match(key, k); matched {
+					delete(inMemoryIndexStore, k)
+				}
+			}
+			continue
 		}
+
+		delete(inMemoryStore, key)
 	}
 	return nil
 }
@@ -193,8 +173,53 @@ func (c *inMemoryCache[V]) Truncate(ctx context.Context) error {
 
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
-	clear(c.cache)
+	clear(inMemoryStore)
 	return nil
+}
+
+func (c *inMemoryCache[V]) lookup(key string) (inMemoryEntry[V], bool) {
+	c.mtx.RLock()
+	data, ok := inMemoryStore[key]
+	if !ok {
+		return inMemoryEntry[V]{}, false
+	}
+	c.mtx.RUnlock()
+
+	var entry inMemoryEntry[V]
+	if err := msgpack.Unmarshal(data, &entry); err != nil {
+		return inMemoryEntry[V]{}, false
+	}
+
+	if entry.TTL > 0 && time.Since(entry.CreatedAt) > entry.TTL {
+		c.mtx.Lock()
+		delete(inMemoryStore, key)
+		c.nSize.Add(-1)
+		c.mtx.Unlock()
+		return inMemoryEntry[V]{}, false
+	}
+
+	return entry, true
+}
+
+func (c *inMemoryCache[V]) lookupIndex(key string) ([]inMemoryEntry[V], bool) {
+	c.mtx.RLock()
+	keys, ok := inMemoryIndexStore[key]
+	if !ok {
+		return nil, false
+	}
+
+	entries := make([]inMemoryEntry[V], 0, len(keys))
+	for _, key := range keys {
+		entry, ok := c.lookup(key)
+		if !ok {
+			continue
+		}
+
+		entries = append(entries, entry)
+	}
+	c.mtx.RUnlock()
+
+	return entries, true
 }
 
 func (c *inMemoryCache[V]) runJanitor() {
@@ -204,15 +229,15 @@ func (c *inMemoryCache[V]) runJanitor() {
 		select {
 		case <-ticker.C:
 			c.mtx.Lock()
-			for key, data := range c.cache {
-				var entry Entry[V]
-				if err := msgpack.Unmarshal([]byte(data), &entry); err != nil {
+			for key, data := range inMemoryStore {
+				var entry inMemoryEntry[V]
+				if err := msgpack.Unmarshal(data, &entry); err != nil {
 					log.Error().Err(err).Msg("failed to unmarshal data for key: " + key)
 					continue
 				}
 
-				if entry.ttl > 0 && time.Since(entry.createdAt) > entry.ttl {
-					delete(c.cache, key)
+				if entry.TTL > 0 && time.Since(entry.CreatedAt) > entry.TTL {
+					delete(inMemoryStore, key)
 					c.nSize.Add(-1)
 				}
 			}

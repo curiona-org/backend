@@ -36,12 +36,6 @@ type Cache[V any] interface {
 	Truncate(ctx context.Context) error
 }
 
-type Entry[V any] struct {
-	value     V
-	ttl       time.Duration
-	createdAt time.Time
-}
-
 type Connection struct {
 	Config *Config
 	Redis  *redis.Client

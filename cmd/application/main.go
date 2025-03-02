@@ -58,13 +58,18 @@ func run(ctx context.Context) {
 	log.Info().Msg("Bootstrapping application...")
 	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Cache)
 
-	worker := worker.New(
-		provider.Queue,
-		provider.QueueServer,
-		postgresRepository,
-		provider.GoogleBooks,
-		provider.Youtube,
-	)
+	var w worker.Worker
+	if config.IsDevelopment() {
+		w = worker.NewNoop()
+	} else {
+		w = worker.NewAsynq(
+			provider.Queue,
+			provider.QueueServer,
+			postgresRepository,
+			provider.GoogleBooks,
+			provider.Youtube,
+		)
+	}
 
 	auth := auth.New(
 		&auth.Config{
@@ -76,7 +81,7 @@ func run(ctx context.Context) {
 	)
 
 	curionaApp := app.New(
-		worker,
+		w,
 		postgresRepository,
 		provider.LLM,
 		auth,
@@ -89,7 +94,7 @@ func run(ctx context.Context) {
 		provider.Tracing,
 	)
 	adminApp := admin.New(postgresRepository, auth, provider.Tracing)
-	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth, provider.Tracing)
+	chatApp := chat.New(w, postgresRepository, provider.LLM, auth, provider.Tracing)
 
 	api := api.New(
 		ctx,
@@ -107,7 +112,7 @@ func run(ctx context.Context) {
 
 	if cacheType == cache.TypeRedis {
 		group.Go(func() error {
-			return worker.Start(groupCtx)
+			return w.Start(groupCtx)
 		})
 	}
 
