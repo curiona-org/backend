@@ -528,7 +528,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 
 	log.Debug().Any("mergedTopicAndSubtopic", mergedTopicAndSubtopic).Send()
 
-	var linkedSubtopics [][]any
+	linkedSubtopics := make([][]any, 0, len(mergedTopicAndSubtopic))
 
 	// Link the subtopics to their parent topic and set the roadmap ID
 	parentID := 0
