@@ -29,23 +29,11 @@ func run(ctx context.Context) {
 	config.Init()
 	log := logger.Get()
 
-	var cacheType cache.Type
-	if config.IsDevelopment() {
-		cacheType = cache.TypeInMemory
-	} else {
-		cacheType = cache.TypeRedis
-	}
-
-	withQueueOpt := provider.Option(nil)
-	if cacheType == cache.TypeRedis {
-		withQueueOpt = option.WithQueue()
-	}
-
 	provider, err := provider.New(
 		option.WithLLM(),
 		option.WithPostgresDB(ctx),
-		option.WithCache(ctx, cacheType),
-		withQueueOpt,
+		option.WithCache(ctx, cache.TypeRedis),
+		option.WithQueue(),
 		option.WithYoutubeClient(),
 		option.WithGoogleBooksClient(),
 		option.WithTracing(ctx),
@@ -58,18 +46,13 @@ func run(ctx context.Context) {
 	log.Info().Msg("Bootstrapping application...")
 	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Cache)
 
-	var w worker.Worker
-	if config.IsDevelopment() {
-		w = worker.NewNoop()
-	} else {
-		w = worker.NewAsynq(
-			provider.Queue,
-			provider.QueueServer,
-			postgresRepository,
-			provider.GoogleBooks,
-			provider.Youtube,
-		)
-	}
+	worker := worker.NewAsynq(
+		provider.Queue,
+		provider.QueueServer,
+		postgresRepository,
+		provider.GoogleBooks,
+		provider.Youtube,
+	)
 
 	auth := auth.NewManager(
 		&auth.ManagerConfig{
@@ -81,7 +64,7 @@ func run(ctx context.Context) {
 	)
 
 	curionaApp := app.New(
-		w,
+		worker,
 		postgresRepository,
 		provider.LLM,
 		auth,
@@ -94,7 +77,7 @@ func run(ctx context.Context) {
 		provider.Tracing,
 	)
 	adminApp := admin.New(postgresRepository, auth, provider.Tracing)
-	chatApp := chat.New(w, postgresRepository, provider.LLM, auth, provider.Tracing)
+	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth, provider.Tracing)
 
 	api := api.New(
 		ctx,
@@ -110,11 +93,9 @@ func run(ctx context.Context) {
 	ctx = log.WithContext(ctx)
 	group, groupCtx := errgroup.WithContext(ctx)
 
-	if cacheType == cache.TypeRedis {
-		group.Go(func() error {
-			return w.Start(groupCtx)
-		})
-	}
+	group.Go(func() error {
+		return worker.Start(groupCtx)
+	})
 
 	group.Go(func() error {
 		api.Start(groupCtx)
