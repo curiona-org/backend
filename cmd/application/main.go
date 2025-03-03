@@ -43,7 +43,7 @@ func run(ctx context.Context) {
 	}
 	defer provider.Close(ctx)
 
-	log.Info().Msg("Bootstrapping application...")
+	log.Info().Msg("Bootstrapping Curiona backend application...")
 	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Cache)
 
 	worker := worker.NewAsynq(
@@ -88,7 +88,7 @@ func run(ctx context.Context) {
 		provider.Tracing,
 	)
 
-	log.Info().Msg("Starting Application Server...")
+	log.Info().Msg("Starting Curiona backend application...")
 
 	ctx = log.WithContext(ctx)
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -106,7 +106,7 @@ func run(ctx context.Context) {
 		log.Fatal().Err(err).Msg("Encountered an error while running the application")
 	}
 
-	log.Info().Msg("Application shutdown")
+	log.Info().Msg("Curiona backend application stopped")
 }
 
 func main() {
