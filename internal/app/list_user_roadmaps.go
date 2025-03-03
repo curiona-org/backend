@@ -19,8 +19,8 @@ func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io
 	}
 
 	output := io.ListUserRoadmapsOutput{
-		TotalRoadmaps: len(roadmaps),
-		Roadmaps:      []io.ListUserRoadmapsOutputRoadmap{},
+		Total: len(roadmaps),
+		Items: make([]io.ListUserRoadmapsOutputRoadmap, 0, len(roadmaps)),
 	}
 
 	if len(roadmaps) == 0 {
@@ -46,7 +46,7 @@ func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io
 			},
 		}
 
-		output.Roadmaps = append(output.Roadmaps, outputRoadmap)
+		output.Items = append(output.Items, outputRoadmap)
 	}
 
 	return output, nil

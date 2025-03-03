@@ -7,8 +7,8 @@ import (
 )
 
 type ListUserRoadmapsOutput struct {
-	TotalRoadmaps int                             `json:"total_roadmaps"`
-	Roadmaps      []ListUserRoadmapsOutputRoadmap `json:"roadmaps"`
+	Total int                             `json:"total"`
+	Items []ListUserRoadmapsOutputRoadmap `json:"items"`
 }
 
 type ListUserRoadmapsOutputRoadmap struct {
