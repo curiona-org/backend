@@ -128,6 +128,7 @@ func (a *API) SetupMiddlewares() {
 			http.MethodDelete, http.MethodHead, http.MethodOptions,
 		},
 	}))
+	a.router.Use(a.secureHeadersMiddleware)
 	a.router.Use(middleware.RealIP)
 	a.router.Use(otelhttp.NewMiddleware("api", otelhttp.WithTracerProvider(a.tracerProvider)))
 	a.router.Use(a.requestIDMiddleware)
@@ -138,6 +139,18 @@ func (a *API) SetupMiddlewares() {
 	if config.IsProduction() {
 		a.router.Use(httprate.LimitByIP(100, time.Minute))
 	}
+}
+
+func (a *API) secureHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		// https://developer.mozilla.org/en-US/observatory/docs/faq#can_i_scan_non-websites_such_as_api_endpoints
+		// https://infosec.mozilla.org/guidelines/web_security#content-security-policy
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (a *API) authMiddleware(next http.Handler) http.Handler {

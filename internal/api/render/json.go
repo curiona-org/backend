@@ -34,7 +34,6 @@ func (r *Renderer) Created(w http.ResponseWriter, msg string, data any) {
 }
 
 func (r *Renderer) Error(w http.ResponseWriter, code int, msg string, err any) {
-	w.Header().Set("X-Content-Type-Options", "nosniff")
 	r.JSON(w, code, Response{
 		Success: false,
 		Message: msg,
