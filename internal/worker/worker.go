@@ -30,3 +30,4 @@ type Worker interface {
 }
 
 var _ Worker = (*asynqWorker)(nil)
+var _ Worker = (*noopWorker)(nil)
