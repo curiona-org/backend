@@ -19,7 +19,7 @@ func (m *Manager) NewRefreshToken(id int) *Token {
 }
 
 func (m *Manager) VerifyAccessToken(tokenStr string) (*Token, error) {
-	t := NewToken(m.cfg.AccessSecretKey, 0, m.cfg.RefreshExpiresIn)
+	t := NewToken(m.cfg.AccessSecretKey, 0, m.cfg.AccessExpiresIn)
 	return t.Unmarshal(tokenStr)
 }
 
