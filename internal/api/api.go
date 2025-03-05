@@ -178,7 +178,7 @@ func (a *API) authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(reqCtx, auth.ContextKey, token)
+		ctx := token.WithContext(reqCtx)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -187,7 +187,7 @@ func (a *API) adminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		log := logger.FromContext(ctx)
-		auth := auth.TokenFromContext(ctx)
+		auth := auth.FromContext(ctx)
 
 		isAdmin, err := a.adminApp.IsAdmin(ctx, auth.AccountID)
 		if err != nil {

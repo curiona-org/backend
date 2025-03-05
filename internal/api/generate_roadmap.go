@@ -23,7 +23,7 @@ func (a *API) GenerateRoadmap(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	auth := auth.TokenFromContext(ctx)
+	auth := auth.FromContext(ctx)
 	input.AccountID = auth.AccountID
 	output, err := a.application.GenerateRoadmap(ctx, input)
 	if err != nil {

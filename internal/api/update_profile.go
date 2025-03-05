@@ -23,7 +23,7 @@ func (a *API) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	auth := auth.TokenFromContext(ctx)
+	auth := auth.FromContext(ctx)
 	input.AccountID = auth.AccountID
 	output, err := a.application.UpdateProfile(ctx, input)
 	if err != nil {

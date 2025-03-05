@@ -16,7 +16,7 @@ func (a *API) MarkTopicAsIncomplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	auth := auth.TokenFromContext(ctx)
+	auth := auth.FromContext(ctx)
 	err := a.application.MarkTopicAsIncomplete(ctx, io.MarkTopicInput{
 		AccountID: auth.AccountID,
 		Slug:      slug,

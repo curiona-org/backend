@@ -9,7 +9,7 @@ import (
 func (a *API) ListUserRoadmaps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	auth := auth.TokenFromContext(ctx)
+	auth := auth.FromContext(ctx)
 	output, err := a.application.ListUserRoadmaps(ctx, auth.AccountID)
 	if err != nil {
 		a.handleError(w, r, err)

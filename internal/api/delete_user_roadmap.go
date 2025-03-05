@@ -16,7 +16,7 @@ func (a *API) DeleteUserRoadmap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	auth := auth.TokenFromContext(ctx)
+	auth := auth.FromContext(ctx)
 	err := a.application.DeleteUserRoadmap(ctx, io.DeleteUserRoadmapInput{
 		AccountID: auth.AccountID,
 		Slug:      slug,

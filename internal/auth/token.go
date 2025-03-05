@@ -41,16 +41,6 @@ func NewToken(secret string, accountID int, expiresIn time.Duration) *Token {
 	return token
 }
 
-// TokenFromContext retrieves the token from a context using the context key.
-func TokenFromContext(ctx context.Context) *Token {
-	token, ok := ctx.Value(ContextKey).(*Token)
-	if !ok {
-		return nil
-	}
-
-	return token
-}
-
 // Marshal generates a JWT token from the token struct.
 func (t *Token) Marshal() (string, error) {
 	claims := map[string]any{
@@ -111,4 +101,21 @@ func (t *Token) ExpiresIn() time.Duration {
 
 func (t *Token) IsExpired() bool {
 	return time.Now().After(t.ExpiresAt)
+}
+
+type ctxKey struct{}
+
+// WithContext returns a copy of the provided context with the token associated.
+func (t *Token) WithContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, ctxKey{}, t)
+}
+
+// FromContext returns the associated token from the context.
+func FromContext(ctx context.Context) *Token {
+	token, ok := ctx.Value(ctxKey{}).(*Token)
+	if !ok {
+		return nil
+	}
+
+	return token
 }
