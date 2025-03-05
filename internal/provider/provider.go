@@ -58,7 +58,7 @@ func (p *Provider) init() (*Provider, error) {
 
 // Close closes all the clients.
 func (p *Provider) Close(ctx context.Context) {
-	log := logger.FromContext(ctx)
+	log := logger.Get()
 	if p.DB != nil {
 		if err := p.DB.Close(); err != nil {
 			log.Warn().Err(err).Msg("failed closing database connection")
@@ -82,6 +82,7 @@ func (p *Provider) Close(ctx context.Context) {
 	}
 
 	if p.Tracing != nil {
+		// TODO: context already cancelled by the time this is called
 		if err := p.Tracing.Shutdown(ctx); err != nil {
 			log.Warn().Err(err).Msg("failed shutting down tracer provider")
 		}
