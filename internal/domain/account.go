@@ -29,6 +29,7 @@ type Account struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	DeletedAt time.Time
 }
 
 func NewAccount(email string, password auth.Password, provider auth.Method, profile *Profile) (*Account, error) {
@@ -77,6 +78,34 @@ func (e *Account) UpdateEmail(email string) {
 	e.UpdateChangelog()
 }
 
+func (e *Account) Suspend() {
+	e.IsSuspended = true
+	e.UpdateChangelog()
+}
+
+func (e *Account) Unsuspend() {
+	e.IsSuspended = false
+	e.UpdateChangelog()
+}
+
+func (e *Account) PromoteToAdmin() {
+	e.IsAdmin = true
+	e.UpdateChangelog()
+}
+
+func (e *Account) DemoteFromAdmin() {
+	e.IsAdmin = false
+	e.UpdateChangelog()
+}
+
 func (e *Account) UpdateChangelog() {
 	e.UpdatedAt = time.Now()
+}
+
+func (e *Account) Delete() {
+	e.DeletedAt = time.Now()
+}
+
+func (e *Account) IsDeleted() bool {
+	return !e.DeletedAt.IsZero()
 }

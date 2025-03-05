@@ -8,12 +8,16 @@ import (
 	"github.com/curiona-org/backend/internal/domain"
 )
 
-func (app *adminApplication) DeleteUser(ctx context.Context, accountID int) error {
-	ctx, span := app.tracer.Start(ctx, "(*adminApplication.DeleteUser)")
+func (app *adminApplication) SuspendUser(ctx context.Context, accountID int) error {
+	ctx, span := app.tracer.Start(ctx, "(*adminApplication.SuspendUser)")
 	defer span.End()
 
 	err := app.repository.Account.Update(ctx, accountID, func(account *domain.Account) (bool, error) {
-		account.Delete()
+		if account.IsSuspended {
+			return false, nil
+		}
+
+		account.Suspend()
 		return true, nil
 	})
 	if err != nil {

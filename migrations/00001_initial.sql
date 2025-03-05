@@ -11,9 +11,11 @@ CREATE TABLE IF NOT EXISTS accounts (
     is_suspended boolean NOT NULL DEFAULT FALSE,
     is_admin boolean NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now())
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
+    deleted_at TIMESTAMPTZ
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_email ON accounts (email);
+CREATE INDEX IF NOT EXISTS idx_accounts_deleted_at ON accounts (deleted_at);
 
 CREATE TABLE IF NOT EXISTS sessions (
     id SERIAL PRIMARY KEY,
