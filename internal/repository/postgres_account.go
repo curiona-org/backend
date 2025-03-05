@@ -173,6 +173,7 @@ func (r *AccountRepository) Count(ctx context.Context) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.AccountTable),
+		sm.Where(psql.Quote("deleted_at").IsNull()),
 	).MustBuild(ctx)
 
 	var count uint64

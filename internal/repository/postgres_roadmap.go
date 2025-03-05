@@ -313,6 +313,7 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, pagination pagination.P
 		sm.LeftJoin(domain.ProfileTable).OnEQ(
 			psql.Quote(domain.ProfileTable, "id"),
 			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 		sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc(),
 		sm.Offset(psql.Arg(pagination.Skip)),
 		sm.Limit(psql.Arg(pagination.Limit)),
@@ -330,6 +331,7 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.RoadmapTable),
+		sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 	).MustBuild(ctx)
 
 	var count uint64
