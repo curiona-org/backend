@@ -22,6 +22,7 @@ type Application interface {
 	UnsuspendUser(ctx context.Context, accountID int) error
 
 	ListRoadmaps(ctx context.Context, input io.ListRoadmapsInput) (io.ListRoadmapsOutput, error)
+	GetRoadmap(ctx context.Context, roadmapID int) (io.GetRoadmapOutput, error)
 	DeleteRoadmap(ctx context.Context, roadmapID int) error
 }
 

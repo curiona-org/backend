@@ -1,49 +1,47 @@
-package app
+package admin
 
 import (
 	"context"
-	"errors"
 
-	"github.com/curiona-org/backend/internal/app/io"
-	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/admin/io"
 	"github.com/curiona-org/backend/pkg/interval"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error) {
-	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.GetRoadmapOutput, error) {
+	ctx, span := app.tracer.Start(ctx, "(*adminApplication.GetRoadmap)")
 	defer span.End()
 
-	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
+	roadmap, err := app.repository.Roadmap.GetByID(ctx, roadmapID)
 	if err != nil {
-		if errors.Is(err, domain.ErrRoadmapNotFound) {
-			return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
-		}
 		return io.GetRoadmapOutput{}, err
 	}
 
 	output := io.GetRoadmapOutput{
 		ID:                   roadmap.ID,
 		Title:                roadmap.Title,
-		Slug:                 roadmap.Slug,
 		Description:          roadmap.Description,
+		Slug:                 roadmap.Slug,
 		TotalTopics:          roadmap.TotalTopics,
 		TotalFinishedTopics:  roadmap.TotalFinishedTopics,
 		CompletionPercentage: roadmap.CompletionPercentage(),
 		CreatedAt:            roadmap.CreatedAt,
 		UpdatedAt:            roadmap.UpdatedAt,
-		Creator: io.GetRoadmapOutputCreator{
-			ID:     roadmap.Account.ID,
-			Name:   roadmap.Account.Profile.Name,
-			Avatar: roadmap.Account.Profile.Avatar,
-		},
 		PersonalizationOpts: io.GetRoadmapOutputPersonalizationOptions{
 			DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 			TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
+		},
+		Creator: io.GetRoadmapOutputUser{
+			ID:          roadmap.Account.ID,
+			Method:      roadmap.Account.Method,
+			Email:       roadmap.Account.Email,
+			Name:        roadmap.Account.Profile.Name,
+			Avatar:      roadmap.Account.Profile.Avatar,
+			IsSuspended: roadmap.Account.IsSuspended,
+			JoinedAt:    roadmap.Account.CreatedAt,
 		},
 	}
 

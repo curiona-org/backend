@@ -125,6 +125,7 @@ func (a *API) SetupRoutes() {
 		r.Patch("/admin/users/{id}/unsuspend", a.AdminUnsuspendUser)
 
 		r.Get("/admin/roadmaps", a.AdminListRoadmaps)
+		r.Get("/admin/roadmaps/{id}", a.AdminGetRoadmap)
 		r.Delete("/admin/roadmaps/{id}", a.AdminListRoadmaps)
 	})
 }

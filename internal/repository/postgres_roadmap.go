@@ -227,6 +227,51 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 	return roadmap, nil
 }
 
+func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap, error) {
+	var roadmap domain.Roadmap
+
+	query, args := psql.Select(
+		sm.Columns(r.roadmapWithOptionsAndAccountColumns()...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(id)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+	).MustBuild(ctx)
+
+	roadmaps, err := r.fetch(ctx, roadmapFetchConfig{
+		query:                        query,
+		args:                         args,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+	if err != nil {
+		return domain.Roadmap{}, err
+	}
+
+	if len(roadmaps) == 0 {
+		return domain.Roadmap{}, domain.ErrRoadmapNotFound
+	}
+
+	roadmap = roadmaps[0]
+	topics, err := r.fetchTopicsByRoadmapID(ctx, roadmap.ID)
+	if err != nil {
+		return domain.Roadmap{}, err
+	}
+
+	roadmap.SetTopics(topics)
+
+	return roadmap, nil
+}
+
 func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) ([]domain.Roadmap, error) {
 	query, args := psql.Select(
 		sm.Columns(r.roadmapWithOptionsColumns()...),
