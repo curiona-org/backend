@@ -52,6 +52,65 @@ func (r *AccountRepository) accountWithProfileColumns() []any {
 	)
 }
 
+func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, query string, args ...any) ([]domain.Account, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetch)", query)
+	defer span.End()
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch accounts")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accounts []domain.Account
+	for rows.Next() {
+		var account domain.Account
+		if includeProfile {
+			var profile domain.Profile
+			err = rows.Scan(
+				&account.ID,
+				&account.Method,
+				&account.Email,
+				&account.PasswordDigest,
+				&account.IsSuspended,
+				&account.IsAdmin,
+				&account.CreatedAt,
+				&account.UpdatedAt,
+				&profile.ID,
+				&profile.Name,
+				&profile.Avatar,
+				&profile.CreatedAt,
+				&profile.UpdatedAt,
+			)
+			account.SetProfile(&profile)
+		} else {
+			err = rows.Scan(
+				&account.ID,
+				&account.Method,
+				&account.Email,
+				&account.PasswordDigest,
+				&account.IsSuspended,
+				&account.IsAdmin,
+				&account.CreatedAt,
+				&account.UpdatedAt,
+			)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		accounts = append(accounts, account)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
+}
+
 func (r *AccountRepository) ListAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Account, error) {
 	query, args := psql.Select(
 		sm.Columns(r.accountWithProfileColumns()...),
@@ -239,63 +298,4 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 	}
 
 	return nil
-}
-
-func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, query string, args ...any) ([]domain.Account, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetch)", query)
-	defer span.End()
-
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		span.SetStatus(codes.Error, "failed to fetch accounts")
-		span.RecordError(err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	var accounts []domain.Account
-	for rows.Next() {
-		var account domain.Account
-		if includeProfile {
-			var profile domain.Profile
-			err = rows.Scan(
-				&account.ID,
-				&account.Method,
-				&account.Email,
-				&account.PasswordDigest,
-				&account.IsSuspended,
-				&account.IsAdmin,
-				&account.CreatedAt,
-				&account.UpdatedAt,
-				&profile.ID,
-				&profile.Name,
-				&profile.Avatar,
-				&profile.CreatedAt,
-				&profile.UpdatedAt,
-			)
-			account.SetProfile(&profile)
-		} else {
-			err = rows.Scan(
-				&account.ID,
-				&account.Method,
-				&account.Email,
-				&account.PasswordDigest,
-				&account.IsSuspended,
-				&account.IsAdmin,
-				&account.CreatedAt,
-				&account.UpdatedAt,
-			)
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		accounts = append(accounts, account)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return accounts, nil
 }

@@ -38,6 +38,36 @@ func (r *ProfileRepository) profileColumns() []any {
 	}
 }
 
+func (r *ProfileRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Profile, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*ProfileRepository.fetch)", query)
+	defer span.End()
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch profiles")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var profiles []domain.Profile
+	for rows.Next() {
+		var s domain.Profile
+		if err = rows.Scan(
+			&s.ID,
+			&s.Name,
+			&s.Avatar,
+			&s.CreatedAt,
+			&s.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		profiles = append(profiles, s)
+	}
+
+	return profiles, nil
+}
+
 func (r *ProfileRepository) Update(ctx context.Context, id int, updateFn func(profile *domain.Profile) (bool, error)) error {
 	traceCtx, span := r.tracer.Start(ctx, "(*ProfileRepository.Update)", trace.WithAttributes(
 		attribute.Int("id", id),
@@ -91,34 +121,4 @@ func (r *ProfileRepository) Update(ctx context.Context, id int, updateFn func(pr
 	}
 
 	return nil
-}
-
-func (r *ProfileRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Profile, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*ProfileRepository.fetch)", query)
-	defer span.End()
-
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		span.SetStatus(codes.Error, "failed to fetch profiles")
-		span.RecordError(err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	var profiles []domain.Profile
-	for rows.Next() {
-		var s domain.Profile
-		if err = rows.Scan(
-			&s.ID,
-			&s.Name,
-			&s.Avatar,
-			&s.CreatedAt,
-			&s.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		profiles = append(profiles, s)
-	}
-
-	return profiles, nil
 }

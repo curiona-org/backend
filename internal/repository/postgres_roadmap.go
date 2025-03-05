@@ -83,6 +83,105 @@ func (r *RoadmapRepository) roadmapWithOptionsAndAccountColumns() []any {
 	)
 }
 
+type roadmapFetchConfig struct {
+	query                        string
+	args                         []any
+	includePersonalizationOption bool
+	includeAccount               bool
+}
+
+func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) ([]domain.Roadmap, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetch)", cfg.query)
+	defer span.End()
+
+	rows, err := r.db.Query(ctx, cfg.query, cfg.args...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var roadmaps []domain.Roadmap
+	for rows.Next() {
+		var roadmap domain.Roadmap
+		var roadmapDeletedAt pgtype.Timestamp
+		var personalizationOptions domain.PersonalizationOptions
+		var account domain.Account
+		var profile domain.Profile
+		dest := []any{
+			&roadmap.ID,
+			&roadmap.AccountID,
+			&roadmap.Title,
+			&roadmap.Slug,
+			&roadmap.Description,
+			&roadmap.TotalTopics,
+			&roadmap.TotalFinishedTopics,
+			&roadmap.CreatedAt,
+			&roadmap.UpdatedAt,
+			&roadmapDeletedAt,
+		}
+
+		if cfg.includePersonalizationOption {
+			dest = append(dest,
+				&personalizationOptions.ID,
+				&personalizationOptions.AccountID,
+				&personalizationOptions.RoadmapID,
+				&personalizationOptions.DailyTimeAvailability,
+				&personalizationOptions.TotalDuration,
+				&personalizationOptions.SkillLevel,
+				&personalizationOptions.AdditionalInfo,
+				&personalizationOptions.CreatedAt,
+				&personalizationOptions.UpdatedAt,
+			)
+		}
+
+		if cfg.includeAccount {
+			dest = append(dest,
+				&account.ID,
+				&account.Method,
+				&account.Email,
+				&account.IsSuspended,
+				&account.IsAdmin,
+				&account.CreatedAt,
+				&account.UpdatedAt,
+				&profile.ID,
+				&profile.Name,
+				&profile.Avatar,
+				&profile.CreatedAt,
+				&profile.UpdatedAt,
+			)
+		}
+
+		err = rows.Scan(dest...)
+		if err != nil {
+			return nil, err
+		}
+
+		if roadmapDeletedAt.Valid {
+			roadmap.DeletedAt = roadmapDeletedAt.Time
+		}
+
+		if cfg.includePersonalizationOption {
+			roadmap.SetPersonalizationOptions(&personalizationOptions)
+		}
+
+		if cfg.includeAccount {
+			account.SetProfile(&profile)
+			roadmap.SetCreator(&account)
+		}
+		roadmaps = append(roadmaps, roadmap)
+	}
+
+	if err = rows.Err(); err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return nil, err
+	}
+
+	return roadmaps, nil
+}
+
 func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.Roadmap, error) {
 	var roadmap domain.Roadmap
 
@@ -489,105 +588,6 @@ func (r *RoadmapRepository) UpdateByID(ctx context.Context, id int, updateFn fun
 	}
 
 	return nil
-}
-
-type roadmapFetchConfig struct {
-	query                        string
-	args                         []any
-	includePersonalizationOption bool
-	includeAccount               bool
-}
-
-func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) ([]domain.Roadmap, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.fetch)", cfg.query)
-	defer span.End()
-
-	rows, err := r.db.Query(ctx, cfg.query, cfg.args...)
-	if err != nil {
-		span.SetStatus(codes.Error, "failed to fetch roadmaps")
-		span.RecordError(err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	var roadmaps []domain.Roadmap
-	for rows.Next() {
-		var roadmap domain.Roadmap
-		var roadmapDeletedAt pgtype.Timestamp
-		var personalizationOptions domain.PersonalizationOptions
-		var account domain.Account
-		var profile domain.Profile
-		dest := []any{
-			&roadmap.ID,
-			&roadmap.AccountID,
-			&roadmap.Title,
-			&roadmap.Slug,
-			&roadmap.Description,
-			&roadmap.TotalTopics,
-			&roadmap.TotalFinishedTopics,
-			&roadmap.CreatedAt,
-			&roadmap.UpdatedAt,
-			&roadmapDeletedAt,
-		}
-
-		if cfg.includePersonalizationOption {
-			dest = append(dest,
-				&personalizationOptions.ID,
-				&personalizationOptions.AccountID,
-				&personalizationOptions.RoadmapID,
-				&personalizationOptions.DailyTimeAvailability,
-				&personalizationOptions.TotalDuration,
-				&personalizationOptions.SkillLevel,
-				&personalizationOptions.AdditionalInfo,
-				&personalizationOptions.CreatedAt,
-				&personalizationOptions.UpdatedAt,
-			)
-		}
-
-		if cfg.includeAccount {
-			dest = append(dest,
-				&account.ID,
-				&account.Method,
-				&account.Email,
-				&account.IsSuspended,
-				&account.IsAdmin,
-				&account.CreatedAt,
-				&account.UpdatedAt,
-				&profile.ID,
-				&profile.Name,
-				&profile.Avatar,
-				&profile.CreatedAt,
-				&profile.UpdatedAt,
-			)
-		}
-
-		err = rows.Scan(dest...)
-		if err != nil {
-			return nil, err
-		}
-
-		if roadmapDeletedAt.Valid {
-			roadmap.DeletedAt = roadmapDeletedAt.Time
-		}
-
-		if cfg.includePersonalizationOption {
-			roadmap.SetPersonalizationOptions(&personalizationOptions)
-		}
-
-		if cfg.includeAccount {
-			account.SetProfile(&profile)
-			roadmap.SetCreator(&account)
-		}
-		roadmaps = append(roadmaps, roadmap)
-	}
-
-	if err = rows.Err(); err != nil {
-		span.SetStatus(codes.Error, "failed to fetch roadmaps")
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return roadmaps, nil
 }
 
 func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {

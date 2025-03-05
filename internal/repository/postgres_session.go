@@ -45,25 +45,6 @@ func (r *SessionRepository) sessionColumns() []any {
 	}
 }
 
-func (r *SessionRepository) GetByAccountID(ctx context.Context, accountID int) (domain.Session, error) {
-	query, args := psql.Select(
-		sm.Columns(r.sessionColumns()...),
-		sm.From(domain.SessionTable),
-		sm.Where(psql.Quote(domain.SessionTable, "account_id").EQ(psql.Arg(accountID))),
-	).MustBuild(ctx)
-
-	accounts, err := r.fetch(ctx, query, args...)
-	if err != nil {
-		return domain.Session{}, err
-	}
-
-	if len(accounts) == 0 {
-		return domain.Session{}, domain.ErrSessionNotFound
-	}
-
-	return accounts[0], nil
-}
-
 func (r *SessionRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Session, error) {
 	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*SessionRepository.fetch)", query)
 	defer span.End()
@@ -95,6 +76,25 @@ func (r *SessionRepository) fetch(ctx context.Context, query string, args ...any
 	}
 
 	return sessions, nil
+}
+
+func (r *SessionRepository) GetByAccountID(ctx context.Context, accountID int) (domain.Session, error) {
+	query, args := psql.Select(
+		sm.Columns(r.sessionColumns()...),
+		sm.From(domain.SessionTable),
+		sm.Where(psql.Quote(domain.SessionTable, "account_id").EQ(psql.Arg(accountID))),
+	).MustBuild(ctx)
+
+	accounts, err := r.fetch(ctx, query, args...)
+	if err != nil {
+		return domain.Session{}, err
+	}
+
+	if len(accounts) == 0 {
+		return domain.Session{}, domain.ErrSessionNotFound
+	}
+
+	return accounts[0], nil
 }
 
 func (r *SessionRepository) Save(ctx context.Context, input *domain.Session) (domain.Session, error) {
