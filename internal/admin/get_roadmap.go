@@ -2,8 +2,11 @@ package admin
 
 import (
 	"context"
+	"errors"
 
 	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/pkg/interval"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -15,6 +18,9 @@ func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.
 
 	roadmap, err := app.repository.Roadmap.GetByID(ctx, roadmapID)
 	if err != nil {
+		if errors.Is(err, domain.ErrRoadmapNotFound) {
+			return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
+		}
 		return io.GetRoadmapOutput{}, err
 	}
 

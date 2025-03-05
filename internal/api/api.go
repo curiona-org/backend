@@ -126,7 +126,7 @@ func (a *API) SetupRoutes() {
 
 		r.Get("/admin/roadmaps", a.AdminListRoadmaps)
 		r.Get("/admin/roadmaps/{id}", a.AdminGetRoadmap)
-		r.Delete("/admin/roadmaps/{id}", a.AdminListRoadmaps)
+		r.Delete("/admin/roadmaps/{id}", a.AdminDeleteRoadmap)
 	})
 }
 
