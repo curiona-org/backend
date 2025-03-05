@@ -56,36 +56,24 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
 
-	var topic domain.Topic
-	topicCacher := cache.New[domain.Topic](r.cache)
-	topicCacheKey := &cache.Key{
-		Namespace: domain.TopicTable,
-		Key:       slug,
+	span.AddEvent("topic cache miss")
+
+	query, args := psql.Select(
+		sm.Columns(r.topicColumns()...),
+		sm.From(domain.TopicTable),
+		sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
+	).MustBuild(ctx)
+
+	topics, err := r.fetch(traceCtx, query, args...)
+	if err != nil {
+		return domain.Topic{}, err
 	}
-	if topicCacher.Exists(traceCtx, topicCacheKey) {
-		span.AddEvent("topic cache hit")
 
-		topicCacher.Read(traceCtx, topicCacheKey, &topic)
-	} else {
-		span.AddEvent("topic cache miss")
-
-		query, args := psql.Select(
-			sm.Columns(r.topicColumns()...),
-			sm.From(domain.TopicTable),
-			sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
-		).MustBuild(ctx)
-
-		topics, err := r.fetch(traceCtx, query, args...)
-		if err != nil {
-			return domain.Topic{}, err
-		}
-
-		if len(topics) == 0 {
-			return domain.Topic{}, domain.ErrTopicNotFound
-		}
-
-		topic = topics[0]
+	if len(topics) == 0 {
+		return domain.Topic{}, domain.ErrTopicNotFound
 	}
+
+	topic := topics[0]
 
 	// Fetch the associated external resources separately, either from cache or postgres.
 	var externalResources []domain.ExternalResource
