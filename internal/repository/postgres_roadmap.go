@@ -121,7 +121,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 		sm.LeftJoin(domain.ProfileTable).OnEQ(
 			psql.Quote(domain.ProfileTable, "id"), psql.Quote(domain.RoadmapTable, "account_id")),
 		sm.Where(psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug)).
-			And(psql.Quote("deleted_at").IsNull())),
+			And(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
 	).MustBuild(ctx)
 
 	roadmaps, err := r.fetchAll(ctx, query, args...)
@@ -170,7 +170,7 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 		sm.LeftJoin(domain.PersonalizationOptionsTable).
 			OnEQ(psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"), psql.Quote(domain.RoadmapTable, "id")),
 		sm.Where(psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)).
-			And(psql.Quote("deleted_at").IsNull())),
+			And(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
 	).MustBuild(ctx)
 
 	roadmaps, err := r.fetchWithPersonalizationOptions(ctx, query, args...)
@@ -616,7 +616,7 @@ func (r *RoadmapRepository) Update(ctx context.Context, slug string, updateFn fu
 			sm.From(domain.RoadmapTable),
 			sm.Where(
 				psql.Quote("slug").EQ(psql.Arg(slug)).
-					And(psql.Quote("deleted_at").IsNull()),
+					And(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 			),
 		).MustBuild(ctx)
 
