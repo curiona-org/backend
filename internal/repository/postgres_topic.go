@@ -35,6 +35,23 @@ func NewPostgresTopicRepository(db database.Connection, cache *cache.Connection)
 	}
 }
 
+func (r *TopicRepository) topicColumns() []any {
+	return []any{
+		psql.Quote(domain.TopicTable, "id"),
+		psql.Quote(domain.TopicTable, "account_id"),
+		psql.Quote(domain.TopicTable, "roadmap_id"),
+		psql.Quote(domain.TopicTable, "parent_id"),
+		psql.Quote(domain.TopicTable, "title"),
+		psql.Quote(domain.TopicTable, "slug"),
+		psql.Quote(domain.TopicTable, "description"),
+		psql.Quote(domain.TopicTable, "order"),
+		psql.Quote(domain.TopicTable, "is_finished"),
+		psql.Quote(domain.TopicTable, "external_search_query"),
+		psql.Quote(domain.TopicTable, "created_at"),
+		psql.Quote(domain.TopicTable, "updated_at"),
+	}
+}
+
 func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
@@ -53,20 +70,7 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 		span.AddEvent("topic cache miss")
 
 		query, args := psql.Select(
-			sm.Columns(
-				psql.Quote(domain.TopicTable, "id"),
-				psql.Quote(domain.TopicTable, "account_id"),
-				psql.Quote(domain.TopicTable, "roadmap_id"),
-				psql.Quote(domain.TopicTable, "parent_id"),
-				psql.Quote(domain.TopicTable, "title"),
-				psql.Quote(domain.TopicTable, "slug"),
-				psql.Quote(domain.TopicTable, "description"),
-				psql.Quote(domain.TopicTable, "order"),
-				psql.Quote(domain.TopicTable, "is_finished"),
-				psql.Quote(domain.TopicTable, "external_search_query"),
-				psql.Quote(domain.TopicTable, "created_at"),
-				psql.Quote(domain.TopicTable, "updated_at"),
-			),
+			sm.Columns(r.topicColumns()...),
 			sm.From(domain.TopicTable),
 			sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
 		).MustBuild(ctx)
@@ -83,8 +87,8 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 		topic = topics[0]
 	}
 
+	// Fetch the associated external resources separately, either from cache or postgres.
 	var externalResources []domain.ExternalResource
-
 	externalResourceCacher := cache.New[domain.ExternalResource](r.cache)
 	externalResourceCacheKey := &cache.Key{
 		Key: fmt.Sprintf("%s:%d:external_resources", domain.TopicTable, topic.ID),
@@ -110,6 +114,105 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	}
 
 	return topic, nil
+}
+
+func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, slug string, updateFn func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.UpdateTopicStatus)")
+	defer span.End()
+
+	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
+		fetchTopicQuery, fetchTopicArgs := psql.Select(
+			sm.Columns(r.topicColumns()...),
+			sm.From(domain.TopicTable),
+			sm.Where(psql.Quote("slug").EQ(psql.Arg(slug))),
+		).MustBuild(ctx)
+
+		topics, err := r.fetch(ctx, fetchTopicQuery, fetchTopicArgs...)
+		if err != nil {
+			return err
+		}
+
+		if len(topics) == 0 {
+			return domain.ErrTopicNotFound
+		}
+
+		topic := topics[0]
+
+		fetchRoadmapQuery, fetchRoadmapArgs := psql.Select(
+			sm.Columns(
+				psql.Quote(domain.RoadmapTable, "id"),
+				psql.Quote(domain.RoadmapTable, "account_id"),
+				psql.Quote(domain.RoadmapTable, "title"),
+				psql.Quote(domain.RoadmapTable, "slug"),
+				psql.Quote(domain.RoadmapTable, "description"),
+				psql.Quote(domain.RoadmapTable, "total_topics"),
+				psql.Quote(domain.RoadmapTable, "total_finished_topics"),
+				psql.Quote(domain.RoadmapTable, "created_at"),
+				psql.Quote(domain.RoadmapTable, "updated_at"),
+			),
+			sm.From(domain.RoadmapTable),
+			sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+				psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+				psql.Quote(domain.RoadmapTable, "id")),
+			sm.Where(psql.And(
+				psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(topic.RoadmapID)),
+				psql.Quote("deleted_at").IsNull())),
+		).MustBuild(ctx)
+
+		roadmaps, err := r.fetchRoadmap(ctx, fetchRoadmapQuery, fetchRoadmapArgs...)
+		if err != nil {
+			return err
+		}
+
+		if len(roadmaps) == 0 {
+			return domain.ErrRoadmapNotFound
+		}
+
+		roadmap := roadmaps[0]
+		updated, err := updateFn(&roadmap, &topic)
+		if err != nil {
+			return err
+		}
+
+		if !updated {
+			return nil
+		}
+
+		updateTopicQuery, updateTopicArgs := psql.Update(
+			um.Table(domain.TopicTable),
+			um.SetCol("is_finished").ToArg(topic.IsFinished),
+			um.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
+		).MustBuild(ctx)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateTopicQuery)
+		defer updateSpan.End()
+
+		if _, err = tx.Exec(ctx, updateTopicQuery, updateTopicArgs...); err != nil {
+			updateSpan.SetStatus(codes.Error, "failed to update topic")
+			updateSpan.RecordError(err)
+			return err
+		}
+
+		updateRoadmapQuery, updateRoadmapArgs := psql.Update(
+			um.Table(domain.RoadmapTable),
+			um.SetCol("total_finished_topics").ToArg(roadmap.TotalFinishedTopics),
+			um.Where(psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(roadmap.ID))),
+		).MustBuild(ctx)
+		_, updateRoadmapSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateRoadmapQuery)
+		defer updateRoadmapSpan.End()
+
+		if _, err = tx.Exec(ctx, updateRoadmapQuery, updateRoadmapArgs...); err != nil {
+			updateRoadmapSpan.SetStatus(codes.Error, "failed to update roadmap")
+			updateRoadmapSpan.RecordError(err)
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Topic, error) {
@@ -169,6 +272,8 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 	}
 
 	if err = rows.Err(); err != nil {
+		span.SetStatus(codes.Error, "failed to fetch topics")
+		span.RecordError(err)
 		return nil, err
 	}
 
@@ -274,118 +379,10 @@ func (r *TopicRepository) fetchRoadmap(ctx context.Context, query string, args .
 	}
 
 	if err = rows.Err(); err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
 		return nil, err
 	}
 
 	return roadmaps, nil
-}
-
-func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, slug string, updateFn func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error)) error {
-	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.Update)")
-	defer span.End()
-
-	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
-		fetchTopicQuery, fetchTopicArgs := psql.Select(
-			sm.Columns(
-				psql.Quote(domain.TopicTable, "id"),
-				psql.Quote(domain.TopicTable, "account_id"),
-				psql.Quote(domain.TopicTable, "roadmap_id"),
-				psql.Quote(domain.TopicTable, "parent_id"),
-				psql.Quote(domain.TopicTable, "title"),
-				psql.Quote(domain.TopicTable, "slug"),
-				psql.Quote(domain.TopicTable, "description"),
-				psql.Quote(domain.TopicTable, "order"),
-				psql.Quote(domain.TopicTable, "is_finished"),
-				psql.Quote(domain.TopicTable, "external_search_query"),
-				psql.Quote(domain.TopicTable, "created_at"),
-				psql.Quote(domain.TopicTable, "updated_at"),
-			),
-			sm.From(domain.TopicTable),
-			sm.Where(psql.Quote("slug").EQ(psql.Arg(slug))),
-		).MustBuild(ctx)
-
-		topics, err := r.fetch(ctx, fetchTopicQuery, fetchTopicArgs...)
-		if err != nil {
-			return err
-		}
-
-		if len(topics) == 0 {
-			return domain.ErrTopicNotFound
-		}
-
-		topic := topics[0]
-
-		fetchRoadmapQuery, fetchRoadmapArgs := psql.Select(
-			sm.Columns(
-				psql.Quote(domain.RoadmapTable, "id"),
-				psql.Quote(domain.RoadmapTable, "account_id"),
-				psql.Quote(domain.RoadmapTable, "title"),
-				psql.Quote(domain.RoadmapTable, "slug"),
-				psql.Quote(domain.RoadmapTable, "description"),
-				psql.Quote(domain.RoadmapTable, "total_topics"),
-				psql.Quote(domain.RoadmapTable, "total_finished_topics"),
-				psql.Quote(domain.RoadmapTable, "created_at"),
-				psql.Quote(domain.RoadmapTable, "updated_at"),
-			),
-			sm.From(domain.RoadmapTable),
-			sm.LeftJoin(domain.PersonalizationOptionsTable).
-				OnEQ(psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"), psql.Quote(domain.RoadmapTable, "id")),
-			sm.Where(psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(topic.RoadmapID)).
-				And(psql.Quote("deleted_at").IsNull())),
-		).MustBuild(ctx)
-
-		roadmaps, err := r.fetchRoadmap(ctx, fetchRoadmapQuery, fetchRoadmapArgs...)
-		if err != nil {
-			return err
-		}
-
-		if len(roadmaps) == 0 {
-			return domain.ErrRoadmapNotFound
-		}
-
-		roadmap := roadmaps[0]
-		updated, err := updateFn(&roadmap, &topic)
-		if err != nil {
-			return err
-		}
-
-		if !updated {
-			return nil
-		}
-
-		updateTopicQuery, updateTopicArgs := psql.Update(
-			um.Table(domain.TopicTable),
-			um.SetCol("is_finished").ToArg(topic.IsFinished),
-			um.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
-		).MustBuild(ctx)
-		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateTopicQuery)
-		defer updateSpan.End()
-
-		if _, err = tx.Exec(ctx, updateTopicQuery, updateTopicArgs...); err != nil {
-			updateSpan.SetStatus(codes.Error, "failed to update topic")
-			updateSpan.RecordError(err)
-			return err
-		}
-
-		updateRoadmapQuery, updateRoadmapArgs := psql.Update(
-			um.Table(domain.RoadmapTable),
-			um.SetCol("total_finished_topics").ToArg(roadmap.TotalFinishedTopics),
-			um.Where(psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(roadmap.ID))),
-		).MustBuild(ctx)
-		_, updateRoadmapSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateRoadmapQuery)
-		defer updateRoadmapSpan.End()
-
-		if _, err = tx.Exec(ctx, updateRoadmapQuery, updateRoadmapArgs...); err != nil {
-			updateRoadmapSpan.SetStatus(codes.Error, "failed to update roadmap")
-			updateRoadmapSpan.RecordError(err)
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

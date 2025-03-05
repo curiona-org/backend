@@ -7,9 +7,7 @@ import (
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/curiona-org/backend/pkg/pagination"
 	"github.com/jackc/pgx/v5"
-	"github.com/stephenafamo/bob"
 	"github.com/stephenafamo/bob/dialect/psql"
-	"github.com/stephenafamo/bob/dialect/psql/dialect"
 	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
 	"github.com/stephenafamo/bob/dialect/psql/um"
@@ -31,23 +29,32 @@ func NewPostgresAccountRepository(db database.Connection) *AccountRepository {
 	}
 }
 
+func (r *AccountRepository) accountColumns() []any {
+	return []any{
+		psql.Quote(domain.AccountTable, "id"),
+		psql.Quote(domain.AccountTable, "provider"),
+		psql.Quote(domain.AccountTable, "email"),
+		psql.Quote(domain.AccountTable, "password"),
+		psql.Quote(domain.AccountTable, "is_suspended"),
+		psql.Quote(domain.AccountTable, "is_admin"),
+		psql.Quote(domain.AccountTable, "created_at"),
+		psql.Quote(domain.AccountTable, "updated_at"),
+	}
+}
+
+func (r *AccountRepository) accountWithProfileColumns() []any {
+	return append(r.accountColumns(),
+		psql.Quote(domain.ProfileTable, "id"),
+		psql.Quote(domain.ProfileTable, "name"),
+		psql.Quote(domain.ProfileTable, "avatar"),
+		psql.Quote(domain.ProfileTable, "created_at"),
+		psql.Quote(domain.ProfileTable, "updated_at"),
+	)
+}
+
 func (r *AccountRepository) ListAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Account, error) {
 	query, args := psql.Select(
-		sm.Columns(
-			psql.Quote(domain.AccountTable, "id"),
-			psql.Quote(domain.AccountTable, "provider"),
-			psql.Quote(domain.AccountTable, "email"),
-			psql.Quote(domain.AccountTable, "password"),
-			psql.Quote(domain.AccountTable, "is_suspended"),
-			psql.Quote(domain.AccountTable, "is_admin"),
-			psql.Quote(domain.AccountTable, "created_at"),
-			psql.Quote(domain.AccountTable, "updated_at"),
-			psql.Quote(domain.ProfileTable, "id"),
-			psql.Quote(domain.ProfileTable, "name"),
-			psql.Quote(domain.ProfileTable, "avatar"),
-			psql.Quote(domain.ProfileTable, "created_at"),
-			psql.Quote(domain.ProfileTable, "updated_at"),
-		),
+		sm.Columns(r.accountWithProfileColumns()...),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
 		sm.Where(psql.Quote("deleted_at").IsNull()),
@@ -56,33 +63,20 @@ func (r *AccountRepository) ListAll(ctx context.Context, pagination pagination.P
 		sm.Limit(psql.Arg(pagination.Limit)),
 	).MustBuild(ctx)
 
-	return r.fetchWithProfile(ctx, query, args...)
+	return r.fetch(ctx, true, query, args...)
 }
 
 func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account, error) {
 	query, args := psql.Select(
-		sm.Columns(
-			psql.Quote(domain.AccountTable, "id"),
-			psql.Quote(domain.AccountTable, "provider"),
-			psql.Quote(domain.AccountTable, "email"),
-			psql.Quote(domain.AccountTable, "password"),
-			psql.Quote(domain.AccountTable, "is_suspended"),
-			psql.Quote(domain.AccountTable, "is_admin"),
-			psql.Quote(domain.AccountTable, "created_at"),
-			psql.Quote(domain.AccountTable, "updated_at"),
-			psql.Quote(domain.ProfileTable, "id"),
-			psql.Quote(domain.ProfileTable, "name"),
-			psql.Quote(domain.ProfileTable, "avatar"),
-			psql.Quote(domain.ProfileTable, "created_at"),
-			psql.Quote(domain.ProfileTable, "updated_at"),
-		),
+		sm.Columns(r.accountWithProfileColumns()...),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
-		sm.Where(psql.Quote("id").EQ(psql.Arg(id)).
-			And(psql.Quote("deleted_at").IsNull())),
+		sm.Where(psql.And(
+			psql.Quote("id").EQ(psql.Arg(id)),
+			psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	accounts, err := r.fetchWithProfile(ctx, query, args...)
+	accounts, err := r.fetch(ctx, true, query, args...)
 	if err != nil {
 		return domain.Account{}, err
 	}
@@ -96,28 +90,15 @@ func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account
 
 func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domain.Account, error) {
 	query, args := psql.Select(
-		sm.Columns(
-			psql.Quote(domain.AccountTable, "id"),
-			psql.Quote(domain.AccountTable, "provider"),
-			psql.Quote(domain.AccountTable, "email"),
-			psql.Quote(domain.AccountTable, "password"),
-			psql.Quote(domain.AccountTable, "is_suspended"),
-			psql.Quote(domain.AccountTable, "is_admin"),
-			psql.Quote(domain.AccountTable, "created_at"),
-			psql.Quote(domain.AccountTable, "updated_at"),
-			psql.Quote(domain.ProfileTable, "id"),
-			psql.Quote(domain.ProfileTable, "name"),
-			psql.Quote(domain.ProfileTable, "avatar"),
-			psql.Quote(domain.ProfileTable, "created_at"),
-			psql.Quote(domain.ProfileTable, "updated_at"),
-		),
+		sm.Columns(r.accountWithProfileColumns()...),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
-		sm.Where(psql.Quote("email").EQ(psql.Arg(email).
-			And(psql.Quote("deleted_at").IsNull()))),
+		sm.Where(psql.And(
+			psql.Quote("email").EQ(psql.Arg(email)),
+			psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	accounts, err := r.fetchWithProfile(ctx, query, args...)
+	accounts, err := r.fetch(ctx, true, query, args...)
 	if err != nil {
 		return domain.Account{}, err
 	}
@@ -203,23 +184,14 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		query, args := psql.Select(
-			sm.Columns(
-				psql.Quote(domain.AccountTable, "id"),
-				psql.Quote(domain.AccountTable, "provider"),
-				psql.Quote(domain.AccountTable, "email"),
-				psql.Quote(domain.AccountTable, "password"),
-				psql.Quote(domain.AccountTable, "is_suspended"),
-				psql.Quote(domain.AccountTable, "is_admin"),
-				psql.Quote(domain.AccountTable, "created_at"),
-				psql.Quote(domain.AccountTable, "updated_at"),
-			),
+			sm.Columns(r.accountColumns()...),
 			sm.From(domain.AccountTable),
-			sm.LeftJoin(domain.ProfileTable).Using("id"),
-			sm.Where(psql.Quote("id").EQ(psql.Arg(id)).
-				And(psql.Quote("deleted_at").IsNull())),
+			sm.Where(psql.And(
+				psql.Quote("id").EQ(psql.Arg(id)),
+				psql.Quote("deleted_at").IsNull())),
 		).MustBuild(ctx)
 
-		accounts, err := r.fetch(traceCtx, query, args...)
+		accounts, err := r.fetch(traceCtx, false, query, args...)
 		if err != nil {
 			return err
 		}
@@ -239,25 +211,24 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 			return nil
 		}
 
-		mods := make([]bob.Mod[*dialect.UpdateQuery], 0)
-		mods = append(mods, um.Table(domain.AccountTable))
-		mods = append(mods, um.SetCol("is_suspended").ToArg(account.IsSuspended))
+		updateAccountQueryBuilder := psql.Update(
+			um.Table(domain.AccountTable),
+			um.SetCol("is_suspended").ToArg(account.IsSuspended),
+			um.SetCol("updated_at").ToArg(account.UpdatedAt),
+		)
 		if account.IsDeleted() {
-			mods = append(mods, um.SetCol("deleted_at").ToArg(account.DeletedAt))
+			updateAccountQueryBuilder.Apply(um.SetCol("deleted_at").ToArg(account.DeletedAt))
 		}
-		mods = append(mods, um.SetCol("updated_at").ToArg(account.UpdatedAt))
-		mods = append(mods, um.Where(psql.Quote("id").EQ(psql.Arg(account.ID))))
+		updateAccountQueryBuilder.Apply(um.Where(psql.Quote("id").EQ(psql.Arg(account.ID))))
 
-		suspendAccountQuery, suspendAccountArgs := psql.Update(
-			mods...,
-		).MustBuild(ctx)
-		_, suspendSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*AccountRepository.Suspend)", suspendAccountQuery)
-		defer suspendSpan.End()
+		updateAccountQuery, updateAccountArgs := updateAccountQueryBuilder.MustBuild(ctx)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*AccountRepository.Update)", updateAccountQuery)
+		defer updateSpan.End()
 
-		_, err = tx.Exec(ctx, suspendAccountQuery, suspendAccountArgs...)
+		_, err = tx.Exec(ctx, updateAccountQuery, updateAccountArgs...)
 		if err != nil {
-			suspendSpan.SetStatus(codes.Error, "failed to suspend account")
-			suspendSpan.RecordError(err)
+			updateSpan.SetStatus(codes.Error, "failed to update account")
+			updateSpan.RecordError(err)
 			return err
 		}
 
@@ -270,53 +241,7 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 	return nil
 }
 
-func (r *AccountRepository) fetchWithProfile(ctx context.Context, query string, args ...any) ([]domain.Account, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetchWithProfile)", query)
-	defer span.End()
-
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		span.SetStatus(codes.Error, "failed to fetch accounts")
-		span.RecordError(err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	var accounts []domain.Account
-	for rows.Next() {
-		var account domain.Account
-		var profile domain.Profile
-		err = rows.Scan(
-			&account.ID,
-			&account.Method,
-			&account.Email,
-			&account.PasswordDigest,
-			&account.IsSuspended,
-			&account.IsAdmin,
-			&account.CreatedAt,
-			&account.UpdatedAt,
-			&profile.ID,
-			&profile.Name,
-			&profile.Avatar,
-			&profile.CreatedAt,
-			&profile.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		account.SetProfile(&profile)
-		accounts = append(accounts, account)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return accounts, nil
-}
-
-func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Account, error) {
+func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, query string, args ...any) ([]domain.Account, error) {
 	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetch)", query)
 	defer span.End()
 
@@ -331,16 +256,36 @@ func (r *AccountRepository) fetch(ctx context.Context, query string, args ...any
 	var accounts []domain.Account
 	for rows.Next() {
 		var account domain.Account
-		err = rows.Scan(
-			&account.ID,
-			&account.Method,
-			&account.Email,
-			&account.PasswordDigest,
-			&account.IsSuspended,
-			&account.IsAdmin,
-			&account.CreatedAt,
-			&account.UpdatedAt,
-		)
+		if includeProfile {
+			var profile domain.Profile
+			err = rows.Scan(
+				&account.ID,
+				&account.Method,
+				&account.Email,
+				&account.PasswordDigest,
+				&account.IsSuspended,
+				&account.IsAdmin,
+				&account.CreatedAt,
+				&account.UpdatedAt,
+				&profile.ID,
+				&profile.Name,
+				&profile.Avatar,
+				&profile.CreatedAt,
+				&profile.UpdatedAt,
+			)
+			account.SetProfile(&profile)
+		} else {
+			err = rows.Scan(
+				&account.ID,
+				&account.Method,
+				&account.Email,
+				&account.PasswordDigest,
+				&account.IsSuspended,
+				&account.IsAdmin,
+				&account.CreatedAt,
+				&account.UpdatedAt,
+			)
+		}
 		if err != nil {
 			return nil, err
 		}

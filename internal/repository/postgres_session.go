@@ -32,18 +32,22 @@ func NewPostgresSessionRepository(db database.Connection) *SessionRepository {
 	}
 }
 
+func (r *SessionRepository) sessionColumns() []any {
+	return []any{
+		psql.Quote(domain.SessionTable, "id"),
+		psql.Quote(domain.SessionTable, "account_id"),
+		psql.Quote(domain.SessionTable, "refresh_token"),
+		psql.Quote(domain.SessionTable, "user_agent"),
+		psql.Quote(domain.SessionTable, "client_ip"),
+		psql.Quote(domain.SessionTable, "is_blocked"),
+		psql.Quote(domain.SessionTable, "expires_at"),
+		psql.Quote(domain.SessionTable, "created_at"),
+	}
+}
+
 func (r *SessionRepository) GetByAccountID(ctx context.Context, accountID int) (domain.Session, error) {
 	query, args := psql.Select(
-		sm.Columns(
-			psql.Quote(domain.SessionTable, "id"),
-			psql.Quote(domain.SessionTable, "account_id"),
-			psql.Quote(domain.SessionTable, "refresh_token"),
-			psql.Quote(domain.SessionTable, "user_agent"),
-			psql.Quote(domain.SessionTable, "client_ip"),
-			psql.Quote(domain.SessionTable, "is_blocked"),
-			psql.Quote(domain.SessionTable, "expires_at"),
-			psql.Quote(domain.SessionTable, "created_at"),
-		),
+		sm.Columns(r.sessionColumns()...),
 		sm.From(domain.SessionTable),
 		sm.Where(psql.Quote(domain.SessionTable, "account_id").EQ(psql.Arg(accountID))),
 	).MustBuild(ctx)
@@ -150,16 +154,7 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		fetchSessionQuery, fetchSessionArgs := psql.Select(
-			sm.Columns(
-				psql.Quote(domain.SessionTable, "id"),
-				psql.Quote(domain.SessionTable, "account_id"),
-				psql.Quote(domain.SessionTable, "refresh_token"),
-				psql.Quote(domain.SessionTable, "user_agent"),
-				psql.Quote(domain.SessionTable, "client_ip"),
-				psql.Quote(domain.SessionTable, "is_blocked"),
-				psql.Quote(domain.SessionTable, "expires_at"),
-				psql.Quote(domain.SessionTable, "created_at"),
-			),
+			sm.Columns(r.sessionColumns()...),
 			sm.From(domain.SessionTable),
 			sm.Where(psql.Quote(domain.SessionTable, "refresh_token").EQ(psql.Arg(refreshToken))),
 		).MustBuild(ctx)
