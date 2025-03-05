@@ -2,8 +2,10 @@ package admin
 
 import (
 	"context"
+	"errors"
 
 	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
@@ -17,7 +19,7 @@ func (app *adminApplication) GetUser(ctx context.Context, accountID int) (io.Get
 	}
 
 	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, accountID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
 		return io.GetUserOutput{}, err
 	}
 
