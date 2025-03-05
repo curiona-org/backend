@@ -241,9 +241,7 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 
 		mods := make([]bob.Mod[*dialect.UpdateQuery], 0)
 		mods = append(mods, um.Table(domain.AccountTable))
-		if account.IsSuspended {
-			mods = append(mods, um.SetCol("is_suspended").ToArg(account.IsSuspended))
-		}
+		mods = append(mods, um.SetCol("is_suspended").ToArg(account.IsSuspended))
 		if account.IsDeleted() {
 			mods = append(mods, um.SetCol("deleted_at").ToArg(account.DeletedAt))
 		}
