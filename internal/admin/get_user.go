@@ -23,7 +23,7 @@ func (app *adminApplication) GetUser(ctx context.Context, accountID int) (io.Get
 		return io.GetUserOutput{}, err
 	}
 
-	var roadmapsOutput []io.GetUserOutputRoadmap
+	roadmapsOutput := make([]io.GetUserOutputRoadmap, 0, len(roadmaps))
 	for _, roadmap := range roadmaps {
 		roadmapOutput := io.GetUserOutputRoadmap{
 			ID:                   roadmap.ID,
