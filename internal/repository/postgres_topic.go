@@ -56,8 +56,6 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
 
-	span.AddEvent("topic cache miss")
-
 	query, args := psql.Select(
 		sm.Columns(r.topicColumns()...),
 		sm.From(domain.TopicTable),
