@@ -99,6 +99,7 @@ func (a *API) SetupRoutes() {
 	// authenticated routes
 	a.router.Group(func(r chi.Router) {
 		r.Use(a.authMiddleware)
+
 		r.Get("/profile", a.GetProfile)
 		r.Patch("/profile", a.UpdateProfile)
 
@@ -116,12 +117,15 @@ func (a *API) SetupRoutes() {
 	a.router.Group(func(r chi.Router) {
 		r.Use(a.authMiddleware)
 		r.Use(a.adminMiddleware)
+
 		r.Get("/admin/users", a.AdminListUsers)
 		r.Get("/admin/users/{id}", a.AdminGetUser)
 		r.Delete("/admin/users/{id}", a.AdminDeleteUser)
 		r.Patch("/admin/users/{id}/suspend", a.AdminSuspendUser)
 		r.Patch("/admin/users/{id}/unsuspend", a.AdminUnsuspendUser)
+
 		r.Get("/admin/roadmaps", a.AdminListRoadmaps)
+		r.Delete("/admin/roadmaps/{id}", a.AdminListRoadmaps)
 	})
 }
 

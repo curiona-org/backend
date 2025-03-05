@@ -2,12 +2,23 @@ package admin
 
 import (
 	"context"
+	"errors"
 
-	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/internal/domain"
 )
 
-func (app *adminApplication) DeleteRoadmap(ctx context.Context, input io.DeleteRoadmapInput) (io.DeleteRoadmapOutput, error) {
-	_ = ctx
-	_ = input
-	return io.DeleteRoadmapOutput{}, nil
+func (app *adminApplication) DeleteRoadmap(ctx context.Context, roadmapID int) error {
+	err := app.repository.Roadmap.UpdateByID(ctx, roadmapID, func(roadmap *domain.Roadmap) (bool, error) {
+		roadmap.Delete()
+		return true, nil
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrRoadmapNotFound) {
+			return cerrors.ErrNotFound.Msg("roadmap")
+		}
+		return err
+	}
+
+	return nil
 }

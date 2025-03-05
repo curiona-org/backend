@@ -22,7 +22,7 @@ type Application interface {
 	UnsuspendUser(ctx context.Context, accountID int) error
 
 	ListRoadmaps(ctx context.Context, input io.ListRoadmapsInput) (io.ListRoadmapsOutput, error)
-	DeleteRoadmap(ctx context.Context, input io.DeleteRoadmapInput) (io.DeleteRoadmapOutput, error)
+	DeleteRoadmap(ctx context.Context, roadmapID int) error
 }
 
 type adminApplication struct {

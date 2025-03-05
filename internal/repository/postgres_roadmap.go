@@ -422,6 +422,75 @@ func (r *RoadmapRepository) Update(ctx context.Context, slug string, updateFn fu
 	return nil
 }
 
+func (r *RoadmapRepository) UpdateByID(ctx context.Context, id int, updateFn func(roadmap *domain.Roadmap) (bool, error)) error {
+	traceCtx, span := r.tracer.Start(ctx, "(*RoadmapRepository.Update)")
+	defer span.End()
+
+	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
+		fetchRoadmapQuery, fetchRoadmapArgs := psql.Select(
+			sm.Columns(r.roadmapColumns()...),
+			sm.From(domain.RoadmapTable),
+			sm.Where(psql.And(
+				psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(id)),
+				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
+			),
+		).MustBuild(ctx)
+
+		roadmaps, err := r.fetch(traceCtx, roadmapFetchConfig{
+			query: fetchRoadmapQuery,
+			args:  fetchRoadmapArgs,
+		})
+		if err != nil {
+			return err
+		}
+
+		if len(roadmaps) == 0 {
+			return domain.ErrRoadmapNotFound
+		}
+
+		roadmap := roadmaps[0]
+		updated, err := updateFn(&roadmap)
+		if err != nil {
+			return err
+		}
+
+		if !updated {
+			return nil
+		}
+
+		updateRoadmapQueryBuilder := psql.Update(
+			um.Table(domain.RoadmapTable),
+		)
+		if roadmap.IsDeleted() {
+			cacher := cache.New[domain.Roadmap](r.cache)
+			err := cacher.Delete(traceCtx, &cache.Key{Namespace: domain.RoadmapTable, Key: roadmap.Slug})
+			if err != nil {
+				// TODO: should retry or log this error
+				log.Error().Err(err).Msg("failed to delete roadmap from cache")
+			}
+			updateRoadmapQueryBuilder.Apply(um.SetCol("deleted_at").ToArg(roadmap.DeletedAt))
+		}
+		updateRoadmapQueryBuilder.Apply(um.Where(psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(id))))
+
+		updateRoadmapQuery, updateRoadmapArgs := updateRoadmapQueryBuilder.MustBuild(ctx)
+		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*RoadmapRepository.Update)", updateRoadmapQuery)
+		defer updateSpan.End()
+
+		if _, err = tx.Exec(ctx, updateRoadmapQuery, updateRoadmapArgs...); err != nil {
+			updateSpan.SetStatus(codes.Error, "failed to update roadmap")
+			updateSpan.RecordError(err)
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type roadmapFetchConfig struct {
 	query                        string
 	args                         []any
