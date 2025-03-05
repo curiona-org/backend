@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -116,6 +117,7 @@ func (a *API) SetupRoutes() {
 		r.Use(a.authMiddleware)
 		r.Use(a.adminMiddleware)
 		r.Get("/admin/users", a.AdminListUsers)
+		r.Get("/admin/users/{id}", a.AdminGetUser)
 		r.Get("/admin/roadmaps", a.AdminListRoadmaps)
 	})
 }
@@ -295,6 +297,11 @@ func (a *API) Bind(r io.Reader, v any) error {
 
 func (a *API) Param(r *http.Request, key string) string {
 	return chi.URLParam(r, key)
+}
+
+func (a *API) ParamInt(r *http.Request, key string) (int, error) {
+	param := chi.URLParam(r, key)
+	return strconv.Atoi(param)
 }
 
 func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
