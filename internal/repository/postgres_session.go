@@ -171,7 +171,7 @@ func (r *SessionRepository) Renew(ctx context.Context, refreshToken string, upda
 		session := sessions[0]
 
 		updated, err := updateFn(&session)
-		if err != nil && errors.Is(cerrors.Unwrap(err), domain.ErrSessionIsBlocked) {
+		if err != nil && errors.Is(err, cerrors.ErrSessionIsBlocked) {
 			query, args := psql.Delete(
 				dm.From(domain.SessionTable),
 				dm.Where(psql.Quote(domain.SessionTable, "id").EQ(psql.Arg(session.ID))),

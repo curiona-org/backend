@@ -22,7 +22,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	}
 
 	if existingAccount.IsSuspended {
-		return registrationResult{}, cerrors.ErrUnauthorized.With(domain.ErrAccountSuspended)
+		return registrationResult{}, cerrors.ErrAccountSuspended
 	}
 
 	// sign in if account already exists
@@ -31,7 +31,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 
 		// check if user already registered with a different method
 		if existingAccount.Method != input.Method {
-			return registrationResult{}, cerrors.ErrInvalidCredentials
+			return registrationResult{}, cerrors.ErrSignUpDifferentMethod
 		}
 
 		// ignore password check if user is signing in with google

@@ -13,7 +13,7 @@ func (a *API) AdminListRoadmaps(w http.ResponseWriter, r *http.Request) {
 
 	pagination, err := pagination.FromRequest(r)
 	if err != nil {
-		a.handleError(w, r, cerrors.ErrInvalidData.Msg(err.Error()))
+		a.handleError(w, r, cerrors.ErrInvalidData.With(err))
 		return
 	}
 

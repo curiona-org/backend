@@ -299,6 +299,28 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := r.Context()
+	log := logger.FromContext(ctx)
+	var cerr cerrors.CurionaError
+	if !errors.As(err, &cerr) {
+		cerr = cerrors.New(err)
+	}
+
+	// check if the error is a validation error
+	validationErrs := a.validator.ParseErrors(err)
+	if len(validationErrs) > 0 {
+		a.render.Error(w, http.StatusUnprocessableEntity, "Validation failed.", validationErrs)
+		return
+	}
+
+	if cerr.Code() >= http.StatusInternalServerError && cerr.Code() < http.StatusInternalServerError+100 {
+		log.Error().Ctx(ctx).Err(err).Send()
+	}
+
+	a.render.Error(w, cerr.Code(), cerr.Message(), nil)
+}
+
 func (a *API) Bind(r io.Reader, v any) error {
 	return json.NewDecoder(r).Decode(v)
 }
@@ -310,30 +332,4 @@ func (a *API) Param(r *http.Request, key string) string {
 func (a *API) ParamInt(r *http.Request, key string) (int, error) {
 	param := chi.URLParam(r, key)
 	return strconv.Atoi(param)
-}
-
-func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
-	ctx := r.Context()
-	log := logger.FromContext(ctx)
-	var appErr *cerrors.CurionaError
-	var msg string
-	code := http.StatusInternalServerError
-	if errors.As(err, &appErr) {
-		code = appErr.Code()
-		msg = appErr.Message()
-	}
-
-	// check if the error is a validation error
-	validationErrs := a.validator.ParseErrors(err)
-	if len(validationErrs) > 0 {
-		a.render.Error(w, http.StatusUnprocessableEntity, "Validation failed.", validationErrs)
-		return
-	}
-
-	if msg == "" {
-		msg = cerrors.DefaultErrorMessage
-	}
-
-	log.Error().Ctx(ctx).Err(err).Send()
-	a.render.Error(w, code, msg, nil)
 }

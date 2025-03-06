@@ -47,20 +47,18 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 
 	roadmap := domain.NewRoadmap(input.AccountID, generated.Title, generated.Description)
 
-	totalTopics := 0
 	for _, topic := range generated.Topics {
-		totalTopics++
 		newTopic := domain.NewTopic(input.AccountID, topic.Title, topic.Description, topic.SearchQuery)
+		roadmap.TotalTopics++
 		roadmap.AddTopic(newTopic)
 		if len(topic.Subtopics) > 0 {
 			for _, subtopic := range topic.Subtopics {
-				totalTopics++
 				newSubtopic := domain.NewTopic(input.AccountID, subtopic.Title, subtopic.Description, subtopic.SearchQuery)
+				roadmap.TotalTopics++
 				newTopic.AddSubtopic(newSubtopic)
 			}
 		}
 	}
-	roadmap.TotalTopics = totalTopics
 
 	personalizationOpt := domain.NewPersonalizationOptions(
 		input.AccountID,

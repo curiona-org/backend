@@ -3,17 +3,17 @@ package cerrors
 import "net/http"
 
 var (
-	ErrNotFound = &CurionaError{
+	ErrNotFound = &curionaError{
 		ErrorCode:       http.StatusNotFound,
 		ExternalMessage: "Not found",
 	}
 
-	ErrDuplicateData = &CurionaError{
+	ErrDuplicateData = &curionaError{
 		ErrorCode:       http.StatusConflict,
 		ExternalMessage: "data already exists",
 	}
 
-	ErrInvalidData = &CurionaError{
+	ErrInvalidData = &curionaError{
 		ErrorCode:       http.StatusBadRequest,
 		ExternalMessage: "Invalid Data",
 	}

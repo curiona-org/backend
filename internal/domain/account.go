@@ -12,8 +12,7 @@ const (
 )
 
 var (
-	ErrAccountNotFound  = errors.New("account not found")
-	ErrAccountSuspended = errors.New("account suspended")
+	ErrAccountNotFound = errors.New("account not found")
 )
 
 type Account struct {
