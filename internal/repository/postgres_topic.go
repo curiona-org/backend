@@ -230,11 +230,7 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, slug string, up
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, topicID int) ([]domain.ExternalResource, error) {

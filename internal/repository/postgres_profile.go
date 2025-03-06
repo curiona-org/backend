@@ -116,9 +116,5 @@ func (r *ProfileRepository) Update(ctx context.Context, id int, updateFn func(pr
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

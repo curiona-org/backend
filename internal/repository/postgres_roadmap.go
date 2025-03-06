@@ -630,11 +630,7 @@ func (r *RoadmapRepository) UpdateByID(ctx context.Context, id int, updateFn fun
 
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {
