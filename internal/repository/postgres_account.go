@@ -292,11 +292,27 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 			return err
 		}
 
+		// If the account has been suspended, block all active sessions to prevent
+		// new access tokens to be generated.
+		//
+		// This is might be temporary solution, a user still have a free time window based on the
+		// access token expiry where they can still access resources since we're using JWTs.
+		// A fix to that is to set a very short access token expiry.
+		if account.IsSuspended {
+			blockSessionQuery, blockSessionArgs := psql.Update(
+				um.Table(domain.SessionTable),
+				um.SetCol("is_blocked").ToArg(true),
+				um.Where(psql.Quote(domain.SessionTable, "account_id").EQ(psql.Arg(account.ID))),
+			).MustBuild(ctx)
+
+			if _, err := tx.Exec(ctx, blockSessionQuery, blockSessionArgs...); err != nil {
+				span.SetStatus(codes.Error, "failed to block session")
+				span.RecordError(err)
+				return err
+			}
+		}
+
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

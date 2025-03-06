@@ -21,6 +21,10 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		return registrationResult{}, err
 	}
 
+	if existingAccount.IsSuspended {
+		return registrationResult{}, cerrors.ErrUnauthorized.With(domain.ErrAccountSuspended)
+	}
+
 	// sign in if account already exists
 	if !existingAccount.IsZero() {
 		span.SetAttributes(attribute.Bool("create_account", false))
