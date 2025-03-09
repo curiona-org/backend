@@ -32,7 +32,6 @@ func (m *Manager) Handle(w http.ResponseWriter, r *http.Request, room string) (*
 
 func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendMessage] = SendMessageHandler
-	m.handlers[EventChangeRoom] = ChatRoomHandler
 }
 
 func (m *Manager) routeEvent(event Event, client *Client) error {

@@ -65,18 +65,3 @@ func SendMessageHandler(event Event, client *Client) error {
 
 	return nil
 }
-
-type ChangeRoomEvent struct {
-	Name string `json:"name"`
-}
-
-func ChatRoomHandler(event Event, c *Client) error {
-	var changeRoomEvent ChangeRoomEvent
-	if err := json.Unmarshal(event.Payload, &changeRoomEvent); err != nil {
-		return cerrors.ErrInvalidData
-	}
-
-	c.room = changeRoomEvent.Name
-
-	return nil
-}
