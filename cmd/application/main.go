@@ -10,7 +10,6 @@ import (
 	"github.com/curiona-org/backend/internal/app"
 	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/auth/oauth"
-	"github.com/curiona-org/backend/internal/chat"
 	"github.com/curiona-org/backend/internal/config"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/provider"
@@ -77,14 +76,12 @@ func run(ctx context.Context) {
 		provider.Tracing,
 	)
 	adminApp := admin.New(postgresRepository, auth, provider.Tracing)
-	chatApp := chat.New(worker, postgresRepository, provider.LLM, auth, provider.Tracing)
 
 	api := api.New(
 		ctx,
 		config.Port(),
 		curionaApp,
 		adminApp,
-		chatApp,
 		provider.Tracing,
 	)
 

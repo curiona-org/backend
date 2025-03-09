@@ -14,10 +14,10 @@ import (
 
 	"github.com/curiona-org/backend/internal/admin"
 	"github.com/curiona-org/backend/internal/api/render"
+	"github.com/curiona-org/backend/internal/api/websocket"
 	"github.com/curiona-org/backend/internal/app"
 	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/internal/chat"
 	"github.com/curiona-org/backend/internal/config"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/validator"
@@ -36,26 +36,27 @@ import (
 )
 
 type API struct {
-	server         *http.Server
-	router         chi.Router
+	server *http.Server
+	router chi.Router
+	ws     *websocket.Manager
+
 	render         *render.Renderer
 	validator      validator.Validator
 	tracerProvider *tracesdk.TracerProvider
 
 	application app.CurionaApplication
 	adminApp    admin.Application
-	chatApp     chat.Application
 }
 
-func New(ctx context.Context, port string, curionaApp app.CurionaApplication, adminApp admin.Application, chatApp chat.Application, tracer *tracesdk.TracerProvider) *API {
+func New(ctx context.Context, port string, curionaApp app.CurionaApplication, adminApp admin.Application, tracer *tracesdk.TracerProvider) *API {
 	router := chi.NewRouter()
 	api := &API{
 		router:         router,
+		ws:             websocket.NewManager(),
 		render:         render.New(ctx),
 		validator:      validator.NewPlayground(),
 		application:    curionaApp,
 		adminApp:       adminApp,
-		chatApp:        chatApp,
 		tracerProvider: tracer,
 	}
 
@@ -111,6 +112,8 @@ func (a *API) SetupRoutes() {
 		r.Get("/roadmaps/topic/{slug}", a.GetTopicBySlug)
 		r.Patch("/roadmaps/topic/{slug}/finish", a.MarkTopicAsFinished)
 		r.Patch("/roadmaps/topic/{slug}/incomplete", a.MarkTopicAsIncomplete)
+
+		r.Handle("/roadmaps/{slug}/assist", http.HandlerFunc(a.RoadmapChatAssist))
 	})
 
 	// admin routes
@@ -128,9 +131,11 @@ func (a *API) SetupRoutes() {
 		r.Get("/admin/roadmaps/{id}", a.AdminGetRoadmap)
 		r.Delete("/admin/roadmaps/{id}", a.AdminDeleteRoadmap)
 	})
+
 }
 
 func (a *API) SetupMiddlewares() {
+	a.router.Use(a.populateLog)
 	a.router.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{
@@ -142,7 +147,6 @@ func (a *API) SetupMiddlewares() {
 	a.router.Use(middleware.RealIP)
 	a.router.Use(otelhttp.NewMiddleware("api", otelhttp.WithTracerProvider(a.tracerProvider)))
 	a.router.Use(a.requestIDMiddleware)
-	a.router.Use(a.populateLog)
 	a.router.Use(a.loggerMiddleware)
 	a.router.Use(middleware.Recoverer)
 	a.router.Use(middleware.Compress(5))
@@ -282,6 +286,7 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 				Str("remote_addr", r.RemoteAddr).
 				Int("bytes", lrw.BytesWritten()).
 				Str("method", r.Method).
+				Str("origin", r.Header.Get("Origin")).
 				Str("user_agent", r.UserAgent()).
 				Dur("elapsed_ms", time.Since(start)).
 				Msg("Incoming request")
@@ -292,6 +297,7 @@ func (a *API) loggerMiddleware(next http.Handler) http.Handler {
 				Str("remote_addr", r.RemoteAddr).
 				Int("bytes", lrw.BytesWritten()).
 				Str("method", r.Method).
+				Str("origin", r.Header.Get("Origin")).
 				Str("user_agent", r.UserAgent()).
 				Dur("elapsed_ms", time.Since(start)).
 				Msg("Incoming request")
