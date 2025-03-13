@@ -17,7 +17,6 @@ func NewManager() *Manager {
 		handlers: make(map[string]EventHandler),
 	}
 
-	m.setupEventHandlers()
 	return m
 }
 
@@ -54,10 +53,6 @@ func (m *Manager) RegisterEventHandler(event string, handler EventHandler) {
 	defer m.mtx.Unlock()
 
 	m.handlers[event] = handler
-}
-
-func (m *Manager) setupEventHandlers() {
-	m.handlers[EventSendMessage] = SendMessageHandler
 }
 
 func (m *Manager) routeEvent(event Event, client *Client) error {
