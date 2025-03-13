@@ -25,9 +25,13 @@ type CurionaApplication interface {
 
 	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
 	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
+	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 	ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error)
 	DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) error
-	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
+
+	// StreamRoadmapLLM handles chat assistance functionality. It interacts with the LLM stream
+	// provider to send and receive messages.
+	StreamRoadmapLLM(ctx context.Context, input io.StreamRoadmapLLMInput) (llm.Stream, error)
 
 	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)
 	MarkTopicAsFinished(ctx context.Context, input io.MarkTopicInput) error

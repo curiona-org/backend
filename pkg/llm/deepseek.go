@@ -64,3 +64,20 @@ func (d *deepSeekClient) Chat(ctx context.Context, prompt ChatPrompt) (string, e
 
 	return response.Choices[0].Message.Content, nil
 }
+
+func (d *deepSeekClient) Stream(ctx context.Context, prompt ChatPrompt) (Stream, error) {
+	ctx, span := d.tracer.Start(ctx, "(*deepSeekClient.Stream)")
+	defer span.End()
+
+	stream, err := d.client.CreateChatCompletionStream(ctx, &deepseek.StreamChatCompletionRequest{
+		Model: d.model,
+		Messages: []deepseek.ChatCompletionMessage{
+			{Role: deepseek.ChatMessageRoleSystem, Content: prompt.System},
+			{Role: deepseek.ChatMessageRoleUser, Content: prompt.User},
+		},
+	})
+
+	return NewStreamHandler(&streamHandlerConfig{
+		deepseek: stream,
+	}), err
+}

@@ -75,3 +75,26 @@ func (o *openAiClient) Chat(ctx context.Context, prompt ChatPrompt) (string, err
 
 	return response.Choices[0].Message.Content, nil
 }
+
+func (o *openAiClient) Stream(ctx context.Context, prompt ChatPrompt) (Stream, error) {
+	ctx, span := o.tracer.Start(ctx, "(*openAiClient.Stream)")
+	defer span.End()
+
+	stream, err := o.client.CreateChatCompletionStream(ctx, openai.ChatCompletionRequest{
+		Model: o.model,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: prompt.System,
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: prompt.User,
+			},
+		},
+	})
+
+	return NewStreamHandler(&streamHandlerConfig{
+		openai: stream,
+	}), err
+}
