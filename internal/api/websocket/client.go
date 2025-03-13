@@ -14,8 +14,9 @@ type Client struct {
 	mtx     sync.RWMutex
 	conn    *websocket.Conn
 	manager *Manager
-	egress  chan Event
 	room    string
+	egress  chan Event
+	done    chan struct{}
 
 	// handlers holds a client specific event handler. used for roadmap private chat
 	// events since they are not global events.
@@ -32,6 +33,7 @@ func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 		conn:     conn,
 		manager:  manager,
 		egress:   make(chan Event),
+		done:     make(chan struct{}),
 		handlers: make(map[string]EventHandler),
 	}
 }
@@ -47,7 +49,7 @@ func (c *Client) RegisterEventHandler(event string, handler EventHandler) {
 	c.handlers[event] = handler
 }
 
-func (c *Client) Read(ctx context.Context) {
+func (c *Client) ReadLoop(ctx context.Context) {
 	defer func() {
 		c.manager.RemoveClient(c)
 	}()
@@ -112,6 +114,9 @@ func (c *Client) WriteLoop(ctx context.Context) {
 
 	for {
 		select {
+		case <-c.done:
+			log.Debug().Msg("client done")
+			return
 		case <-ctx.Done():
 			return
 		case message, ok := <-c.egress:
@@ -152,4 +157,9 @@ func (c *Client) WriteDirectMessage(message Event) {
 
 func (c *Client) pongHandler(msg string) error {
 	return c.conn.SetReadDeadline(time.Now().Add(pongWait))
+}
+
+func (c *Client) Close() {
+	c.conn.Close()
+	close(c.done)
 }

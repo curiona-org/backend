@@ -43,7 +43,7 @@ func (m *Manager) RemoveClient(client *Client) {
 	defer m.mtx.Unlock()
 
 	if _, ok := m.clients[client]; ok {
-		client.conn.Close()
+		client.Close()
 		delete(m.clients, client)
 	}
 }

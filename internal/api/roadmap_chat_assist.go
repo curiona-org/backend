@@ -123,7 +123,7 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 
-	go client.Read(ctx)
+	go client.ReadLoop(ctx)
 	go client.WriteLoop(ctx)
 
 	select {}
