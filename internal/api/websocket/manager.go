@@ -30,6 +30,27 @@ func (m *Manager) Handle(w http.ResponseWriter, r *http.Request, room string) (*
 	return NewClient(conn, m, room), nil
 }
 
+func (m *Manager) AddClient(client *Client) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	m.clients[client] = true
+}
+
+func (m *Manager) RemoveClient(client *Client) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	if _, ok := m.clients[client]; ok {
+		client.conn.Close()
+		delete(m.clients, client)
+	}
+}
+
+func (m *Manager) RegisterEventHandler(event string, handler EventHandler) {
+	m.handlers[event] = handler
+}
+
 func (m *Manager) setupEventHandlers() {
 	m.handlers[EventSendMessage] = SendMessageHandler
 }
@@ -41,21 +62,4 @@ func (m *Manager) routeEvent(event Event, client *Client) error {
 	}
 
 	return handler(event, client)
-}
-
-func (m *Manager) Register(client *Client) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
-	m.clients[client] = true
-}
-
-func (m *Manager) Unregister(client *Client) {
-	m.mtx.Lock()
-	defer m.mtx.Unlock()
-
-	if _, ok := m.clients[client]; ok {
-		client.conn.Close()
-		delete(m.clients, client)
-	}
 }

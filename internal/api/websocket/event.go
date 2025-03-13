@@ -19,9 +19,10 @@ var (
 )
 
 const (
-	EventSendMessage = "send_message"
-	EventNewMessage  = "new_message"
-	EventChangeRoom  = "change_room"
+	EventSendMessage              = "send_message"
+	EventNewMessage               = "new_message"
+	EventRoadmapChatAssistRequest = "roadmap_chat_assist_request"
+	EventRoadmapChatAssistChunk   = "roadmap_chat_assist_chunk"
 )
 
 type SendMessageEvent struct {
@@ -33,6 +34,15 @@ type NewMessageEvent struct {
 	Message string    `json:"message"`
 	From    string    `json:"from"`
 	Sent    time.Time `json:"sent"`
+}
+
+type RoadmapChatAssistRequestEvent struct {
+	Message string `json:"message"`
+}
+
+type RoadmapChatAssistChunkEvent struct {
+	Content string `json:"content"`
+	Done    bool   `json:"done"`
 }
 
 func SendMessageHandler(event Event, client *Client) error {

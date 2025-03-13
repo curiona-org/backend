@@ -32,10 +32,10 @@ func NewClient(conn *websocket.Conn, manager *Manager, room string) *Client {
 
 func (c *Client) Read(ctx context.Context) {
 	defer func() {
-		c.manager.Unregister(c)
+		c.manager.RemoveClient(c)
 	}()
 
-	log := logger.Get()
+	log := logger.FromContext(ctx)
 
 	c.conn.SetReadLimit(512)
 
@@ -48,7 +48,10 @@ func (c *Client) Read(ctx context.Context) {
 	for {
 		_, payload, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if websocket.IsUnexpectedCloseError(err,
+				websocket.CloseNoStatusReceived,
+				websocket.CloseGoingAway,
+				websocket.CloseAbnormalClosure) {
 				log.Err(err).Msg("error reading message")
 			}
 			break
@@ -66,13 +69,13 @@ func (c *Client) Read(ctx context.Context) {
 	}
 }
 
-func (c *Client) Write(ctx context.Context, fn func(conn Connection, message Event) error) {
-	log := logger.Get()
+func (c *Client) WriteLoop(ctx context.Context) {
+	log := logger.FromContext(ctx)
 
 	ticker := time.NewTicker(pingInterval)
 	defer func() {
 		ticker.Stop()
-		c.manager.Unregister(c)
+		c.manager.RemoveClient(c)
 	}()
 
 	for {
@@ -87,7 +90,17 @@ func (c *Client) Write(ctx context.Context, fn func(conn Connection, message Eve
 				return
 			}
 
-			if err := fn(c.conn, message); err != nil {
+			data, err := json.Marshal(message)
+			if err != nil {
+				log.Err(err).Msg("error marshalling message")
+				continue // Don't terminate connection for serialization errors
+			}
+
+			if err := c.conn.WriteMessage(websocket.TextMessage, data); err != nil {
+				if err == websocket.ErrCloseSent {
+					return
+				}
+
 				log.Err(err).Msg("error writing message")
 				return
 			}
@@ -98,6 +111,11 @@ func (c *Client) Write(ctx context.Context, fn func(conn Connection, message Eve
 			}
 		}
 	}
+}
+
+// WriteDirectMessage sends a message to the client without going through the event handler
+func (c *Client) WriteDirectMessage(message Event) {
+	c.egress <- message
 }
 
 func (c *Client) pongHandler(msg string) error {

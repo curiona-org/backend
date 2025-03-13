@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -36,34 +37,73 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info().Str("room", slug).Msg("Roadmap chat assist connected")
-	a.ws.Register(client)
-	log.Info().Str("remote_addr", r.RemoteAddr).Msg("Client registered")
+	a.ws.AddClient(client)
 
-	go client.Read(ctx)
-
-	client.Write(ctx, func(conn websocket.Connection, message websocket.Event) error {
-		roadmapBaseKnowledge.Message = string(message.Payload)
-		llmStream, err := a.application.StreamRoadmapLLM(ctx, roadmapBaseKnowledge)
-		if err != nil {
-			return err
+	a.ws.RegisterEventHandler(websocket.EventRoadmapChatAssistRequest, func(event websocket.Event, client *websocket.Client) error {
+		var chatAssistEvent websocket.RoadmapChatAssistRequestEvent
+		if err := json.Unmarshal(event.Payload, &chatAssistEvent); err != nil {
+			return cerrors.ErrInvalidData
 		}
 
-		for {
-			msg, err := llmStream.Recv()
-			if err != nil && errors.Is(err, llm.StreamDone) {
-				break
-			}
-
+		go func() {
+			roadmapBaseKnowledge.Message = chatAssistEvent.Message
+			llmStream, err := a.application.StreamRoadmapLLM(ctx, roadmapBaseKnowledge)
 			if err != nil {
-				return err
+				return
 			}
 
-			if err := conn.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-				return err
+			for {
+				content, err := llmStream.Recv()
+				if err != nil && errors.Is(err, llm.StreamDone) {
+					doneChunk := websocket.RoadmapChatAssistChunkEvent{Content: "", Done: true}
+
+					var data []byte
+					data, err = json.Marshal(doneChunk)
+					if err != nil {
+						log.Err(err).Msg("error marshalling message, sending literal json string")
+						data = []byte(`{"content":"","done":true}`)
+					}
+
+					client.WriteDirectMessage(websocket.Event{
+						Type:    websocket.EventRoadmapChatAssistChunk,
+						Payload: data,
+					})
+
+					break
+				}
+
+				if err != nil {
+					log.Err(err).Msg("error receiving message from LLM")
+					break
+				}
+
+				chunk := websocket.RoadmapChatAssistChunkEvent{
+					Content: content,
+					Done:    false,
+				}
+
+				var data []byte
+				data, err = json.Marshal(chunk)
+				if err != nil {
+					// in case of error while marshalling, we'll send a literal json string
+					log.Err(err).Msg("error marshalling message, sending literal json string")
+					data = append(data, []byte(`{"content":"`)...)
+					data = append(data, []byte(content)...)
+					data = append(data, []byte(`","done":false}`)...)
+				}
+
+				client.WriteDirectMessage(websocket.Event{
+					Type:    websocket.EventRoadmapChatAssistChunk,
+					Payload: data,
+				})
 			}
-		}
+		}()
 
 		return nil
 	})
+
+	go client.Read(ctx)
+	go client.WriteLoop(ctx)
+
+	<-ctx.Done()
 }

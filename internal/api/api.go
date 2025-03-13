@@ -113,8 +113,8 @@ func (a *API) SetupRoutes() {
 		r.Patch("/roadmaps/topic/{slug}/finish", a.MarkTopicAsFinished)
 		r.Patch("/roadmaps/topic/{slug}/incomplete", a.MarkTopicAsIncomplete)
 
-		r.Handle("/roadmaps/{slug}/assist", http.HandlerFunc(a.RoadmapChatAssist))
 	})
+	a.router.Handle("/roadmaps/{slug}/assist", http.HandlerFunc(a.RoadmapChatAssist))
 
 	// admin routes
 	a.router.Group(func(r chi.Router) {
