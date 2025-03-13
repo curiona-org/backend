@@ -50,7 +50,7 @@ type Stream interface {
 }
 
 var (
-	StreamDone = io.EOF
+	ErrStreamDone = io.EOF
 )
 
 type stream struct {

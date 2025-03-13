@@ -82,7 +82,7 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 
 			for {
 				content, err := llmStream.Recv()
-				if err != nil && errors.Is(err, llm.StreamDone) {
+				if err != nil && errors.Is(err, llm.ErrStreamDone) {
 					client.WriteDirectMessage(websocket.Event{
 						Type:    websocket.EventRoadmapChatAssistChunk,
 						Payload: websocket.RoadmapChatAssistChunkEventDoneJSON,
