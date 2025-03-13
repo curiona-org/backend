@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"net/http"
 	"time"
 
@@ -73,7 +74,7 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			llmStream, err := a.application.StreamRoadmapLLM(ctx, io.StreamRoadmapLLMInput{
 				GetRoadmapOutput: roadmap,
-				Message:          chatAssistEvent.Message,
+				Message:          html.EscapeString(chatAssistEvent.Message),
 			})
 			if err != nil {
 				return
@@ -90,13 +91,15 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 
+				sanitizedContent := html.EscapeString(content)
+
 				if err != nil {
 					log.Err(err).Msg("error receiving message from LLM")
 					break
 				}
 
 				chunk := websocket.RoadmapChatAssistChunkEvent{
-					Content: content,
+					Content: sanitizedContent,
 					Done:    false,
 				}
 
@@ -106,7 +109,7 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 					// in case of error while marshalling, we'll send a literal json string
 					log.Err(err).Msg("error marshalling message, sending literal json string")
 					data = append(data, []byte(`{"content":"`)...)
-					data = append(data, []byte(content)...)
+					data = append(data, []byte(sanitizedContent)...)
 					data = append(data, []byte(`","done":false}`)...)
 				}
 
