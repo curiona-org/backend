@@ -24,30 +24,28 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// get the roadmap as the base knowledge for the chat assist
 	roadmap, err := a.application.GetRoadmapBySlug(ctx, slug)
 	if err != nil {
 		a.handleError(w, r, err)
 		return
 	}
 
-	roadmapBaseKnowledge := io.StreamRoadmapLLMInput{
-		GetRoadmapOutput: roadmap,
-	}
-
+	// upgrade the connection to websocket and create a new client
 	client, err := a.ws.Handle(w, r)
 	if err != nil {
 		a.handleError(w, r, err)
 		return
 	}
 
+	// register client to a roadmap chat assist room
 	auth := auth.FromContext(ctx)
 	roomName := fmt.Sprintf("roadmap:%d:%d", roadmap.ID, auth.AccountID)
-
 	client.SetRoom(roomName)
 	a.ws.AddClient(client)
 
+	// Send welcome message
 	go func() {
-		// Send welcome message
 		welcomeMessage := websocket.NewMessageEvent{
 			Message: "👋 Welcome to the Roadmap Chat Assist! We're here to help you with your roadmap. Let's get started! 🚀 Feel free to ask any questions you have.",
 			From:    "Curiona 🤖",
@@ -66,15 +64,17 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		})
 	}()
 
-	a.ws.RegisterEventHandler(websocket.EventRoadmapChatAssistRequest, func(event websocket.Event, client *websocket.Client) error {
+	client.RegisterEventHandler(websocket.EventRoadmapChatAssistRequest, func(event websocket.Event, client *websocket.Client) error {
 		var chatAssistEvent websocket.RoadmapChatAssistRequestEvent
 		if err := json.Unmarshal(event.Payload, &chatAssistEvent); err != nil {
 			return cerrors.ErrInvalidData
 		}
 
 		go func() {
-			roadmapBaseKnowledge.Message = chatAssistEvent.Message
-			llmStream, err := a.application.StreamRoadmapLLM(ctx, roadmapBaseKnowledge)
+			llmStream, err := a.application.StreamRoadmapLLM(ctx, io.StreamRoadmapLLMInput{
+				GetRoadmapOutput: roadmap,
+				Message:          chatAssistEvent.Message,
+			})
 			if err != nil {
 				return
 			}
@@ -82,18 +82,9 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 			for {
 				content, err := llmStream.Recv()
 				if err != nil && errors.Is(err, llm.StreamDone) {
-					doneChunk := websocket.RoadmapChatAssistChunkEvent{Content: "", Done: true}
-
-					var data []byte
-					data, err = json.Marshal(doneChunk)
-					if err != nil {
-						log.Err(err).Msg("error marshalling message, sending literal json string")
-						data = []byte(`{"content":"","done":true}`)
-					}
-
 					client.WriteDirectMessage(websocket.Event{
 						Type:    websocket.EventRoadmapChatAssistChunk,
-						Payload: data,
+						Payload: websocket.RoadmapChatAssistChunkEventDoneJSON,
 					})
 
 					break

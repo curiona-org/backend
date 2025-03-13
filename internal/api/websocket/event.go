@@ -45,6 +45,8 @@ type RoadmapChatAssistChunkEvent struct {
 	Done    bool   `json:"done"`
 }
 
+var RoadmapChatAssistChunkEventDoneJSON = json.RawMessage(`{"content":"","done":true}`)
+
 func SendMessageHandler(event Event, client *Client) error {
 	var chatEvent SendMessageEvent
 	if err := json.Unmarshal(event.Payload, &chatEvent); err != nil {

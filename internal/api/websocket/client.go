@@ -3,6 +3,7 @@ package websocket
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/curiona-org/backend/internal/logger"
@@ -10,10 +11,15 @@ import (
 )
 
 type Client struct {
+	mtx     sync.RWMutex
 	conn    *websocket.Conn
 	manager *Manager
 	egress  chan Event
 	room    string
+
+	// handlers holds a client specific event handler. used for roadmap private chat
+	// events since they are not global events.
+	handlers map[string]EventHandler
 }
 
 var (
@@ -23,14 +29,22 @@ var (
 
 func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 	return &Client{
-		conn:    conn,
-		manager: manager,
-		egress:  make(chan Event),
+		conn:     conn,
+		manager:  manager,
+		egress:   make(chan Event),
+		handlers: make(map[string]EventHandler),
 	}
 }
 
 func (c *Client) SetRoom(room string) {
 	c.room = room
+}
+
+func (c *Client) RegisterEventHandler(event string, handler EventHandler) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	c.handlers[event] = handler
 }
 
 func (c *Client) Read(ctx context.Context) {
@@ -66,6 +80,21 @@ func (c *Client) Read(ctx context.Context) {
 			break
 		}
 
+		c.mtx.RLock()
+		handler, ok := c.handlers[req.Type]
+		c.mtx.RUnlock()
+
+		if ok {
+			if err := handler(req, c); err != nil {
+				log.Err(err).Msg("error handling event")
+			}
+			continue
+		}
+
+		// If no client specific handler is found, route the event to the global event handler.
+		// Warning: This will route the event to all clients in the same room.
+		// for example, if a client needs assistant in roadmap X, the event will be routed to all clients in roadmap X if
+		// the client and other clients failed to register a client specific handler.
 		if err := c.manager.routeEvent(req, c); err != nil {
 			log.Err(err).Msg("error handling event")
 		}
