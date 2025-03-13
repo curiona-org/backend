@@ -21,13 +21,15 @@ func NewManager() *Manager {
 	return m
 }
 
-func (m *Manager) Handle(w http.ResponseWriter, r *http.Request, room string) (*Client, error) {
+// Handle creates a new client from the request and upgrades the connection to a websocket connection.
+// It returns the client and an error if the upgrade fails.
+func (m *Manager) Handle(w http.ResponseWriter, r *http.Request) (*Client, error) {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewClient(conn, m, room), nil
+	return NewClient(conn, m), nil
 }
 
 func (m *Manager) AddClient(client *Client) {
@@ -48,6 +50,9 @@ func (m *Manager) RemoveClient(client *Client) {
 }
 
 func (m *Manager) RegisterEventHandler(event string, handler EventHandler) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
 	m.handlers[event] = handler
 }
 

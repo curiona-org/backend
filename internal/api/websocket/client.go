@@ -21,13 +21,16 @@ var (
 	pingInterval = (pongWait * 9) / 10
 )
 
-func NewClient(conn *websocket.Conn, manager *Manager, room string) *Client {
+func NewClient(conn *websocket.Conn, manager *Manager) *Client {
 	return &Client{
 		conn:    conn,
 		manager: manager,
 		egress:  make(chan Event),
-		room:    room,
 	}
+}
+
+func (c *Client) SetRoom(room string) {
+	c.room = room
 }
 
 func (c *Client) Read(ctx context.Context) {

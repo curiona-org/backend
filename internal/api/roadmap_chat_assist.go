@@ -3,10 +3,13 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/curiona-org/backend/internal/api/websocket"
 	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/llm"
@@ -31,13 +34,37 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		GetRoadmapOutput: roadmap,
 	}
 
-	client, err := a.ws.Handle(w, r, slug)
+	client, err := a.ws.Handle(w, r)
 	if err != nil {
 		a.handleError(w, r, err)
 		return
 	}
 
+	auth := auth.FromContext(ctx)
+	roomName := fmt.Sprintf("roadmap:%d:%d", roadmap.ID, auth.AccountID)
+
+	client.SetRoom(roomName)
 	a.ws.AddClient(client)
+
+	go func() {
+		// Send welcome message
+		welcomeMessage := websocket.NewMessageEvent{
+			Message: "👋 Welcome to the Roadmap Chat Assist! We're here to help you with your roadmap. Let's get started! 🚀 Feel free to ask any questions you have.",
+			From:    "Curiona 🤖",
+			Sent:    time.Now(),
+		}
+
+		data, err := json.Marshal(welcomeMessage)
+		if err != nil {
+			log.Err(err).Msg("error marshalling welcome message")
+			return
+		}
+
+		client.WriteDirectMessage(websocket.Event{
+			Type:    websocket.EventNewMessage,
+			Payload: data,
+		})
+	}()
 
 	a.ws.RegisterEventHandler(websocket.EventRoadmapChatAssistRequest, func(event websocket.Event, client *websocket.Client) error {
 		var chatAssistEvent websocket.RoadmapChatAssistRequestEvent
@@ -105,5 +132,5 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 	go client.Read(ctx)
 	go client.WriteLoop(ctx)
 
-	<-ctx.Done()
+	select {}
 }
