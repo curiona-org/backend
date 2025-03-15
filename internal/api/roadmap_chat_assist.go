@@ -90,14 +90,12 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 
 					break
 				}
-
-				sanitizedContent := html.EscapeString(content)
-
 				if err != nil {
 					log.Err(err).Msg("error receiving message from LLM")
 					break
 				}
 
+				sanitizedContent := html.EscapeString(content)
 				chunk := websocket.RoadmapChatAssistChunkEvent{
 					Content: sanitizedContent,
 					Done:    false,
