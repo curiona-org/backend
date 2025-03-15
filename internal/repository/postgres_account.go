@@ -116,13 +116,20 @@ func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters)
 		sm.Columns(r.accountWithProfileColumns()...),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
-		sm.Where(psql.And(
-			psql.Or(
-				psql.Quote("email").ILike(psql.Arg("%"+filters.Search+"%")),
-				psql.Quote("name").ILike(psql.Arg("%"+filters.Search+"%")),
-			),
-			psql.Quote("deleted_at").IsNull())),
 	)
+
+	if filters.Search != "" {
+		selectQuery.Apply(
+			sm.Where(psql.And(
+				psql.Or(
+					psql.Quote("email").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote("name").ILike(psql.Arg("%"+filters.Search+"%")),
+				),
+				psql.Quote("deleted_at").IsNull()),
+			))
+	} else {
+		selectQuery.Apply(sm.Where(psql.Quote("deleted_at").IsNull()))
+	}
 
 	if filters.OrderBy == filter.OrderByOldest {
 		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())

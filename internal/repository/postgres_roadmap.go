@@ -313,14 +313,21 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 		sm.LeftJoin(domain.ProfileTable).OnEQ(
 			psql.Quote(domain.ProfileTable, "id"),
 			psql.Quote(domain.RoadmapTable, "account_id")),
-		sm.Where(psql.And(
-			psql.Or(
-				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
-				psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
-			),
-			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
 	)
+
+	if filters.Search != "" {
+		selectQuery.Apply(
+			sm.Where(psql.And(
+				psql.Or(
+					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
+				),
+				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
+			))
+	} else {
+		selectQuery.Apply(sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()))
+	}
 
 	if filters.OrderBy == filter.OrderByOldest {
 		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
