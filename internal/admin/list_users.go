@@ -4,28 +4,28 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/admin/io"
-	"github.com/curiona-org/backend/pkg/pagination"
+	"github.com/curiona-org/backend/pkg/filter"
 )
 
 func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersInput) (io.ListUsersOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*adminApplication.ListUsers)")
 	defer span.End()
 
-	count, err := app.repository.Account.Count(ctx)
+	totalItems, err := app.repository.Account.Count(ctx)
 	if err != nil {
 		return io.ListUsersOutput{}, err
 	}
 
-	pagination := pagination.NewOffsetPaginator(input.Page, input.Limit, count)
-	users, err := app.repository.Account.ListAll(ctx, pagination)
+	filters := filter.New(input, totalItems)
+	users, err := app.repository.Account.ListAll(ctx, filters)
 	if err != nil {
 		return io.ListUsersOutput{}, err
 	}
 
 	output := io.ListUsersOutput{
-		Total:       pagination.Total,
-		TotalPages:  pagination.TotalPages,
-		CurrentPage: pagination.CurrentPage,
+		Total:       filters.Paginator.Total,
+		TotalPages:  filters.Paginator.TotalPages,
+		CurrentPage: filters.Paginator.CurrentPage,
 		Items:       make([]io.ListUsersOutputItem, len(users)),
 	}
 

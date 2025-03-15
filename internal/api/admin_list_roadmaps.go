@@ -3,24 +3,20 @@ package api
 import (
 	"net/http"
 
-	"github.com/curiona-org/backend/internal/admin/io"
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/pagination"
+	"github.com/curiona-org/backend/pkg/filter"
 )
 
 func (a *API) AdminListRoadmaps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	pagination, err := pagination.FromRequest(r)
+	filters, err := filter.FromRequest(r)
 	if err != nil {
 		a.handleError(w, r, cerrors.ErrInvalidData.With(err))
 		return
 	}
 
-	output, err := a.adminApp.ListRoadmaps(ctx, io.PaginatedListInput{
-		Page:  pagination.CurrentPage,
-		Limit: pagination.Limit,
-	})
+	output, err := a.adminApp.ListRoadmaps(ctx, filters)
 	if err != nil {
 		a.handleError(w, r, err)
 		return

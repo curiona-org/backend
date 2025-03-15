@@ -5,7 +5,7 @@ import (
 
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/pkg/database"
-	"github.com/curiona-org/backend/pkg/pagination"
+	"github.com/curiona-org/backend/pkg/filter"
 	"github.com/jackc/pgx/v5"
 	"github.com/stephenafamo/bob/dialect/psql"
 	"github.com/stephenafamo/bob/dialect/psql/im"
@@ -111,16 +111,31 @@ func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, quer
 	return accounts, nil
 }
 
-func (r *AccountRepository) ListAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Account, error) {
-	query, args := psql.Select(
+func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Account, error) {
+	selectQuery := psql.Select(
 		sm.Columns(r.accountWithProfileColumns()...),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
-		sm.Where(psql.Quote("deleted_at").IsNull()),
-		sm.OrderBy(psql.Quote(domain.ProfileTable, "created_at")).Desc(),
-		sm.Offset(psql.Arg(pagination.Skip)),
-		sm.Limit(psql.Arg(pagination.Limit)),
-	).MustBuild(ctx)
+		sm.Where(psql.And(
+			psql.Or(
+				psql.Quote("email").ILike(psql.Arg("%"+filters.Search+"%")),
+				psql.Quote("name").ILike(psql.Arg("%"+filters.Search+"%")),
+			),
+			psql.Quote("deleted_at").IsNull())),
+	)
+
+	if filters.OrderBy == filter.OrderByOldest {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
+	} else {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc())
+	}
+
+	selectQuery.Apply(
+		sm.Offset(psql.Arg(filters.Paginator.Skip)),
+		sm.Limit(psql.Arg(filters.Paginator.Limit)),
+	)
+
+	query, args := selectQuery.MustBuild(ctx)
 
 	return r.fetch(ctx, true, query, args...)
 }

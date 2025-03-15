@@ -7,7 +7,7 @@ import (
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
-	"github.com/curiona-org/backend/pkg/pagination"
+	"github.com/curiona-org/backend/pkg/filter"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
@@ -300,8 +300,8 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) 
 	return roadmaps, nil
 }
 
-func (r *RoadmapRepository) ListAll(ctx context.Context, pagination pagination.Paginator) ([]domain.Roadmap, error) {
-	query, args := psql.Select(
+func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
+	selectQuery := psql.Select(
 		sm.Columns(r.roadmapWithOptionsAndAccountColumns()...),
 		sm.From(domain.RoadmapTable),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
@@ -313,11 +313,27 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, pagination pagination.P
 		sm.LeftJoin(domain.ProfileTable).OnEQ(
 			psql.Quote(domain.ProfileTable, "id"),
 			psql.Quote(domain.RoadmapTable, "account_id")),
-		sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
-		sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc(),
-		sm.Offset(psql.Arg(pagination.Skip)),
-		sm.Limit(psql.Arg(pagination.Limit)),
-	).MustBuild(ctx)
+		sm.Where(psql.And(
+			psql.Or(
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
+				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
+				psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
+			),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+	)
+
+	if filters.OrderBy == filter.OrderByOldest {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
+	} else {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc())
+	}
+
+	selectQuery.Apply(
+		sm.Offset(psql.Arg(filters.Paginator.Skip)),
+		sm.Limit(psql.Arg(filters.Paginator.Limit)),
+	)
+
+	query, args := selectQuery.MustBuild(ctx)
 
 	return r.fetch(ctx, roadmapFetchConfig{
 		query:                        query,

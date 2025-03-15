@@ -4,10 +4,11 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/auth"
+	"github.com/curiona-org/backend/pkg/filter"
 )
 
-type ListUsersInput = PaginatedListInput
-type ListUsersOutput = PaginatedListOutput[ListUsersOutputItem]
+type ListUsersInput = filter.Params
+type ListUsersOutput = filter.FilteredList[ListUsersOutputItem]
 
 type ListUsersOutputItem struct {
 	ID          int         `json:"id"`

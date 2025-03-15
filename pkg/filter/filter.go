@@ -1,0 +1,87 @@
+package filter
+
+import (
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+// FilteredList is a generic structure that represents a list of items with pagination.
+type FilteredList[T any] struct {
+	Total       uint64 `json:"total"`
+	TotalPages  uint64 `json:"total_pages"`
+	CurrentPage uint64 `json:"current_page"`
+	Items       []T    `json:"items"`
+}
+
+type Filters struct {
+	Search    string
+	OrderBy   OrderBy
+	Paginator Paginator
+}
+
+func New(params Params, total uint64) Filters {
+	paginator := NewOffsetPaginator(params.CurrentPage, params.Limit, total)
+	return Filters{
+		Search:    params.Search,
+		OrderBy:   params.OrderBy,
+		Paginator: paginator,
+	}
+}
+
+type Params struct {
+	Search      string
+	OrderBy     OrderBy
+	CurrentPage uint64
+	Limit       uint64
+}
+
+type OrderBy string
+
+const (
+	OrderByNewest OrderBy = "newest"
+	OrderByOldest OrderBy = "oldest"
+
+	QueryKeySearch = "search"
+	QueryKeyOrder  = "order_by"
+	QueryKeyPage   = "page"
+	QueryKeyLimit  = "limit"
+)
+
+func FromRequest(r *http.Request) (Params, error) {
+	search := strings.TrimSpace(r.FormValue(QueryKeySearch))
+	order := OrderBy(strings.TrimSpace(r.FormValue(QueryKeyOrder)))
+
+	page := uint64(1)
+	if v := strings.TrimSpace(r.FormValue(QueryKeyPage)); v != "" {
+		var err error
+		page, err = strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return Params{}, errors.New("invalid query provided")
+		}
+	}
+
+	limit := DefaultPageSize
+	if v := strings.TrimSpace(r.FormValue(QueryKeyLimit)); v != "" {
+		var err error
+		limit, err = strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return Params{}, errors.New("invalid limit provided")
+		}
+	}
+
+	// Cap the maximum limit.
+	if limit > MaxPageSize {
+		limit = MaxPageSize
+	}
+
+	params := Params{
+		Search:      search,
+		OrderBy:     order,
+		CurrentPage: page,
+		Limit:       limit,
+	}
+
+	return params, nil
+}
