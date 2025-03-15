@@ -6,9 +6,17 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/pkg/llm"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func (app *application) StreamRoadmapLLM(ctx context.Context, input io.StreamRoadmapLLMInput) (llm.Stream, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.StreamRoadmapLLM)")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("roadmap_title", input.Title),
+		attribute.String("user_message", input.Message))
+
 	// TODO: store each chat session in the database
 	return app.llm.Stream(ctx, llm.ChatPrompt{
 		System: app.makeSystemPrompt(input),
