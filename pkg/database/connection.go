@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,6 +21,7 @@ type db struct {
 type Connection interface {
 	io.Closer
 
+	Ping(ctx context.Context) bool
 	Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
 	Query(context.Context, string, ...any) (pgx.Rows, error)
@@ -94,6 +96,17 @@ func dbValues(cfg *Config) map[string]string {
 	setIfPositiveDuration(p, "pool_max_conn_idle_time", cfg.PoolMaxConnIdleTime)
 	setIfPositiveDuration(p, "pool_health_check_period", cfg.PoolHealthCheckPeriod)
 	return p
+}
+
+func (db *db) Ping(ctx context.Context) bool {
+	log := logger.FromContext(ctx)
+	err := db.pool.Ping(ctx)
+	if err != nil {
+		log.Err(err).Msg("failed to ping database")
+		return false
+	}
+
+	return true
 }
 
 func (db *db) Exec(ctx context.Context, query string, args ...any) (pgconn.CommandTag, error) {

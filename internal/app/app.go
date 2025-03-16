@@ -17,6 +17,8 @@ import (
 
 // CurionaApplication is the main application. Handling authentication, roadmap/topic management, and user profile management.
 type CurionaApplication interface {
+	HealthCheck(ctx context.Context) bool
+
 	Auth(ctx context.Context, input io.AuthInput) (io.AuthOutput, error)
 	AuthVerify(ctx context.Context, token string) (*auth.Token, error)
 	AuthRefresh(ctx context.Context, input io.AuthRefreshInput) (io.AuthRefreshOutput, error)

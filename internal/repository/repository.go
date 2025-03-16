@@ -1,11 +1,14 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
 )
 
 type Repository struct {
+	db                     database.Connection
 	Account                *AccountRepository
 	Profile                *ProfileRepository
 	Roadmap                *RoadmapRepository
@@ -25,4 +28,8 @@ func NewPostgresRepository(db database.Connection, cache *cache.Connection) *Rep
 		PersonalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
 		Session:                NewPostgresSessionRepository(db),
 	}
+}
+
+func (r *Repository) Ping(ctx context.Context) bool {
+	return r.db.Ping(ctx)
 }

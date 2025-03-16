@@ -17,4 +17,9 @@ var (
 		ErrorCode:       http.StatusBadRequest,
 		ExternalMessage: "Invalid Data",
 	}
+
+	ErrInternal = &curionaError{
+		ErrorCode:       http.StatusInternalServerError,
+		ExternalMessage: "Internal Server Error",
+	}
 )
