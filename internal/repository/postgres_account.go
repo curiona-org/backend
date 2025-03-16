@@ -32,7 +32,7 @@ func NewPostgresAccountRepository(db database.Connection) *AccountRepository {
 func (r *AccountRepository) accountColumns() []any {
 	return []any{
 		psql.Quote(domain.AccountTable, "id"),
-		psql.Quote(domain.AccountTable, "provider"),
+		psql.Quote(domain.AccountTable, "method"),
 		psql.Quote(domain.AccountTable, "email"),
 		psql.Quote(domain.AccountTable, "password"),
 		psql.Quote(domain.AccountTable, "is_suspended"),
@@ -212,7 +212,7 @@ func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (do
 	var profile domain.Profile
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		saveAccountQuery, saveAccountArgs := psql.Insert(
-			im.Into(domain.AccountTable, "email", "password", "provider", "created_at", "updated_at"),
+			im.Into(domain.AccountTable, "email", "password", "method", "created_at", "updated_at"),
 			im.Values(psql.Arg(input.Email, input.PasswordDigest, input.Method, input.CreatedAt, input.UpdatedAt)),
 			im.Returning("id", "email", "created_at", "updated_at"),
 		).MustBuild(ctx)

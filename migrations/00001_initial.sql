@@ -1,11 +1,11 @@
 -- +goose Up
-CREATE TYPE account_provider AS ENUM (
+CREATE TYPE account_method AS ENUM (
     'email',
     'google'
 );
 CREATE TABLE IF NOT EXISTS accounts (
     id SERIAL PRIMARY KEY,
-    provider account_provider NOT NULL DEFAULT 'email',
+    method account_method NOT NULL DEFAULT 'email',
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     is_suspended boolean NOT NULL DEFAULT FALSE,
@@ -152,4 +152,4 @@ DROP TABLE IF EXISTS profiles;
 DROP TABLE IF EXISTS sessions;
 
 DROP TABLE IF EXISTS accounts;
-DROP TYPE IF EXISTS account_provider;
+DROP TYPE IF EXISTS account_method;

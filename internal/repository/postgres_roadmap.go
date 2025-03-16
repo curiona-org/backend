@@ -69,7 +69,7 @@ func (r *RoadmapRepository) roadmapWithOptionsColumns() []any {
 func (r *RoadmapRepository) roadmapWithOptionsAndAccountColumns() []any {
 	return append(r.roadmapWithOptionsColumns(),
 		psql.Quote(domain.AccountTable, "id"),
-		psql.Quote(domain.AccountTable, "provider"),
+		psql.Quote(domain.AccountTable, "method"),
 		psql.Quote(domain.AccountTable, "email"),
 		psql.Quote(domain.AccountTable, "is_suspended"),
 		psql.Quote(domain.AccountTable, "is_admin"),
