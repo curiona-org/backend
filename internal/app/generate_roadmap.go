@@ -34,7 +34,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 
 	systemPrompt := app.makeGenerateRoadmapSystemPrompt(traceCtx)
 	if systemPrompt == "" {
-		return io.GenerateRoadmapOutput{}, cerrors.ErrPromptGenerationFailed
+		return io.GenerateRoadmapOutput{}, cerrors.ErrLLMPromptGenerationFailed
 	}
 
 	generated, err := app.chatGeneratePrompt(traceCtx, llm.ChatPrompt{

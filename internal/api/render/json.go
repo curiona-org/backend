@@ -14,6 +14,7 @@ type Response struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Data    any    `json:"data,omitempty"`
+	Code    string `json:"code,omitempty"`
 	Error   any    `json:"error,omitempty"`
 }
 
@@ -33,29 +34,30 @@ func (r *Renderer) Created(w http.ResponseWriter, msg string, data any) {
 	})
 }
 
-func (r *Renderer) Error(w http.ResponseWriter, code int, msg string, err any) {
-	r.JSON(w, code, Response{
+func (r *Renderer) Error(w http.ResponseWriter, statusCode int, msg string, err any, code string) {
+	r.JSON(w, statusCode, Response{
 		Success: false,
 		Message: msg,
+		Code:    code,
 		Error:   err,
 	})
 }
 
-func (r *Renderer) JSON(w http.ResponseWriter, code int, data Response) {
+func (r *Renderer) JSON(w http.ResponseWriter, statusCode int, data Response) {
 	b := bytebufferpool.Get()
 	b.Reset()
 	defer bytebufferpool.Put(b)
 
 	if data == (Response{}) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(code)
+		w.WriteHeader(statusCode)
 
-		if code >= http.StatusOK && code < http.StatusMultipleChoices {
+		if statusCode >= http.StatusOK && statusCode < http.StatusMultipleChoices {
 			fmt.Fprint(w, jsonOK)
 			return
 		}
 
-		msg := escapeJSON(http.StatusText(code))
+		msg := escapeJSON(http.StatusText(statusCode))
 		fmt.Fprintf(w, jsonErrFormat, msg)
 		return
 	}
@@ -71,7 +73,7 @@ func (r *Renderer) JSON(w http.ResponseWriter, code int, data Response) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
+	w.WriteHeader(statusCode)
 	if _, err := b.WriteTo(w); err != nil {
 		r.logger.Error().Err(err).Msg("failed to write json to response")
 	}

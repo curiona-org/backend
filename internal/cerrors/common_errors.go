@@ -4,22 +4,32 @@ import "net/http"
 
 var (
 	ErrNotFound = &curionaError{
-		ErrorCode:       http.StatusNotFound,
+		Code:            "NOT_FOUND",
+		StatusCode:      http.StatusNotFound,
 		ExternalMessage: "Not found",
 	}
 
 	ErrDuplicateData = &curionaError{
-		ErrorCode:       http.StatusConflict,
-		ExternalMessage: "data already exists",
+		Code:            "DUPLICATE_DATA",
+		StatusCode:      http.StatusConflict,
+		ExternalMessage: "The data you provided already exists",
 	}
 
 	ErrInvalidData = &curionaError{
-		ErrorCode:       http.StatusBadRequest,
-		ExternalMessage: "Invalid Data",
+		Code:            "INVALID_DATA",
+		StatusCode:      http.StatusBadRequest,
+		ExternalMessage: "Invalid data provided",
+	}
+
+	ErrValidation = &curionaError{
+		Code:            "VALIDATION_ERROR",
+		StatusCode:      http.StatusUnprocessableEntity,
+		ExternalMessage: "There was an issue with the data you provided. Please check and try again.",
 	}
 
 	ErrInternal = &curionaError{
-		ErrorCode:       http.StatusInternalServerError,
-		ExternalMessage: "Internal Server Error",
+		Code:            "INTERNAL_ERROR",
+		StatusCode:      http.StatusInternalServerError,
+		ExternalMessage: "Oops! We encountered an unexpected error. Please try again.",
 	}
 )

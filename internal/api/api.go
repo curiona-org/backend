@@ -314,17 +314,18 @@ func (a *API) handleError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	// check if the error is a validation error
-	validationErrs := a.validator.ParseErrors(err)
-	if len(validationErrs) > 0 {
-		a.render.Error(w, http.StatusUnprocessableEntity, "Validation failed.", validationErrs)
+	validationErrors := a.validator.ParseErrors(err)
+	if len(validationErrors) > 0 {
+		err := cerrors.ErrValidation
+		a.render.Error(w, err.HTTPStatusCode(), err.Message(), validationErrors, err.ErrorCode())
 		return
 	}
 
-	if cerr.Code() >= http.StatusInternalServerError && cerr.Code() < http.StatusInternalServerError+100 {
+	if cerr.HTTPStatusCode() >= http.StatusInternalServerError && cerr.HTTPStatusCode() < http.StatusInternalServerError+100 {
 		log.Error().Ctx(ctx).Err(err).Send()
 	}
 
-	a.render.Error(w, cerr.Code(), cerr.Message(), nil)
+	a.render.Error(w, cerr.HTTPStatusCode(), cerr.Message(), nil, cerr.ErrorCode())
 }
 
 func (a *API) Bind(r io.Reader, v any) error {

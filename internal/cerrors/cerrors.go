@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	DefaultErrorCode    = http.StatusInternalServerError
+	DefaultErrorCode    = "INTERNAL_ERROR"
+	DefaultStatusCode   = http.StatusInternalServerError
 	DefaultErrorMessage = "Oops! We encountered an unexpected error. Please try again."
 )
 
@@ -16,8 +17,10 @@ type CurionaError interface {
 
 	// Message returns the error message for the end user.
 	Message() string
-	// Code returns the HTTP status code of the error.
-	Code() int
+	// ErrorCode returns the application error code.
+	ErrorCode() string
+	// StatusCode returns the HTTP status code.
+	HTTPStatusCode() int
 	// With concats an error to the external message of the error.
 	With(err error) error
 	// Msg concats an error message to the external message of the error.
@@ -36,8 +39,10 @@ type CurionaError interface {
 type curionaError struct {
 	err error
 
-	// ErrorCode is the HTTP status code that is returned to the end user.
-	ErrorCode int
+	// Code is the application error code that is returned to the end user.
+	Code string
+	// StatusCode is the HTTP status code that is returned to the end user.
+	StatusCode int
 	// InternalMessage should be used for logging and debugging purposes.
 	InternalMessage string
 	// ExternalMessage is the error message that is returned to the end user.
@@ -54,19 +59,19 @@ func New(err any) CurionaError {
 	case error:
 		return &curionaError{
 			err:             err.(error),
-			ErrorCode:       DefaultErrorCode,
+			StatusCode:      DefaultStatusCode,
 			InternalMessage: err.(error).Error(),
 			ExternalMessage: DefaultErrorMessage,
 		}
 	case string:
 		return &curionaError{
-			ErrorCode:       DefaultErrorCode,
+			StatusCode:      DefaultStatusCode,
 			InternalMessage: err.(string),
 			ExternalMessage: DefaultErrorMessage,
 		}
 	default:
 		return &curionaError{
-			ErrorCode:       DefaultErrorCode,
+			StatusCode:      DefaultStatusCode,
 			InternalMessage: fmt.Sprintf("%v", err),
 			ExternalMessage: DefaultErrorMessage,
 		}
@@ -84,8 +89,12 @@ func Unwrap(err error) error {
 	return cerr.err
 }
 
-func (e *curionaError) Code() int {
-	return e.ErrorCode
+func (e *curionaError) ErrorCode() string {
+	return e.Code
+}
+
+func (e *curionaError) HTTPStatusCode() int {
+	return e.StatusCode
 }
 
 func (e *curionaError) Error() string {
@@ -102,7 +111,7 @@ func (e *curionaError) With(err error) error {
 	}
 
 	return &curionaError{
-		ErrorCode:       e.ErrorCode,
+		StatusCode:      e.StatusCode,
 		InternalMessage: e.InternalMessage + ": " + err.Error(),
 		ExternalMessage: e.ExternalMessage + ": " + err.Error(),
 		err:             err,
@@ -112,7 +121,7 @@ func (e *curionaError) With(err error) error {
 // Msg creates a new wrapped application error with the provided message.
 func (e *curionaError) Msg(errorString string) error {
 	return &curionaError{
-		ErrorCode:       e.ErrorCode,
+		StatusCode:      e.StatusCode,
 		InternalMessage: e.InternalMessage,
 		ExternalMessage: e.ExternalMessage + ": " + errorString,
 	}
@@ -122,14 +131,14 @@ func (e *curionaError) Msg(errorString string) error {
 func (e *curionaError) Msgf(format string, a ...any) error {
 	format = fmt.Sprintf(format, a...)
 	return &curionaError{
-		ErrorCode:       e.ErrorCode,
+		StatusCode:      e.StatusCode,
 		InternalMessage: e.InternalMessage,
 		ExternalMessage: e.ExternalMessage + ": " + format,
 	}
 }
 
 func (e *curionaError) SetCode(code int) CurionaError {
-	e.ErrorCode = code
+	e.StatusCode = code
 	return e
 }
 

@@ -55,7 +55,7 @@ func TestRenderer_Error(t *testing.T) {
 	msg := "An error occurred"
 	err := "error details"
 
-	renderer.Error(w, http.StatusBadRequest, msg, err)
+	renderer.Error(w, http.StatusBadRequest, msg, err, "")
 
 	resp := w.Result()
 	defer resp.Body.Close()
