@@ -72,7 +72,7 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 		}
 
 		go func() {
-			llmStream, err := a.application.StreamRoadmapLLM(ctx, io.StreamRoadmapLLMInput{
+			llmStream, err := a.application.RoadmapChatAssistStream(ctx, io.RoadmapChatAssistStreamInput{
 				GetRoadmapOutput: roadmap,
 				Message:          html.EscapeString(chatAssistEvent.Message),
 			})

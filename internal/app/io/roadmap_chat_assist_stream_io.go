@@ -1,6 +1,6 @@
 package io
 
-type StreamRoadmapLLMInput struct {
+type RoadmapChatAssistStreamInput struct {
 	GetRoadmapOutput
 
 	Message string `json:"message"`

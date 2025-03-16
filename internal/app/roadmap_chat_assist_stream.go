@@ -9,8 +9,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func (app *application) StreamRoadmapLLM(ctx context.Context, input io.StreamRoadmapLLMInput) (llm.Stream, error) {
-	ctx, span := app.tracer.Start(ctx, "(*application.StreamRoadmapLLM)")
+func (app *application) RoadmapChatAssistStream(ctx context.Context, input io.RoadmapChatAssistStreamInput) (llm.Stream, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.RoadmapChatAssistStream)")
 	defer span.End()
 
 	span.SetAttributes(
@@ -24,7 +24,7 @@ func (app *application) StreamRoadmapLLM(ctx context.Context, input io.StreamRoa
 	})
 }
 
-func (app *application) makeSystemPrompt(input io.StreamRoadmapLLMInput) string {
+func (app *application) makeSystemPrompt(input io.RoadmapChatAssistStreamInput) string {
 	var sb strings.Builder
 
 	sb.WriteString("You are an AI assistant helping a user navigate the ")
