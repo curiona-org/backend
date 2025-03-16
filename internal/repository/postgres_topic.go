@@ -98,6 +98,8 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 		} else {
 			topic.ExternalSearchQuery = ""
 		}
+
+		topics = append(topics, topic)
 	}
 
 	if err = rows.Err(); err != nil {
