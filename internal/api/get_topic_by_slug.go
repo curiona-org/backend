@@ -19,5 +19,5 @@ func (a *API) GetTopicBySlug(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.render.OK(w, "Profile details.", output)
+	a.render.OK(w, "Topic Details.", output)
 }
