@@ -105,6 +105,7 @@ func (a *API) SetupRoutes() {
 		r.Patch("/profile", a.UpdateProfile)
 
 		r.Get("/roadmaps", a.ListUserRoadmaps)
+		r.Get("/roadmaps/community", a.ListCommunityRoadmaps)
 		r.Get("/roadmaps/{slug}", a.GetRoadmapBySlug)
 		r.Post("/roadmaps", a.GenerateRoadmap)
 		r.Delete("/roadmaps/{slug}", a.DeleteUserRoadmap)
