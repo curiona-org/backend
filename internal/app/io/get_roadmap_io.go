@@ -34,7 +34,7 @@ type GetRoadmapOutputTopic struct {
 	Slug                string                  `json:"slug"`
 	Description         string                  `json:"description"`
 	Order               int                     `json:"order"`
-	Finished            bool                    `json:"finished"`
+	IsFinished          bool                    `json:"is_finished"`
 	ExternalSearchQuery string                  `json:"external_search_query"`
 	Subtopics           []GetRoadmapOutputTopic `json:"subtopics"`
 	CreatedAt           time.Time               `json:"created_at"`
