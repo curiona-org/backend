@@ -25,3 +25,5 @@ jobs:
           GO111MODULE: off
       - name: Golangci-lint
         uses: golangci/golangci-lint-action@v6.5.1
+        with:
+          args: --timeout=10m
