@@ -20,6 +20,7 @@ type Repository struct {
 
 func NewPostgresRepository(db database.Connection, cache *cache.Connection) *Repository {
 	return &Repository{
+		db:                     db,
 		Account:                NewPostgresAccountRepository(db),
 		Profile:                NewPostgresProfileRepository(db),
 		Roadmap:                NewPostgresRoadmapRepository(db, cache),
