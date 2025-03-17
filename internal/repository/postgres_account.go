@@ -132,9 +132,9 @@ func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters)
 	}
 
 	if filters.OrderBy == filter.OrderByOldest {
-		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.AccountTable, "created_at")).Asc())
 	} else {
-		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc())
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.AccountTable, "created_at")).Desc())
 	}
 
 	selectQuery.Apply(
