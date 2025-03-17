@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/pkg/interval"
 )
@@ -15,6 +16,9 @@ func (app *adminApplication) GetUser(ctx context.Context, accountID int) (io.Get
 
 	account, err := app.repository.Account.GetByID(ctx, accountID)
 	if err != nil {
+		if errors.Is(err, domain.ErrAccountNotFound) {
+			return io.GetUserOutput{}, cerrors.ErrNotFound.Msg("account")
+		}
 		return io.GetUserOutput{}, err
 	}
 
