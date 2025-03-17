@@ -22,7 +22,9 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23
-
+          go-version: '1.23'
+          cache: false
+        env:
+          GO111MODULE: off
       - name: Golangci-lint
         uses: golangci/golangci-lint-action@v6.5.0
