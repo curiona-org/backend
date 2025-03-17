@@ -1,8 +1,6 @@
 module github.com/curiona-org/backend
 
-go 1.23.3
-
-toolchain go1.23.4
+go 1.23.4
 
 require (
 	github.com/cohesion-org/deepseek-go v1.2.4
