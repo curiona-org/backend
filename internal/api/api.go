@@ -209,7 +209,7 @@ func (a *API) adminMiddleware(next http.Handler) http.Handler {
 		}
 
 		if !isAdmin {
-			a.handleError(w, r, cerrors.ErrUnauthorized)
+			a.handleError(w, r, cerrors.ErrForbidden)
 			return
 		}
 

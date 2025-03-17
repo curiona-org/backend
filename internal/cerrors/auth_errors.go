@@ -17,6 +17,13 @@ var (
 		ExternalMessage: "You are not authorized to perform this action.",
 	}
 
+	ErrForbidden = &curionaError{
+		Code:            "FORBIDDEN",
+		StatusCode:      http.StatusForbidden,
+		InternalMessage: "Forbidden",
+		ExternalMessage: "You do not have permission to perform this action.",
+	}
+
 	ErrAccountSuspended = &curionaError{
 		Code:            "ACCOUNT_SUSPENDED",
 		StatusCode:      http.StatusUnauthorized,
