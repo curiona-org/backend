@@ -39,7 +39,7 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4317:4317" # OpenTelemetry gRPC (for Go app)
+      - "4318:4318"
 
 volumes:
   postgres_data:
