@@ -15,6 +15,8 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 	ctx, span := app.tracer.Start(ctx, "(*application.Auth)", trace.WithAttributes(attribute.String("email", input.Email)))
 	defer span.End()
 
+	input.Email = auth.NormalizeEmail(input.Email)
+
 	var result registrationResult
 	var err error
 	if input.OAuthToken != "" {
