@@ -28,19 +28,21 @@ type ExternalResource struct {
 	Author   string
 	URL      string
 	CoverURL string
+	Length   string
 	Type     ExternalResourceType
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-func NewExternalResource(topicID int, title, author, url, coverURL string, resourceType ExternalResourceType) *ExternalResource {
+func NewExternalResource(topicID int, title, author, url, coverURL, length string, resourceType ExternalResourceType) *ExternalResource {
 	return &ExternalResource{
 		TopicID:   topicID,
 		Title:     title,
 		Author:    author,
 		URL:       url,
 		CoverURL:  coverURL,
+		Length:    length,
 		Type:      resourceType,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

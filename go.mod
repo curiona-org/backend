@@ -68,6 +68,7 @@ require (
 	github.com/qdm12/reprint v0.0.0-20200326205758-722754a53494 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
+	github.com/sosodev/duration v1.3.1 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/stephenafamo/scan v0.6.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect

@@ -38,6 +38,7 @@ type Volume struct {
 	URL     string
 	Authors string
 	Cover   string
+	Pages   int64
 }
 
 func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume, error) {
@@ -53,7 +54,7 @@ func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume
 
 	call := service.Volumes.
 		List(query).
-		Fields("items(volumeInfo(title,authors,imageLinks(thumbnail),canonicalVolumeLink))").
+		Fields("items(volumeInfo(title,authors,imageLinks(thumbnail),canonicalVolumeLink,pageCount))").
 		MaxResults(maxResults)
 
 	result, err := call.Do()
@@ -79,11 +80,16 @@ func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume
 			Authors: strings.Join(item.VolumeInfo.Authors, ", "),
 			Cover:   item.VolumeInfo.ImageLinks.Thumbnail,
 			URL:     item.VolumeInfo.CanonicalVolumeLink,
+			Pages:   item.VolumeInfo.PageCount,
 		}
+
 		span.AddEvent("book:google_books:search", trace.WithAttributes(
 			attribute.String("title", volume.Title),
 			attribute.String("authors", volume.Authors),
-			attribute.String("url", volume.URL)))
+			attribute.String("url", volume.URL),
+			attribute.String("cover", volume.Cover),
+			attribute.Int64("pages", volume.Pages)))
+
 		volumes = append(volumes, &volume)
 	}
 

@@ -30,4 +30,5 @@ type GetTopicOutputExternalResourceItem struct {
 	Author   string `json:"author"`
 	URL      string `json:"url"`
 	CoverURL string `json:"cover_url"`
+	Length   string `json:"length"`
 }

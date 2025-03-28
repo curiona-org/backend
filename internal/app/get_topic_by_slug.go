@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"strconv"
 	"sync"
 
 	"github.com/curiona-org/backend/internal/app/io"
@@ -10,6 +11,7 @@ import (
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/worker"
+	"github.com/sosodev/duration"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -92,6 +94,7 @@ func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *
 			result.Channel,
 			result.URL,
 			result.Thumbnail,
+			result.Duration,
 			domain.ExternalResourceTypeYoutube,
 		)
 
@@ -137,6 +140,7 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 			result.Authors,
 			result.URL,
 			result.Cover,
+			strconv.FormatInt(result.Pages, 10),
 			domain.ExternalResourceTypeBook,
 		)
 
@@ -159,11 +163,20 @@ func (app *application) mapExternalResourcesOutput(resources []domain.ExternalRe
 	output.ExternalResources.Articles = make([]io.GetTopicOutputExternalResourceItem, 0)
 
 	for _, resource := range resources {
+		contentLength := resource.Length
+
+		if resource.IsYoutube() {
+			// Parse ISO 8601 duration
+			parsedContentLength, _ := duration.Parse(resource.Length)
+			contentLength = parsedContentLength.ToTimeDuration().String()
+		}
+
 		item := io.GetTopicOutputExternalResourceItem{
 			Title:    resource.Title,
 			Author:   resource.Author,
 			URL:      resource.URL,
 			CoverURL: resource.CoverURL,
+			Length:   contentLength,
 		}
 
 		switch {
