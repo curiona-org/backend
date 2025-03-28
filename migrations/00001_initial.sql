@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS external_resources (
     author VARCHAR(255),
     url VARCHAR(255) NOT NULL,
     cover_url VARCHAR(255),
+    length VARCHAR(255), --- duration for videos and pages for books.
     type external_resource_type NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now()),

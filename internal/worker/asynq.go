@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/logger"
@@ -107,6 +108,7 @@ func (w *asynqWorker) searchYoutubeExternalResources(ctx context.Context, task *
 			result.Channel,
 			result.URL,
 			result.Thumbnail,
+			result.Duration,
 			domain.ExternalResourceTypeYoutube,
 		)
 
@@ -171,6 +173,7 @@ func (w *asynqWorker) searchGoogleBooksExternalResources(ctx context.Context, ta
 			result.Authors,
 			result.URL,
 			result.Cover,
+			strconv.FormatInt(result.Pages, 10),
 			domain.ExternalResourceTypeBook,
 		)
 

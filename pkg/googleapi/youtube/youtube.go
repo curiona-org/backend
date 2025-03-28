@@ -34,10 +34,12 @@ func New(secret string) Client {
 }
 
 type SearchResult struct {
+	id        string
 	Title     string
 	URL       string
 	Channel   string
 	Thumbnail string
+	Duration  string
 }
 
 func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, error) {
@@ -51,21 +53,23 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 		return nil, err
 	}
 
-	call := service.Search.
+	searchCall := service.Search.
 		List([]string{"snippet"}).
 		Q(query).
 		MaxResults(maxResults)
 
-	response, err := call.Do()
+	searchResponse, err := searchCall.Do()
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to fetch youtube videos")
 		span.RecordError(err)
 		return nil, err
 	}
 
-	items := response.Items
+	items := searchResponse.Items
 
+	videoIDs := make([]string, 0, len(items))
 	videos := make([]*SearchResult, 0, len(items))
+	videoIDMap := make(map[string]*SearchResult)
 	for i, item := range items {
 		// To make sure we don't exceed the maxResults if the API returns more than expected
 		if i >= maxResults {
@@ -79,13 +83,40 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 				URL:       videoURL,
 				Channel:   item.Snippet.ChannelTitle,
 				Thumbnail: item.Snippet.Thumbnails.High.Url,
+				Duration:  item.Id.VideoId,
 			}
 			span.AddEvent("video", trace.WithAttributes(
 				attribute.String("title", video.Title),
 				attribute.String("channel", video.Channel),
 				attribute.String("url", video.URL)))
 			videos = append(videos, &video)
+			videoIDs = append(videoIDs, item.Id.VideoId)
+			videoIDMap[item.Id.VideoId] = &video
 		}
+	}
+
+	videoCall := service.Videos.List([]string{"contentDetails"}).Id(videoIDs...)
+	videoResponse, err := videoCall.Do()
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch youtube video details")
+		span.RecordError(err)
+		return nil, err
+	}
+
+	for _, item := range videoResponse.Items {
+		videoID := item.Id
+		video, ok := videoIDMap[videoID]
+		if !ok {
+			span.SetStatus(codes.Error, "video not found in map")
+			span.RecordError(err)
+			continue
+		}
+
+		duration := item.ContentDetails.Duration
+		video.Duration = duration
+		span.AddEvent("video duration", trace.WithAttributes(
+			attribute.String("video_id", videoID),
+			attribute.String("duration", duration)))
 	}
 
 	return videos, nil

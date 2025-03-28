@@ -35,7 +35,7 @@ func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, 
 
 		for _, res := range resource {
 			resources = append(resources, []any{
-				topicID, res.Title, res.Author, res.URL, res.CoverURL, res.Type, res.CreatedAt, res.UpdatedAt,
+				topicID, res.Title, res.Author, res.URL, res.CoverURL, res.Length, res.Type, res.CreatedAt, res.UpdatedAt,
 			})
 		}
 
@@ -46,7 +46,7 @@ func (r *ExternalResourceRepository) BulkSave(ctx context.Context, topicID int, 
 
 		_, err := tx.CopyFrom(ctx,
 			pgx.Identifier{domain.ExternalResourceTable},
-			[]string{"topic_id", "title", "author", "url", "cover_url", "type", "created_at", "updated_at"},
+			[]string{"topic_id", "title", "author", "url", "cover_url", "length", "type", "created_at", "updated_at"},
 			pgx.CopyFromRows(resources),
 		)
 		return err
