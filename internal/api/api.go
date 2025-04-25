@@ -143,7 +143,8 @@ func (a *API) SetupMiddlewares() {
 			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
 			http.MethodDelete, http.MethodHead, http.MethodOptions,
 		},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: true,
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 	}))
 	a.router.Use(a.secureHeadersMiddleware)
 	a.router.Use(middleware.RealIP)
