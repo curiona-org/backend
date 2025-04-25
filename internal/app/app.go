@@ -39,6 +39,10 @@ type CurionaApplication interface {
 	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)
 	MarkTopicAsFinished(ctx context.Context, input io.MarkTopicInput) error
 	MarkTopicAsIncomplete(ctx context.Context, input io.MarkTopicInput) error
+
+	// BookmarkRoadmap(ctx context.Context, input io.BookmarkRoadmapInput) error
+	// UnbookmarkRoadmap(ctx context.Context, input io.BookmarkRoadmapInput) error
+	// ListBookmarkedRoadmaps(ctx context.Context, input io.ListBookmarkedRoadmapsInput) (io.ListBookmarkedRoadmapsOutput, error)
 }
 
 type application struct {
