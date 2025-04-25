@@ -138,11 +138,12 @@ func (a *API) SetupRoutes() {
 func (a *API) SetupMiddlewares() {
 	a.router.Use(a.populateLog)
 	a.router.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"*"},
+		AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedMethods: []string{
 			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
 			http.MethodDelete, http.MethodHead, http.MethodOptions,
 		},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 	}))
 	a.router.Use(a.secureHeadersMiddleware)
 	a.router.Use(middleware.RealIP)
