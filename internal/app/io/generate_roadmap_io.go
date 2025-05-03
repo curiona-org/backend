@@ -6,7 +6,7 @@ import (
 
 type GenerateRoadmapInput struct {
 	AccountID              int    `json:"-"`
-	Topic                  string `json:"topic" validate:"required"`
+	Topic                  string `json:"topic" validate:"required,max=150"`
 	PersonalizationOptions struct {
 		DailyTimeAvailability struct {
 			Value int           `json:"value" validate:"required"`
