@@ -60,7 +60,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.Get
 		}
 	}
 
-	app.mapExternalResourcesOutput(topic.Resources, &output)
+	app.mapExternalResourcesOutput(traceCtx, topic.Resources, &output)
 
 	return output, nil
 }
@@ -157,18 +157,24 @@ func (app *application) searchGoogleBooksExternalResources(ctx context.Context, 
 	return app.repository.ExternalResource.BulkSave(bookSearchCtx, topic.ID, externalResources)
 }
 
-func (app *application) mapExternalResourcesOutput(resources []domain.ExternalResource, output *io.GetTopicOutput) {
+func (app *application) mapExternalResourcesOutput(ctx context.Context, resources []domain.ExternalResource, output *io.GetTopicOutput) {
 	output.ExternalResources.YoutubeVideos = make([]io.GetTopicOutputExternalResourceItem, 0)
 	output.ExternalResources.Books = make([]io.GetTopicOutputExternalResourceItem, 0)
 	output.ExternalResources.Articles = make([]io.GetTopicOutputExternalResourceItem, 0)
 
+	log := logger.FromContext(ctx)
 	for _, resource := range resources {
 		contentLength := resource.Length
 
 		if resource.IsYoutube() {
 			// Parse ISO 8601 duration
-			parsedContentLength, _ := duration.Parse(resource.Length)
-			contentLength = parsedContentLength.ToTimeDuration().String()
+			parsedContentLength, err := duration.Parse(resource.Length)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to parse youtube video duration")
+				contentLength = resource.Length
+			} else {
+				contentLength = parsedContentLength.ToTimeDuration().String()
+			}
 		}
 
 		item := io.GetTopicOutputExternalResourceItem{
