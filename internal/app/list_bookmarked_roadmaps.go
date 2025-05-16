@@ -1,0 +1,63 @@
+package app
+
+import (
+	"context"
+
+	"github.com/curiona-org/backend/internal/app/io"
+	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/pkg/interval"
+)
+
+func (app *application) ListBookmarkedRoadmaps(ctx context.Context, input io.ListBookmarkedRoadmapsInput) (io.ListBookmarkedRoadmapsOutput, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.ListBookmarkedRoadmaps)")
+	defer span.End()
+
+	count, err := app.repository.Bookmark.Count(ctx, input.AccountID)
+	if err != nil {
+		return io.ListBookmarkedRoadmapsOutput{}, err
+	}
+
+	filters := filter.New(input.Params, count)
+	roadmaps, err := app.repository.Bookmark.ListBookmarkedRoadmaps(ctx, input.AccountID, filters)
+	if err != nil {
+		return io.ListBookmarkedRoadmapsOutput{}, err
+	}
+
+	output := io.ListBookmarkedRoadmapsOutput{
+		Total:       filters.Paginator.Total,
+		TotalPages:  filters.Paginator.TotalPages,
+		CurrentPage: filters.Paginator.CurrentPage,
+		Items:       make([]io.ListBookmarkedRoadmapsOutputItem, len(roadmaps)),
+	}
+
+	for idx, roadmap := range roadmaps {
+		output.Items[idx] = io.ListBookmarkedRoadmapsOutputItem{
+			ID:                   roadmap.ID,
+			Title:                roadmap.Title,
+			Description:          roadmap.Description,
+			Slug:                 roadmap.Slug,
+			TotalTopics:          roadmap.TotalTopics,
+			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+			CompletionPercentage: roadmap.CompletionPercentage(),
+			CreatedAt:            roadmap.CreatedAt,
+			UpdatedAt:            roadmap.UpdatedAt,
+			PersonalizationOpts: io.ListBookmarkedRoadmapsOutputItemPersonalizationOptions{
+				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
+				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
+				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
+				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
+			},
+			Creator: io.ListBookmarkedRoadmapsOutputItemUser{
+				ID:          roadmap.Account.ID,
+				Method:      roadmap.Account.Method,
+				Email:       roadmap.Account.Email,
+				Name:        roadmap.Account.Profile.Name,
+				Avatar:      roadmap.Account.Profile.Avatar,
+				IsSuspended: roadmap.Account.IsSuspended,
+				JoinedAt:    roadmap.Account.CreatedAt,
+			},
+		}
+	}
+
+	return output, nil
+}
