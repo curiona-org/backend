@@ -19,6 +19,7 @@ import (
 func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.FromContext(ctx)
+	auth := auth.FromContext(ctx)
 	slug := a.Param(r, "slug")
 	if slug == "" {
 		a.handleError(w, r, cerrors.ErrNotFound)
@@ -26,7 +27,10 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the roadmap as the base knowledge for the chat assist
-	roadmap, err := a.application.GetRoadmapBySlug(ctx, slug)
+	roadmap, err := a.application.GetRoadmapBySlug(ctx, io.GetRoadmapInput{
+		AccountID: auth.AccountID,
+		Slug:      slug,
+	})
 	if err != nil {
 		a.handleError(w, r, err)
 		return
@@ -40,7 +44,6 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// register client to a roadmap chat assist room
-	auth := auth.FromContext(ctx)
 	roomName := fmt.Sprintf("roadmap:%d:%d", roadmap.ID, auth.AccountID)
 	client.SetRoom(roomName)
 	a.ws.AddClient(client)

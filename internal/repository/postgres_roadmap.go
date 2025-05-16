@@ -45,7 +45,6 @@ func (r *RoadmapRepository) roadmapColumns() []any {
 		psql.Quote(domain.RoadmapTable, "slug"),
 		psql.Quote(domain.RoadmapTable, "description"),
 		psql.Quote(domain.RoadmapTable, "total_topics"),
-		psql.Quote(domain.RoadmapTable, "total_finished_topics"),
 		psql.Quote(domain.RoadmapTable, "created_at"),
 		psql.Quote(domain.RoadmapTable, "updated_at"),
 		psql.Quote(domain.RoadmapTable, "deleted_at"),
@@ -116,7 +115,6 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			&roadmap.Slug,
 			&roadmap.Description,
 			&roadmap.TotalTopics,
-			&roadmap.TotalFinishedTopics,
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 			&roadmapDeletedAt,
@@ -350,6 +348,45 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 	})
 }
 
+func (r *RoadmapRepository) GetTopicProgressions(ctx context.Context, accountID, roadmapID int) ([]domain.RoadmapTopicProgression, error) {
+	query, args := psql.Select(
+		sm.Columns("id", "roadmap_id", "topic_id", "account_id", "is_finished"),
+		sm.From(domain.RoadmapTopicProgressionTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTopicProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapTopicProgressionTable, "roadmap_id").EQ(psql.Arg(roadmapID)),
+		)),
+	).MustBuild(ctx)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var progressions []domain.RoadmapTopicProgression
+	for rows.Next() {
+		var progression domain.RoadmapTopicProgression
+		err = rows.Scan(
+			&progression.ID,
+			&progression.RoadmapID,
+			&progression.TopicID,
+			&progression.AccountID,
+			&progression.IsFinished,
+		)
+		if err != nil {
+			return nil, err
+		}
+		progressions = append(progressions, progression)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return progressions, nil
+}
+
 func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
@@ -409,11 +446,11 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 
 	// Insert the topics
 	insertTopicMods := []bob.Mod[*dialect.InsertQuery]{
-		im.Into(domain.TopicTable, "account_id", "roadmap_id", "title", "slug", "description", "order", "is_finished", "external_search_query", "created_at", "updated_at"),
+		im.Into(domain.TopicTable, "account_id", "roadmap_id", "title", "slug", "description", "order", "external_search_query", "created_at", "updated_at"),
 	}
 	for _, topic := range topics {
 		subTopicMap[topic.Slug] = topic.Subtopics
-		arg := psql.Arg(topic.AccountID, roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.IsFinished, topic.ExternalSearchQuery, topic.CreatedAt, topic.UpdatedAt)
+		arg := psql.Arg(topic.AccountID, roadmapID, topic.Title, topic.Slug, topic.Description, topic.Order, topic.ExternalSearchQuery, topic.CreatedAt, topic.UpdatedAt)
 		insertTopicMods = append(insertTopicMods, im.Values(arg))
 	}
 	insertTopicMods = append(insertTopicMods, im.Returning("id", "slug"))
@@ -469,7 +506,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 		// Link the subtopic
 		linkedSubtopics = append(linkedSubtopics, []any{
 			item.AccountID, roadmapID, parentID,
-			item.Title, item.Slug, item.Description, item.Order, item.IsFinished, item.ExternalSearchQuery,
+			item.Title, item.Slug, item.Description, item.Order, item.ExternalSearchQuery,
 			item.CreatedAt, item.UpdatedAt,
 		})
 	}
@@ -479,7 +516,7 @@ func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.T
 	_, err = tx.CopyFrom(ctx,
 		pgx.Identifier{domain.TopicTable},
 		[]string{"account_id", "roadmap_id", "parent_id",
-			"title", "slug", "description", "order", "is_finished", "external_search_query",
+			"title", "slug", "description", "order", "external_search_query",
 			"created_at", "updated_at"},
 		pgx.CopyFromRows(linkedSubtopics),
 	)
@@ -658,7 +695,7 @@ func (r *RoadmapRepository) UpdateByID(ctx context.Context, id int, updateFn fun
 
 func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapID int) ([]*domain.Topic, error) {
 	query, args := psql.Select(
-		sm.Columns("id", "roadmap_id", "parent_id", "title", "slug", "description", psql.Quote("order"), "is_finished", "external_search_query", "created_at", "updated_at"),
+		sm.Columns("id", "roadmap_id", "parent_id", "title", "slug", "description", psql.Quote("order"), "external_search_query", "created_at", "updated_at"),
 		sm.From(domain.TopicTable),
 		sm.Where(psql.Quote("roadmap_id").EQ(psql.Arg(roadmapID))),
 		sm.OrderBy(psql.Quote("order")),
@@ -688,7 +725,6 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 			&topic.Slug,
 			&topic.Description,
 			&topic.Order,
-			&topic.IsFinished,
 			&externalSearchQuery,
 			&topic.CreatedAt,
 			&topic.UpdatedAt,
