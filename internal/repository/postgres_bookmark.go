@@ -325,6 +325,7 @@ func (r *BookmarkRepository) Save(ctx context.Context, accountID int, slug strin
 	query, args := psql.Insert(
 		im.Into(domain.BookmarkTable, "account_id", "roadmap_id", "created_at"),
 		im.Values(psql.Arg(accountID, roadmap.ID, time.Now())),
+		im.OnConflict().DoNothing(),
 	).MustBuild(ctx)
 
 	ctx, span = spanWithInsertQuery(ctx, r.tracer, "(*BookmarkRepository.Save)", query)
