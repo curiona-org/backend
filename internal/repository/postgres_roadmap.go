@@ -358,6 +358,9 @@ func (r *RoadmapRepository) GetTopicProgressions(ctx context.Context, accountID,
 		)),
 	).MustBuild(ctx)
 
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetTopicProgressions)", query)
+	defer span.End()
+
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -394,9 +397,14 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 		sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 	).MustBuild(ctx)
 
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.Count)", query)
+	defer span.End()
+
 	var count uint64
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to count roadmaps")
+		span.RecordError(err)
 		return 0, err
 	}
 

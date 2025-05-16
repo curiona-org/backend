@@ -115,6 +115,10 @@ func (a *API) SetupRoutes() {
 		r.Patch("/roadmaps/topic/{slug}/finish", a.MarkTopicAsFinished)
 		r.Patch("/roadmaps/topic/{slug}/incomplete", a.MarkTopicAsIncomplete)
 		r.Handle("/roadmaps/{slug}/assist", http.HandlerFunc(a.RoadmapChatAssist))
+
+		r.Get("/bookmarks", a.ListBookmarkedRoadmaps)
+		r.Post("/roadmaps/{slug}/bookmark", a.BookmarkRoadmap)
+		r.Delete("/roadmaps/{slug}/bookmark", a.UnbookmarkRoadmap)
 	})
 
 	// admin routes

@@ -15,6 +15,7 @@ type Repository struct {
 	Topic                  *TopicRepository
 	ExternalResource       *ExternalResourceRepository
 	PersonalizationOptions *PersonalizationOptionsRepository
+	Bookmark               *BookmarkRepository
 	Session                *SessionRepository
 }
 
@@ -27,6 +28,7 @@ func NewPostgresRepository(db database.Connection, cache *cache.Connection) *Rep
 		Topic:                  NewPostgresTopicRepository(db, cache),
 		ExternalResource:       NewPostgresExternalResourceRepository(db, cache),
 		PersonalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
+		Bookmark:               NewPostgresBookmarkRepository(db, cache),
 		Session:                NewPostgresSessionRepository(db),
 	}
 }

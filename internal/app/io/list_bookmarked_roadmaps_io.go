@@ -8,7 +8,10 @@ import (
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
-type ListBookmarkedRoadmapsInput = filter.Params
+type ListBookmarkedRoadmapsInput struct {
+	filter.Params
+	AccountID int
+}
 type ListBookmarkedRoadmapsOutput = filter.FilteredList[ListBookmarkedRoadmapsOutputItem]
 
 type ListBookmarkedRoadmapsOutputItem struct {
