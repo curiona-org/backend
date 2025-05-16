@@ -6,6 +6,11 @@ import (
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
+type GetRoadmapInput struct {
+	AccountID int
+	Slug      string
+}
+
 type GetRoadmapOutput struct {
 	ID                   int                                    `json:"id"`
 	Title                string                                 `json:"title"`

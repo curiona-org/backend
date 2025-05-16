@@ -7,13 +7,14 @@ import (
 	"strconv"
 
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stephenafamo/bob/dialect/psql"
+	"github.com/stephenafamo/bob/dialect/psql/im"
 	"github.com/stephenafamo/bob/dialect/psql/sm"
-	"github.com/stephenafamo/bob/dialect/psql/um"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -45,7 +46,6 @@ func (r *TopicRepository) topicColumns() []any {
 		psql.Quote(domain.TopicTable, "slug"),
 		psql.Quote(domain.TopicTable, "description"),
 		psql.Quote(domain.TopicTable, "order"),
-		psql.Quote(domain.TopicTable, "is_finished"),
 		psql.Quote(domain.TopicTable, "external_search_query"),
 		psql.Quote(domain.TopicTable, "created_at"),
 		psql.Quote(domain.TopicTable, "updated_at"),
@@ -78,7 +78,6 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 			&topic.Slug,
 			&topic.Description,
 			&topic.Order,
-			&topic.IsFinished,
 			&externalSearchQuery,
 			&topic.CreatedAt,
 			&topic.UpdatedAt,
@@ -202,31 +201,24 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, slug string, up
 			return nil
 		}
 
-		updateTopicQuery, updateTopicArgs := psql.Update(
-			um.Table(domain.TopicTable),
-			um.SetCol("is_finished").ToArg(topic.IsFinished),
-			um.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
+		upsertTopicProgressionQuery, upsertTopicProgressionArgs := psql.Insert(
+			im.Into(domain.RoadmapTopicProgressionTable, "account_id", "roadmap_id", "topic_id", "is_finished"),
+			im.Values(psql.Arg(topic.AccountID, topic.RoadmapID, topic.ID, topic.IsFinished)),
+			im.OnConflict("account_id", "roadmap_id", "topic_id").DoUpdate(
+				im.SetCol("is_finished").ToArg(topic.IsFinished),
+				im.Where(psql.Quote(domain.RoadmapTopicProgressionTable, "topic_id").EQ(psql.Arg(topic.ID))),
+			),
 		).MustBuild(ctx)
-		_, updateSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateTopicQuery)
-		defer updateSpan.End()
+		_, upsertSpan := spanWithInsertQuery(traceCtx, r.tracer, "(*TopicRepository.Insert)", upsertTopicProgressionQuery)
+		defer upsertSpan.End()
 
-		if _, err = tx.Exec(ctx, updateTopicQuery, updateTopicArgs...); err != nil {
-			updateSpan.SetStatus(codes.Error, "failed to update topic")
-			updateSpan.RecordError(err)
-			return err
-		}
+		log := logger.FromContext(ctx)
+		log.Debug().Msg("query: " + upsertTopicProgressionQuery)
+		log.Debug().Msg("args: " + fmt.Sprint(upsertTopicProgressionArgs))
 
-		updateRoadmapQuery, updateRoadmapArgs := psql.Update(
-			um.Table(domain.RoadmapTable),
-			um.SetCol("total_finished_topics").ToArg(roadmap.TotalFinishedTopics),
-			um.Where(psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(roadmap.ID))),
-		).MustBuild(ctx)
-		_, updateRoadmapSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateRoadmapQuery)
-		defer updateRoadmapSpan.End()
-
-		if _, err = tx.Exec(ctx, updateRoadmapQuery, updateRoadmapArgs...); err != nil {
-			updateRoadmapSpan.SetStatus(codes.Error, "failed to update roadmap")
-			updateRoadmapSpan.RecordError(err)
+		if _, err = tx.Exec(ctx, upsertTopicProgressionQuery, upsertTopicProgressionArgs...); err != nil {
+			upsertSpan.SetStatus(codes.Error, "failed to upsert topic progression")
+			upsertSpan.RecordError(err)
 			return err
 		}
 
@@ -309,7 +301,6 @@ func (r *TopicRepository) fetchRoadmapByID(ctx context.Context, id int) ([]domai
 			psql.Quote(domain.RoadmapTable, "slug"),
 			psql.Quote(domain.RoadmapTable, "description"),
 			psql.Quote(domain.RoadmapTable, "total_topics"),
-			psql.Quote(domain.RoadmapTable, "total_finished_topics"),
 			psql.Quote(domain.RoadmapTable, "created_at"),
 			psql.Quote(domain.RoadmapTable, "updated_at"),
 		),
@@ -339,7 +330,6 @@ func (r *TopicRepository) fetchRoadmapByID(ctx context.Context, id int) ([]domai
 			&roadmap.Slug,
 			&roadmap.Description,
 			&roadmap.TotalTopics,
-			&roadmap.TotalFinishedTopics,
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 		)

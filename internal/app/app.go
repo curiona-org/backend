@@ -25,7 +25,7 @@ type CurionaApplication interface {
 	GetProfile(ctx context.Context, accountID int) (io.GetProfileOutput, error)
 	UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error)
 
-	GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error)
+	GetRoadmapBySlug(ctx context.Context, input io.GetRoadmapInput) (io.GetRoadmapOutput, error)
 	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
 	// RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 	ListCommunityRoadmaps(ctx context.Context, input io.ListCommunityRoadmapsInput) (io.ListCommunityRoadmapsOutput, error)

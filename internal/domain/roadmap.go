@@ -15,6 +15,8 @@ const (
 	RoadmapMaximumTopics    = 10
 	RoadmapMinimumSubtopics = 3
 	RoadmapMaximumSubtopics = 5
+
+	RoadmapTopicProgressionTable = "roadmap_topic_progressions"
 )
 
 var (
@@ -83,14 +85,6 @@ func (e *Roadmap) CompletionPercentage() float64 {
 	return float64(e.TotalFinishedTopics) / float64(e.TotalTopics) * 100
 }
 
-func (e *Roadmap) AddFinishedTopic() {
-	e.TotalFinishedTopics++
-}
-
-func (e *Roadmap) RemoveFinishedTopic() {
-	e.TotalFinishedTopics--
-}
-
 func (e *Roadmap) SetCreator(acc *Account) {
 	e.Account = acc
 }
@@ -113,4 +107,12 @@ func (e *Roadmap) Delete() {
 
 func (e *Roadmap) UpdateChangelog() {
 	e.UpdatedAt = time.Now()
+}
+
+type RoadmapTopicProgression struct {
+	ID         int
+	AccountID  int
+	RoadmapID  int
+	TopicID    int
+	IsFinished bool
 }

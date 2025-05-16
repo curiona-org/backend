@@ -12,16 +12,41 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error) {
-	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadmapInput) (io.GetRoadmapOutput, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", input.Slug)))
 	defer span.End()
 
-	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
+	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, input.Slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
 			return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
 		}
 		return io.GetRoadmapOutput{}, err
+	}
+
+	if input.AccountID != 0 {
+		progressions, err := app.repository.Roadmap.GetTopicProgressions(ctx, input.AccountID, roadmap.ID)
+		if err != nil {
+			if errors.Is(err, domain.ErrRoadmapNotFound) {
+				return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
+			}
+			return io.GetRoadmapOutput{}, err
+		}
+
+		topicMap := make(map[int]bool)
+		for _, progression := range progressions {
+			topicMap[progression.TopicID] = progression.IsFinished
+		}
+
+		for i := range roadmap.Topics {
+			if isFinished, ok := topicMap[roadmap.Topics[i].ID]; ok {
+				roadmap.Topics[i].IsFinished = isFinished
+				if isFinished {
+					roadmap.TotalFinishedTopics++
+				}
+			}
+		}
+		roadmap.TotalTopics = len(roadmap.Topics)
 	}
 
 	output := io.GetRoadmapOutput{

@@ -18,12 +18,7 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 			return false, cerrors.ErrNotFound
 		}
 
-		if !topic.IsFinished {
-			return false, nil
-		}
-
 		topic.MarkAsIncomplete()
-		roadmap.RemoveFinishedTopic()
 		return true, nil
 	})
 	if err != nil {
