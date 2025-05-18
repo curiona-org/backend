@@ -37,7 +37,7 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 			Description:          roadmap.Description,
 			Slug:                 roadmap.Slug,
 			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 			CompletionPercentage: roadmap.CompletionPercentage(),
 			CreatedAt:            roadmap.CreatedAt,
 			UpdatedAt:            roadmap.UpdatedAt,

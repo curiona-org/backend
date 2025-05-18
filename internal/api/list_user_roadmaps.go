@@ -3,14 +3,20 @@ package api
 import (
 	"net/http"
 
-	"github.com/curiona-org/backend/internal/auth"
+	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/pkg/filter"
 )
 
 func (a *API) ListUserRoadmaps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	auth := auth.FromContext(ctx)
-	output, err := a.application.ListUserRoadmaps(ctx, auth.AccountID)
+	filters, err := filter.FromRequest(r)
+	if err != nil {
+		a.handleError(w, r, cerrors.ErrInvalidData.With(err))
+		return
+	}
+
+	output, err := a.application.ListUserRoadmaps(ctx, filters)
 	if err != nil {
 		a.handleError(w, r, err)
 		return

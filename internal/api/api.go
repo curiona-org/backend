@@ -151,6 +151,7 @@ func (a *API) SetupMiddlewares() {
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 	}))
 	a.router.Use(a.secureHeadersMiddleware)
+	a.router.Use(a.catchAuthorizationIfExists)
 	a.router.Use(middleware.RealIP)
 	a.router.Use(otelhttp.NewMiddleware("api", otelhttp.WithTracerProvider(a.tracerProvider)))
 	a.router.Use(a.requestIDMiddleware)
@@ -198,6 +199,35 @@ func (a *API) authMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctx := token.WithContext(reqCtx)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// catchAuthorizationIfExists is a middleware that checks if the request has an
+// Authorization header. If it does, it verifies the token and adds the
+// account ID to the request context. If the token is invalid, it should
+// ignore the error and continue to the next handler.
+// This is useful for public endpoints that need to know if the user is
+// authenticated or not, but don't require authentication to access.
+func (a *API) catchAuthorizationIfExists(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authorization := r.Header.Get("Authorization")
+		if authorization == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		bearer := strings.Split(authorization, " ")
+		if len(bearer) < 2 {
+			next.ServeHTTP(w, r)
+			return
+		}
+		t := bearer[1]
+		token, err := a.application.AuthVerify(r.Context(), t)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		ctx := token.WithContext(r.Context())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

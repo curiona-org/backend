@@ -3,8 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/curiona-org/backend/internal/app/io"
-	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/pkg/filter"
 )
@@ -18,11 +16,7 @@ func (a *API) ListBookmarkedRoadmaps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth := auth.FromContext(ctx)
-	output, err := a.application.ListBookmarkedRoadmaps(ctx, io.ListBookmarkedRoadmapsInput{
-		Params:    filters,
-		AccountID: auth.AccountID,
-	})
+	output, err := a.application.ListBookmarkedRoadmaps(ctx, filters)
 	if err != nil {
 		a.handleError(w, r, err)
 		return

@@ -16,6 +16,7 @@ const (
 	RoadmapMinimumSubtopics = 3
 	RoadmapMaximumSubtopics = 5
 
+	RoadmapProgressionTable      = "roadmap_progressions"
 	RoadmapTopicProgressionTable = "roadmap_topic_progressions"
 )
 
@@ -24,17 +25,17 @@ var (
 )
 
 type Roadmap struct {
-	ID                  int
-	AccountID           int
-	Title               string
-	Slug                string
-	Description         string
-	TotalTopics         int
-	TotalFinishedTopics int
+	ID          int
+	AccountID   int
+	Title       string
+	Slug        string
+	Description string
+	TotalTopics int
 
 	Account                *Account
 	Topics                 []*Topic
 	PersonalizationOptions *PersonalizationOptions
+	Progression            *RoadmapProgression
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -58,7 +59,6 @@ func (e *Roadmap) IsZero() bool {
 		e.Title == "" &&
 		e.Slug == "" &&
 		e.Description == "" &&
-		e.TotalFinishedTopics == 0 &&
 		e.TotalTopics == 0 &&
 		e.Account.IsZero() &&
 		len(e.Topics) == 0 &&
@@ -82,7 +82,7 @@ func (e *Roadmap) CompletionPercentage() float64 {
 		return 0
 	}
 
-	return float64(e.TotalFinishedTopics) / float64(e.TotalTopics) * 100
+	return float64(e.Progression.TotalFinishedTopics) / float64(e.TotalTopics) * 100
 }
 
 func (e *Roadmap) SetCreator(acc *Account) {
@@ -97,6 +97,10 @@ func (e *Roadmap) SetPersonalizationOptions(opts *PersonalizationOptions) {
 	e.PersonalizationOptions = opts
 }
 
+func (e *Roadmap) SetProgression(progression *RoadmapProgression) {
+	e.Progression = progression
+}
+
 func (e *Roadmap) IsDeleted() bool {
 	return !e.DeletedAt.IsZero()
 }
@@ -109,10 +113,23 @@ func (e *Roadmap) UpdateChangelog() {
 	e.UpdatedAt = time.Now()
 }
 
+type RoadmapProgression struct {
+	ID                  int
+	AccountID           int
+	RoadmapID           int
+	TotalFinishedTopics int
+
+	TopicProgressionMap map[int]bool
+}
+
 type RoadmapTopicProgression struct {
-	ID         int
-	AccountID  int
-	RoadmapID  int
 	TopicID    int
 	IsFinished bool
+}
+
+func (e *RoadmapProgression) IsZero() bool {
+	return e.ID == 0 &&
+		e.AccountID == 0 &&
+		e.RoadmapID == 0 &&
+		e.TotalFinishedTopics == 0
 }

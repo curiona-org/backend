@@ -15,7 +15,7 @@ type Application interface {
 	Statistics(ctx context.Context) (io.StatisticsOutput, error)
 
 	IsAdmin(ctx context.Context, accountID int) (bool, error)
-	GetUser(ctx context.Context, accountID int) (io.GetUserOutput, error)
+	GetUser(ctx context.Context, input io.GetUserInput) (io.GetUserOutput, error)
 	ListUsers(ctx context.Context, input io.ListUsersInput) (io.ListUsersOutput, error)
 	DeleteUser(ctx context.Context, accountID int) error
 	SuspendUser(ctx context.Context, accountID int) error

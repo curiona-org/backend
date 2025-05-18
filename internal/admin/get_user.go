@@ -7,14 +7,15 @@ import (
 	"github.com/curiona-org/backend/internal/admin/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/pkg/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
-func (app *adminApplication) GetUser(ctx context.Context, accountID int) (io.GetUserOutput, error) {
+func (app *adminApplication) GetUser(ctx context.Context, input io.GetUserInput) (io.GetUserOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*adminApplication.GetUser)")
 	defer span.End()
 
-	account, err := app.repository.Account.GetByID(ctx, accountID)
+	account, err := app.repository.Account.GetByID(ctx, input.AccountID)
 	if err != nil {
 		if errors.Is(err, domain.ErrAccountNotFound) {
 			return io.GetUserOutput{}, cerrors.ErrNotFound.Msg("account")
@@ -22,32 +23,15 @@ func (app *adminApplication) GetUser(ctx context.Context, accountID int) (io.Get
 		return io.GetUserOutput{}, err
 	}
 
-	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, accountID)
-	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
+	count, err := app.repository.Roadmap.CountAccountRoadmaps(ctx, input.AccountID)
+	if err != nil {
 		return io.GetUserOutput{}, err
 	}
 
-	roadmapsOutput := make([]io.GetUserOutputRoadmap, 0, len(roadmaps))
-	for _, roadmap := range roadmaps {
-		roadmapOutput := io.GetUserOutputRoadmap{
-			ID:                   roadmap.ID,
-			Title:                roadmap.Title,
-			Description:          roadmap.Description,
-			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
-			CompletionPercentage: roadmap.CompletionPercentage(),
-			CreatedAt:            roadmap.CreatedAt,
-			UpdatedAt:            roadmap.UpdatedAt,
-			PersonalizationOpts: io.GetUserOutputRoadmapPersonalizationOptions{
-				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
-				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
-				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
-				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
-			},
-		}
-
-		roadmapsOutput = append(roadmapsOutput, roadmapOutput)
+	filters := filter.New(input, count)
+	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, filters)
+	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
+		return io.GetUserOutput{}, err
 	}
 
 	output := io.GetUserOutput{
@@ -59,7 +43,33 @@ func (app *adminApplication) GetUser(ctx context.Context, accountID int) (io.Get
 		IsSuspended: account.IsSuspended,
 		IsAdmin:     account.IsAdmin,
 		JoinedAt:    account.CreatedAt,
-		Roadmaps:    roadmapsOutput,
+	}
+
+	output.Roadmaps = io.ListUserRoadmapOutput{
+		Total:       filters.Paginator.Total,
+		TotalPages:  filters.Paginator.TotalPages,
+		CurrentPage: filters.Paginator.CurrentPage,
+		Items:       make([]io.ListUserRoadmapItem, len(roadmaps)),
+	}
+
+	for idx, roadmap := range roadmaps {
+		output.Roadmaps.Items[idx] = io.ListUserRoadmapItem{
+			ID:                   roadmap.ID,
+			Title:                roadmap.Title,
+			Description:          roadmap.Description,
+			Slug:                 roadmap.Slug,
+			TotalTopics:          roadmap.TotalTopics,
+			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
+			CompletionPercentage: roadmap.CompletionPercentage(),
+			CreatedAt:            roadmap.CreatedAt,
+			UpdatedAt:            roadmap.UpdatedAt,
+			PersonalizationOpts: io.ListUserRoadmapPersonalizationOptions{
+				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
+				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
+				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
+				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
+			},
+		}
 	}
 
 	return output, nil

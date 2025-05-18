@@ -25,28 +25,16 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 	}
 
 	if input.AccountID != 0 {
-		progressions, err := app.repository.Roadmap.GetTopicProgressions(ctx, input.AccountID, roadmap.ID)
-		if err != nil {
-			if errors.Is(err, domain.ErrRoadmapNotFound) {
-				return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
-			}
-			return io.GetRoadmapOutput{}, err
-		}
-
-		topicMap := make(map[int]bool)
-		for _, progression := range progressions {
-			topicMap[progression.TopicID] = progression.IsFinished
-		}
-
-		for i := range roadmap.Topics {
-			if isFinished, ok := topicMap[roadmap.Topics[i].ID]; ok {
-				roadmap.Topics[i].IsFinished = isFinished
-				if isFinished {
-					roadmap.TotalFinishedTopics++
+		progression, err := app.repository.Roadmap.GetRoadmapProgression(ctx, input.AccountID, roadmap.ID)
+		if err == nil {
+			for i := range roadmap.Topics {
+				if isFinished, ok := progression.TopicProgressionMap[roadmap.Topics[i].ID]; ok {
+					roadmap.Topics[i].IsFinished = isFinished
 				}
 			}
 		}
-		roadmap.TotalTopics = len(roadmap.Topics)
+
+		roadmap.SetProgression(&progression)
 	}
 
 	output := io.GetRoadmapOutput{
@@ -55,7 +43,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 		Slug:                 roadmap.Slug,
 		Description:          roadmap.Description,
 		TotalTopics:          roadmap.TotalTopics,
-		TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+		TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 		CompletionPercentage: roadmap.CompletionPercentage(),
 		CreatedAt:            roadmap.CreatedAt,
 		UpdatedAt:            roadmap.UpdatedAt,

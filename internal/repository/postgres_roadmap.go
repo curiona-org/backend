@@ -37,8 +37,14 @@ func NewPostgresRoadmapRepository(db database.Connection, cache *cache.Connectio
 	}
 }
 
-func (r *RoadmapRepository) roadmapColumns() []any {
-	return []any{
+type roadmapColumnsOptions struct {
+	includeProgression           bool
+	includePersonalizationOption bool
+	includeAccount               bool
+}
+
+func (r *RoadmapRepository) roadmapColumns(opt roadmapColumnsOptions) []any {
+	columns := []any{
 		psql.Quote(domain.RoadmapTable, "id"),
 		psql.Quote(domain.RoadmapTable, "account_id"),
 		psql.Quote(domain.RoadmapTable, "title"),
@@ -49,42 +55,50 @@ func (r *RoadmapRepository) roadmapColumns() []any {
 		psql.Quote(domain.RoadmapTable, "updated_at"),
 		psql.Quote(domain.RoadmapTable, "deleted_at"),
 	}
-}
 
-func (r *RoadmapRepository) roadmapWithOptionsColumns() []any {
-	return append(r.roadmapColumns(),
-		psql.Quote(domain.PersonalizationOptionsTable, "id"),
-		psql.Quote(domain.PersonalizationOptionsTable, "account_id"),
-		psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
-		psql.Quote(domain.PersonalizationOptionsTable, "daily_time_availability"),
-		psql.Quote(domain.PersonalizationOptionsTable, "total_duration"),
-		psql.Quote(domain.PersonalizationOptionsTable, "skill_level"),
-		psql.Quote(domain.PersonalizationOptionsTable, "additional_info"),
-		psql.Quote(domain.PersonalizationOptionsTable, "created_at"),
-		psql.Quote(domain.PersonalizationOptionsTable, "updated_at"),
-	)
-}
+	if opt.includeProgression {
+		columns = append(columns,
+			psql.F("COALESCE", psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics"), 0))
+	}
 
-func (r *RoadmapRepository) roadmapWithOptionsAndAccountColumns() []any {
-	return append(r.roadmapWithOptionsColumns(),
-		psql.Quote(domain.AccountTable, "id"),
-		psql.Quote(domain.AccountTable, "method"),
-		psql.Quote(domain.AccountTable, "email"),
-		psql.Quote(domain.AccountTable, "is_suspended"),
-		psql.Quote(domain.AccountTable, "is_admin"),
-		psql.Quote(domain.AccountTable, "created_at"),
-		psql.Quote(domain.AccountTable, "updated_at"),
-		psql.Quote(domain.ProfileTable, "id"),
-		psql.Quote(domain.ProfileTable, "name"),
-		psql.Quote(domain.ProfileTable, "avatar"),
-		psql.Quote(domain.ProfileTable, "created_at"),
-		psql.Quote(domain.ProfileTable, "updated_at"),
-	)
+	if opt.includePersonalizationOption {
+		columns = append(columns,
+			psql.Quote(domain.PersonalizationOptionsTable, "id"),
+			psql.Quote(domain.PersonalizationOptionsTable, "account_id"),
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.PersonalizationOptionsTable, "daily_time_availability"),
+			psql.Quote(domain.PersonalizationOptionsTable, "total_duration"),
+			psql.Quote(domain.PersonalizationOptionsTable, "skill_level"),
+			psql.Quote(domain.PersonalizationOptionsTable, "additional_info"),
+			psql.Quote(domain.PersonalizationOptionsTable, "created_at"),
+			psql.Quote(domain.PersonalizationOptionsTable, "updated_at"),
+		)
+	}
+
+	if opt.includeAccount {
+		columns = append(columns,
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.AccountTable, "method"),
+			psql.Quote(domain.AccountTable, "email"),
+			psql.Quote(domain.AccountTable, "is_suspended"),
+			psql.Quote(domain.AccountTable, "is_admin"),
+			psql.Quote(domain.AccountTable, "created_at"),
+			psql.Quote(domain.AccountTable, "updated_at"),
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.ProfileTable, "name"),
+			psql.Quote(domain.ProfileTable, "avatar"),
+			psql.Quote(domain.ProfileTable, "created_at"),
+			psql.Quote(domain.ProfileTable, "updated_at"),
+		)
+	}
+
+	return columns
 }
 
 type roadmapFetchConfig struct {
 	query                        string
 	args                         []any
+	includeProgression           bool
 	includePersonalizationOption bool
 	includeAccount               bool
 }
@@ -104,6 +118,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 	var roadmaps []domain.Roadmap
 	for rows.Next() {
 		var roadmap domain.Roadmap
+		var roadmapProgression domain.RoadmapProgression
 		var roadmapDeletedAt pgtype.Timestamp
 		var personalizationOptions domain.PersonalizationOptions
 		var account domain.Account
@@ -118,6 +133,10 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 			&roadmapDeletedAt,
+		}
+
+		if cfg.includeProgression {
+			dest = append(dest, &roadmapProgression.TotalFinishedTopics)
 		}
 
 		if cfg.includePersonalizationOption {
@@ -160,6 +179,10 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			roadmap.DeletedAt = roadmapDeletedAt.Time
 		}
 
+		if cfg.includeProgression {
+			roadmap.SetProgression(&roadmapProgression)
+		}
+
 		if cfg.includePersonalizationOption {
 			roadmap.SetPersonalizationOptions(&personalizationOptions)
 		}
@@ -184,8 +207,15 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 	var roadmap domain.Roadmap
 
 	query, args := psql.Select(
-		sm.Columns(r.roadmapWithOptionsAndAccountColumns()...),
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
 		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
 			psql.Quote(domain.RoadmapTable, "id")),
@@ -203,6 +233,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 	roadmaps, err := r.fetch(ctx, roadmapFetchConfig{
 		query:                        query,
 		args:                         args,
+		includeProgression:           true,
 		includePersonalizationOption: true,
 		includeAccount:               true,
 	})
@@ -229,8 +260,15 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 	var roadmap domain.Roadmap
 
 	query, args := psql.Select(
-		sm.Columns(r.roadmapWithOptionsAndAccountColumns()...),
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
 		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
 			psql.Quote(domain.RoadmapTable, "id")),
@@ -270,37 +308,13 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 	return roadmap, nil
 }
 
-func (r *RoadmapRepository) ListByAccountID(ctx context.Context, accountID int) ([]domain.Roadmap, error) {
-	query, args := psql.Select(
-		sm.Columns(r.roadmapWithOptionsColumns()...),
-		sm.From(domain.RoadmapTable),
-		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
-			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
-			psql.Quote(domain.RoadmapTable, "id")),
-		sm.Where(psql.And(
-			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)),
-			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
-	).MustBuild(ctx)
-
-	roadmaps, err := r.fetch(ctx, roadmapFetchConfig{
-		query:                        query,
-		args:                         args,
-		includePersonalizationOption: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(roadmaps) == 0 {
-		return nil, domain.ErrRoadmapNotFound
-	}
-
-	return roadmaps, nil
-}
-
-func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
+func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
 	selectQuery := psql.Select(
-		sm.Columns(r.roadmapWithOptionsAndAccountColumns()...),
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
 		sm.From(domain.RoadmapTable),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
@@ -312,6 +326,93 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 			psql.Quote(domain.ProfileTable, "id"),
 			psql.Quote(domain.RoadmapTable, "account_id")),
 	)
+
+	if filters.AccountID != 0 {
+		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.And(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			),
+		))
+	} else {
+		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		)
+	}
+
+	if filters.Search != "" {
+		selectQuery.Apply(
+			sm.Where(psql.And(
+				psql.Or(
+					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
+				),
+				psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
+			))
+	} else {
+		selectQuery.Apply(sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+		)
+	}
+
+	if filters.OrderBy == filter.OrderByOldest {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
+	} else {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc())
+	}
+
+	selectQuery.Apply(
+		sm.Offset(psql.Arg(filters.Paginator.Skip)),
+		sm.Limit(psql.Arg(filters.Paginator.Limit)),
+	)
+
+	query, args := selectQuery.MustBuild(ctx)
+
+	return r.fetch(ctx, roadmapFetchConfig{
+		query:                        query,
+		args:                         args,
+		includeProgression:           true,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+}
+
+func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
+	selectQuery := psql.Select(
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+	)
+
+	if filters.AccountID != 0 {
+		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.And(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			),
+		))
+	} else {
+		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		)
+	}
 
 	if filters.Search != "" {
 		selectQuery.Apply(
@@ -343,51 +444,71 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 	return r.fetch(ctx, roadmapFetchConfig{
 		query:                        query,
 		args:                         args,
+		includeProgression:           true,
 		includePersonalizationOption: true,
 		includeAccount:               true,
 	})
 }
 
-func (r *RoadmapRepository) GetTopicProgressions(ctx context.Context, accountID, roadmapID int) ([]domain.RoadmapTopicProgression, error) {
+func (r *RoadmapRepository) GetRoadmapProgression(ctx context.Context, accountID, roadmapID int) (domain.RoadmapProgression, error) {
 	query, args := psql.Select(
-		sm.Columns("id", "roadmap_id", "topic_id", "account_id", "is_finished"),
-		sm.From(domain.RoadmapTopicProgressionTable),
+		sm.Columns("id", "account_id", "roadmap_id", "total_finished_topics"),
+		sm.From(domain.RoadmapProgressionTable),
 		sm.Where(psql.And(
-			psql.Quote(domain.RoadmapTopicProgressionTable, "account_id").EQ(psql.Arg(accountID)),
-			psql.Quote(domain.RoadmapTopicProgressionTable, "roadmap_id").EQ(psql.Arg(roadmapID)),
+			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Arg(roadmapID)),
 		)),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetTopicProgressions)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetRoadmapProgression)", query)
 	defer span.End()
 
-	rows, err := r.db.Query(ctx, query, args...)
+	var roadmapProgression domain.RoadmapProgression
+	err := r.db.QueryRow(ctx, query, args...).Scan(
+		&roadmapProgression.ID,
+		&roadmapProgression.AccountID,
+		&roadmapProgression.RoadmapID,
+		&roadmapProgression.TotalFinishedTopics,
+	)
 	if err != nil {
-		return nil, err
+		span.SetStatus(codes.Error, "failed to fetch roadmap progression")
+		span.RecordError(err)
+		return domain.RoadmapProgression{}, err
 	}
-	defer rows.Close()
 
-	var progressions []domain.RoadmapTopicProgression
-	for rows.Next() {
-		var progression domain.RoadmapTopicProgression
-		err = rows.Scan(
-			&progression.ID,
-			&progression.RoadmapID,
-			&progression.TopicID,
-			&progression.AccountID,
-			&progression.IsFinished,
+	// Fetch the topics progression
+	topicsProgressionQuery, topicsProgressionArgs := psql.Select(
+		sm.Columns("topic_id", "is_finished"),
+		sm.From(domain.RoadmapTopicProgressionTable),
+		sm.Where(psql.Quote("progression_id").EQ(psql.Arg(roadmapProgression.ID))),
+	).MustBuild(ctx)
+
+	topicsProgressionRows, err := r.db.Query(ctx, topicsProgressionQuery, topicsProgressionArgs...)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch topics progression")
+		span.RecordError(err)
+		return domain.RoadmapProgression{}, err
+	}
+	defer topicsProgressionRows.Close()
+
+	roadmapProgression.TopicProgressionMap = make(map[int]bool)
+
+	for topicsProgressionRows.Next() {
+		var topicProgression domain.RoadmapTopicProgression
+		err = topicsProgressionRows.Scan(
+			&topicProgression.TopicID,
+			&topicProgression.IsFinished,
 		)
 		if err != nil {
-			return nil, err
+			span.SetStatus(codes.Error, "failed to scan topics progression")
+			span.RecordError(err)
+			return domain.RoadmapProgression{}, err
 		}
-		progressions = append(progressions, progression)
+
+		roadmapProgression.TopicProgressionMap[topicProgression.TopicID] = topicProgression.IsFinished
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return progressions, nil
+	return roadmapProgression, nil
 }
 
 func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
@@ -404,6 +525,30 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to count roadmaps")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountAccountRoadmaps(ctx context.Context, accountID int) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountRoadmaps)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count user roadmaps")
 		span.RecordError(err)
 		return 0, err
 	}
@@ -431,6 +576,10 @@ func (r *RoadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (do
 			return err
 		}
 
+		if err = r.saveInitialProgression(traceCtx, tx, input.AccountID, roadmap.ID); err != nil {
+			return err
+		}
+
 		if err = r.saveTopicsAndSubtopics(traceCtx, tx, roadmap.ID, input.Topics); err != nil {
 			return err
 		}
@@ -446,6 +595,23 @@ func (r *RoadmapRepository) Save(ctx context.Context, input *domain.Roadmap) (do
 	}
 
 	return roadmap, nil
+}
+
+func (r *RoadmapRepository) saveInitialProgression(ctx context.Context, tx pgx.Tx, accountID, roadmapID int) error {
+	query, args := psql.Insert(
+		im.Into(domain.RoadmapProgressionTable, "account_id", "roadmap_id", "total_finished_topics"),
+		im.Values(psql.Arg(accountID, roadmapID, 0)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithInsertQuery(ctx, r.tracer, "(*RoadmapRepository.saveInitialProgression)", query)
+	defer span.End()
+
+	_, err := tx.Exec(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *RoadmapRepository) saveTopicsAndSubtopics(ctx context.Context, tx pgx.Tx, roadmapID int, topics []*domain.Topic) error {
@@ -573,7 +739,11 @@ func (r *RoadmapRepository) Update(ctx context.Context, slug string, updateFn fu
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		fetchRoadmapQuery, fetchRoadmapArgs := psql.Select(
-			sm.Columns(r.roadmapColumns()...),
+			sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+				includeProgression:           false,
+				includePersonalizationOption: false,
+				includeAccount:               false,
+			})...),
 			sm.From(domain.RoadmapTable),
 			sm.Where(psql.And(
 				psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug)),
@@ -642,7 +812,11 @@ func (r *RoadmapRepository) UpdateByID(ctx context.Context, id int, updateFn fun
 
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		fetchRoadmapQuery, fetchRoadmapArgs := psql.Select(
-			sm.Columns(r.roadmapColumns()...),
+			sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+				includeProgression:           false,
+				includePersonalizationOption: false,
+				includeAccount:               false,
+			})...),
 			sm.From(domain.RoadmapTable),
 			sm.Where(psql.And(
 				psql.Quote(domain.RoadmapTable, "id").EQ(psql.Arg(id)),

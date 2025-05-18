@@ -17,8 +17,8 @@ func (app *application) ListBookmarkedRoadmaps(ctx context.Context, input io.Lis
 		return io.ListBookmarkedRoadmapsOutput{}, err
 	}
 
-	filters := filter.New(input.Params, count)
-	roadmaps, err := app.repository.Bookmark.ListBookmarkedRoadmaps(ctx, input.AccountID, filters)
+	filters := filter.New(input, count)
+	roadmaps, err := app.repository.Bookmark.ListBookmarkedRoadmaps(ctx, filters)
 	if err != nil {
 		return io.ListBookmarkedRoadmapsOutput{}, err
 	}
@@ -37,7 +37,7 @@ func (app *application) ListBookmarkedRoadmaps(ctx context.Context, input io.Lis
 			Description:          roadmap.Description,
 			Slug:                 roadmap.Slug,
 			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 			CompletionPercentage: roadmap.CompletionPercentage(),
 			CreatedAt:            roadmap.CreatedAt,
 			UpdatedAt:            roadmap.UpdatedAt,
