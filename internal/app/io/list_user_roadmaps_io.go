@@ -3,7 +3,7 @@ package io
 import (
 	"time"
 
-	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 

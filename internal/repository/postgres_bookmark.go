@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
-	"github.com/curiona-org/backend/pkg/filter"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stephenafamo/bob/dialect/psql"

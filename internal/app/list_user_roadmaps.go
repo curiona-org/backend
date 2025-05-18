@@ -6,7 +6,7 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/domain"
-	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 

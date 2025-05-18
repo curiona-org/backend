@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/admin/io"
-	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 

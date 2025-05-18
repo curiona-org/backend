@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/curiona-org/backend/internal/cerrors"
-	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/internal/filter"
 )
 
 func (a *API) ListBookmarkedRoadmaps(w http.ResponseWriter, r *http.Request) {

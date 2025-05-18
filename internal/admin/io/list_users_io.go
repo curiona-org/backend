@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/auth"
-	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/internal/filter"
 )
 
 type ListUsersInput = filter.Params
