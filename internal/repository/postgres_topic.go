@@ -199,7 +199,11 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 		topic := topics[0]
 
 		log.Debug().Msgf("Topic found: %v", topic)
-		topicProgress, _ := r.fetchTopicProgressionByID(ctx, accountID, topic.ID)
+		topicProgress, err := r.fetchTopicProgressionByID(ctx, accountID, topic.ID)
+		if err != nil {
+			log.Err(err).Msg("failed to fetch topic progression")
+		}
+
 		if !topicProgress.IsZero() {
 			topic.IsFinished = topicProgress.IsFinished
 			topic.FinishedAt = topicProgress.FinishedAt
