@@ -7,6 +7,7 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/interval"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -15,6 +16,8 @@ import (
 func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadmapInput) (io.GetRoadmapOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", input.Slug)))
 	defer span.End()
+
+	log := logger.FromContext(ctx)
 
 	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, input.Slug)
 	if err != nil {
@@ -28,25 +31,35 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 		progression, err := app.repository.Roadmap.GetRoadmapProgression(ctx, input.AccountID, roadmap.ID)
 		if err == nil {
 			for i := range roadmap.Topics {
-				if isFinished, ok := progression.TopicProgressionMap[roadmap.Topics[i].ID]; ok {
-					roadmap.Topics[i].IsFinished = isFinished
+				if topicProgress, ok := progression.TopicProgressionMap[roadmap.Topics[i].ID]; ok {
+					roadmap.Topics[i].IsFinished = topicProgress.IsFinished
+					roadmap.Topics[i].FinishedAt = topicProgress.FinishedAt
 				}
 			}
+		} else {
+			log.Err(err).Msg("failed to get roadmap progression")
 		}
 
 		roadmap.SetProgression(&progression)
 	}
 
 	output := io.GetRoadmapOutput{
-		ID:                   roadmap.ID,
-		Title:                roadmap.Title,
-		Slug:                 roadmap.Slug,
-		Description:          roadmap.Description,
-		TotalTopics:          roadmap.TotalTopics,
-		TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
-		CompletionPercentage: roadmap.CompletionPercentage(),
-		CreatedAt:            roadmap.CreatedAt,
-		UpdatedAt:            roadmap.UpdatedAt,
+		ID:          roadmap.ID,
+		Title:       roadmap.Title,
+		Slug:        roadmap.Slug,
+		Description: roadmap.Description,
+		TotalTopics: roadmap.TotalTopics,
+		CreatedAt:   roadmap.CreatedAt,
+		UpdatedAt:   roadmap.UpdatedAt,
+		Progression: io.GetRoadmapOutputProgression{
+			TotalTopics:          roadmap.Progression.TotalTopics,
+			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
+			IsFinished:           roadmap.Progression.IsFinished,
+			FinishedAt:           roadmap.Progression.FinishedAt,
+			CompletionPercentage: roadmap.Progression.CompletionPercentage(),
+			CreatedAt:            roadmap.Progression.CreatedAt,
+			UpdatedAt:            roadmap.Progression.UpdatedAt,
+		},
 		Creator: io.GetRoadmapOutputCreator{
 			ID:     roadmap.Account.ID,
 			Name:   roadmap.Account.Profile.Name,
@@ -72,6 +85,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 			Description:         topic.Description,
 			Order:               topic.Order,
 			IsFinished:          topic.IsFinished,
+			FinishedAt:          topic.FinishedAt,
 			ExternalSearchQuery: topic.ExternalSearchQuery,
 			CreatedAt:           topic.CreatedAt,
 			UpdatedAt:           topic.UpdatedAt,

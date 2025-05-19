@@ -26,6 +26,7 @@ type Topic struct {
 	Description         string
 	Order               int
 	IsFinished          bool
+	FinishedAt          time.Time
 	ExternalSearchQuery string
 
 	Subtopics []*Topic
@@ -154,11 +155,13 @@ func (e *Topic) Update(title, description, slug string) {
 
 func (e *Topic) MarkAsFinished() {
 	e.IsFinished = true
+	e.FinishedAt = time.Now()
 	e.UpdateChangelog()
 }
 
 func (e *Topic) MarkAsIncomplete() {
 	e.IsFinished = false
+	e.FinishedAt = time.Time{}
 	e.UpdateChangelog()
 }
 

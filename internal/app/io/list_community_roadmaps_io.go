@@ -12,17 +12,26 @@ type ListCommunityRoadmapsInput = filter.Params
 type ListCommunityRoadmapsOutput = filter.FilteredList[ListCommunityRoadmapsOutputItem]
 
 type ListCommunityRoadmapsOutputItem struct {
-	ID                   int                                                   `json:"id"`
-	Title                string                                                `json:"title"`
-	Slug                 string                                                `json:"slug"`
-	Description          string                                                `json:"description"`
-	TotalTopics          int                                                   `json:"total_topics"`
-	TotalFinishedTopics  int                                                   `json:"finished_topics"`
-	CompletionPercentage float64                                               `json:"completion_percentage"`
-	CreatedAt            time.Time                                             `json:"created_at"`
-	UpdatedAt            time.Time                                             `json:"updated_at"`
-	PersonalizationOpts  ListCommunityRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`
-	Creator              ListCommunityRoadmapsOutputItemUser                   `json:"creator"`
+	ID                  int                                                   `json:"id"`
+	Title               string                                                `json:"title"`
+	Slug                string                                                `json:"slug"`
+	Description         string                                                `json:"description"`
+	TotalTopics         int                                                   `json:"total_topics"`
+	CreatedAt           time.Time                                             `json:"created_at"`
+	UpdatedAt           time.Time                                             `json:"updated_at"`
+	Progression         ListCommunityRoadmapsOutputItemProgression            `json:"progression"`
+	PersonalizationOpts ListCommunityRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`
+	Creator             ListCommunityRoadmapsOutputItemCreator                `json:"creator"`
+}
+
+type ListCommunityRoadmapsOutputItemProgression struct {
+	TotalTopics          int       `json:"total_topics"`
+	TotalFinishedTopics  int       `json:"finished_topics"`
+	CompletionPercentage float64   `json:"completion_percentage"`
+	IsFinished           bool      `json:"is_finished"`
+	FinishedAt           time.Time `json:"finished_at"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 type ListCommunityRoadmapsOutputItemPersonalizationOptions struct {
@@ -32,7 +41,7 @@ type ListCommunityRoadmapsOutputItemPersonalizationOptions struct {
 	AdditionalInfo        string            `json:"additional_info"`
 }
 
-type ListCommunityRoadmapsOutputItemUser struct {
+type ListCommunityRoadmapsOutputItemCreator struct {
 	ID          int         `json:"id"`
 	Method      auth.Method `json:"method"`
 	Email       string      `json:"email"`

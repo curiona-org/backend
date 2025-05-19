@@ -47,7 +47,15 @@ func (r *BookmarkRepository) roadmapColumns(opt roadmapColumnsOptions) []any {
 
 	if opt.includeProgression {
 		columns = append(columns,
-			psql.F("COALESCE", psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics"), 0))
+			psql.Quote(domain.RoadmapProgressionTable, "id"),
+			psql.Quote(domain.RoadmapProgressionTable, "account_id"),
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapProgressionTable, "total_topics"),
+			psql.F("COALESCE", psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics"), 0),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished"),
+			psql.Quote(domain.RoadmapProgressionTable, "finished_at"),
+			psql.Quote(domain.RoadmapProgressionTable, "created_at"),
+			psql.Quote(domain.RoadmapProgressionTable, "updated_at"))
 	}
 
 	if opt.includePersonalizationOption {
@@ -83,44 +91,8 @@ func (r *BookmarkRepository) roadmapColumns(opt roadmapColumnsOptions) []any {
 
 	return columns
 }
-
-func (r *BookmarkRepository) fetch(ctx context.Context, query string, args ...any) ([]domain.Bookmark, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*BookmarkRepository.fetch)", query)
-	defer span.End()
-
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		span.SetStatus(codes.Error, "failed to fetch bookmarks")
-		span.RecordError(err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	var bookmarks []domain.Bookmark
-	for rows.Next() {
-		var bookmark domain.Bookmark
-		err = rows.Scan(
-			&bookmark.AccountID,
-			&bookmark.RoadmapID,
-			&bookmark.CreatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		bookmarks = append(bookmarks, bookmark)
-	}
-
-	if err = rows.Err(); err != nil {
-		span.SetStatus(codes.Error, "failed to fetch bookmarks")
-		span.RecordError(err)
-		return nil, err
-	}
-
-	return bookmarks, nil
-}
-
 func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchConfig) ([]domain.Roadmap, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*BookmarkRepository.fetch)", cfg.query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*BookmarkRepository.fetchRoadmap)", cfg.query)
 	defer span.End()
 
 	rows, err := r.db.Query(ctx, cfg.query, cfg.args...)
@@ -134,11 +106,7 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 	var roadmaps []domain.Roadmap
 	for rows.Next() {
 		var roadmap domain.Roadmap
-		var roadmapProgression domain.RoadmapProgression
 		var roadmapDeletedAt pgtype.Timestamp
-		var personalizationOptions domain.PersonalizationOptions
-		var account domain.Account
-		var profile domain.Profile
 		dest := []any{
 			&roadmap.ID,
 			&roadmap.AccountID,
@@ -151,10 +119,25 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 			&roadmapDeletedAt,
 		}
 
+		var roadmapProgressionID, roadmapProgressionAccountID, roadmapProgressionRoadmapID, roadmapProgressionTotalTopics, roadmapProgressionTotalFinishedTopics pgtype.Int4
+		var roadmapProgressionIsFinished pgtype.Bool
+		var roadmapProgressionCreatedAt, roadmapProgressionUpdatedAt pgtype.Timestamp
+		var roadmapProgressionFinishedAt pgtype.Timestamp
 		if cfg.includeProgression {
-			dest = append(dest, &roadmapProgression.TotalFinishedTopics)
+			dest = append(dest,
+				&roadmapProgressionID,
+				&roadmapProgressionAccountID,
+				&roadmapProgressionRoadmapID,
+				&roadmapProgressionTotalTopics,
+				&roadmapProgressionTotalFinishedTopics,
+				&roadmapProgressionIsFinished,
+				&roadmapProgressionFinishedAt,
+				&roadmapProgressionCreatedAt,
+				&roadmapProgressionUpdatedAt,
+			)
 		}
 
+		var personalizationOptions domain.PersonalizationOptions
 		if cfg.includePersonalizationOption {
 			dest = append(dest,
 				&personalizationOptions.ID,
@@ -169,6 +152,8 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 			)
 		}
 
+		var account domain.Account
+		var profile domain.Profile
 		if cfg.includeAccount {
 			dest = append(dest,
 				&account.ID,
@@ -195,8 +180,21 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 			roadmap.DeletedAt = roadmapDeletedAt.Time
 		}
 
-		if cfg.includeProgression {
-			roadmap.SetProgression(&roadmapProgression)
+		if cfg.includeProgression && roadmapProgressionID.Valid {
+			roadmapProgression := new(domain.RoadmapProgression)
+			if roadmapProgressionFinishedAt.Valid {
+				roadmapProgression.FinishedAt = roadmapProgressionFinishedAt.Time
+			}
+
+			roadmapProgression.ID = int(roadmapProgressionID.Int32)
+			roadmapProgression.AccountID = int(roadmapProgressionAccountID.Int32)
+			roadmapProgression.RoadmapID = int(roadmapProgressionRoadmapID.Int32)
+			roadmapProgression.TotalTopics = int(roadmapProgressionTotalTopics.Int32)
+			roadmapProgression.TotalFinishedTopics = int(roadmapProgressionTotalFinishedTopics.Int32)
+			roadmapProgression.IsFinished = roadmapProgressionIsFinished.Bool
+			roadmapProgression.CreatedAt = roadmapProgressionCreatedAt.Time
+			roadmapProgression.UpdatedAt = roadmapProgressionUpdatedAt.Time
+			roadmap.SetProgression(roadmapProgression)
 		}
 
 		if cfg.includePersonalizationOption {

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
@@ -16,6 +17,11 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 	err := app.repository.Topic.UpdateTopicStatus(ctx, input.AccountID, input.Slug, func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error) {
 		if topic.AccountID != input.AccountID {
 			return false, cerrors.ErrNotFound
+		}
+
+		if !topic.IsFinished {
+			fmt.Println("Topic is already incomplete")
+			return false, nil
 		}
 
 		topic.MarkAsIncomplete()
