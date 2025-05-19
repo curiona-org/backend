@@ -6,35 +6,40 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
-func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io.ListUserRoadmapsOutput, error) {
+func (app *application) ListUserRoadmaps(ctx context.Context, input io.ListUserRoadmapsInput) (io.ListUserRoadmapsOutput, error) {
 	ctx, span := app.tracer.Start(ctx, "(*application.ListUserRoadmaps)")
 	defer span.End()
 
-	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, accountID)
+	count, err := app.repository.Roadmap.CountAccountRoadmaps(ctx, input.AccountID)
+	if err != nil {
+		return io.ListUserRoadmapsOutput{}, err
+	}
+
+	filters := filter.New(input, count)
+	roadmaps, err := app.repository.Roadmap.ListByAccountID(ctx, filters)
 	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
 		return io.ListUserRoadmapsOutput{}, err
 	}
 
 	output := io.ListUserRoadmapsOutput{
-		Total: len(roadmaps),
-		Items: make([]io.ListUserRoadmapsOutputRoadmap, 0, len(roadmaps)),
+		Total:       filters.Paginator.Total,
+		TotalPages:  filters.Paginator.TotalPages,
+		CurrentPage: filters.Paginator.CurrentPage,
+		Items:       make([]io.ListUserRoadmapsOutputItem, len(roadmaps)),
 	}
 
-	if len(roadmaps) == 0 {
-		return output, nil
-	}
-
-	for _, roadmap := range roadmaps {
-		outputRoadmap := io.ListUserRoadmapsOutputRoadmap{
+	for idx, roadmap := range roadmaps {
+		output.Items[idx] = io.ListUserRoadmapsOutputItem{
 			ID:                   roadmap.ID,
 			Title:                roadmap.Title,
 			Description:          roadmap.Description,
 			Slug:                 roadmap.Slug,
 			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 			CompletionPercentage: roadmap.CompletionPercentage(),
 			CreatedAt:            roadmap.CreatedAt,
 			UpdatedAt:            roadmap.UpdatedAt,
@@ -45,8 +50,6 @@ func (app *application) ListUserRoadmaps(ctx context.Context, accountID int) (io
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},
 		}
-
-		output.Items = append(output.Items, outputRoadmap)
 	}
 
 	return output, nil

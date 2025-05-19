@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/curiona-org/backend/internal/auth"
 )
 
 // FilteredList is a generic structure that represents a list of items with pagination.
@@ -16,6 +18,7 @@ type FilteredList[T any] struct {
 }
 
 type Filters struct {
+	AccountID int
 	Search    string
 	OrderBy   OrderBy
 	Paginator Paginator
@@ -24,6 +27,7 @@ type Filters struct {
 func New(params Params, total uint64) Filters {
 	paginator := NewOffsetPaginator(params.CurrentPage, params.Limit, total)
 	return Filters{
+		AccountID: params.AccountID,
 		Search:    params.Search,
 		OrderBy:   params.OrderBy,
 		Paginator: paginator,
@@ -31,6 +35,7 @@ func New(params Params, total uint64) Filters {
 }
 
 type Params struct {
+	AccountID   int
 	Search      string
 	OrderBy     OrderBy
 	CurrentPage uint64
@@ -50,8 +55,15 @@ const (
 )
 
 func FromRequest(r *http.Request) (Params, error) {
+	ctx := r.Context()
 	search := strings.TrimSpace(r.FormValue(QueryKeySearch))
 	order := OrderBy(strings.TrimSpace(r.FormValue(QueryKeyOrder)))
+
+	var accountID int
+	auth := auth.FromContext(ctx)
+	if auth != nil {
+		accountID = auth.AccountID
+	}
 
 	page := uint64(1)
 	if v := strings.TrimSpace(r.FormValue(QueryKeyPage)); v != "" {
@@ -77,6 +89,7 @@ func FromRequest(r *http.Request) (Params, error) {
 	}
 
 	params := Params{
+		AccountID:   accountID,
 		Search:      search,
 		OrderBy:     order,
 		CurrentPage: page,

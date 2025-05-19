@@ -7,7 +7,7 @@ import (
 	"github.com/curiona-org/backend/internal/filter"
 )
 
-func (a *API) AdminListUsers(w http.ResponseWriter, r *http.Request) {
+func (a *API) ListBookmarkedRoadmaps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	filters, err := filter.FromRequest(r)
@@ -16,11 +16,11 @@ func (a *API) AdminListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := a.adminApp.ListUsers(ctx, filters)
+	output, err := a.application.ListBookmarkedRoadmaps(ctx, filters)
 	if err != nil {
 		a.handleError(w, r, err)
 		return
 	}
 
-	a.render.OK(w, "List Users.", output)
+	a.render.OK(w, "List Bookmarked Roadmaps.", output)
 }

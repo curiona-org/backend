@@ -1,37 +1,37 @@
-package admin
+package app
 
 import (
 	"context"
 
-	"github.com/curiona-org/backend/internal/admin/io"
+	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
-func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoadmapsInput) (io.ListRoadmapsOutput, error) {
-	ctx, span := app.tracer.Start(ctx, "(*adminApplication.ListUsers)")
+func (app *application) ListBookmarkedRoadmaps(ctx context.Context, input io.ListBookmarkedRoadmapsInput) (io.ListBookmarkedRoadmapsOutput, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.ListBookmarkedRoadmaps)")
 	defer span.End()
 
-	totalItems, err := app.repository.Roadmap.Count(ctx)
+	count, err := app.repository.Bookmark.Count(ctx, input.AccountID)
 	if err != nil {
-		return io.ListRoadmapsOutput{}, err
+		return io.ListBookmarkedRoadmapsOutput{}, err
 	}
 
-	filters := filter.New(input, totalItems)
-	roadmaps, err := app.repository.Roadmap.ListAll(ctx, filters)
+	filters := filter.New(input, count)
+	roadmaps, err := app.repository.Bookmark.ListBookmarkedRoadmaps(ctx, filters)
 	if err != nil {
-		return io.ListRoadmapsOutput{}, err
+		return io.ListBookmarkedRoadmapsOutput{}, err
 	}
 
-	output := io.ListRoadmapsOutput{
+	output := io.ListBookmarkedRoadmapsOutput{
 		Total:       filters.Paginator.Total,
 		TotalPages:  filters.Paginator.TotalPages,
 		CurrentPage: filters.Paginator.CurrentPage,
-		Items:       make([]io.ListRoadmapsOutputItem, len(roadmaps)),
+		Items:       make([]io.ListBookmarkedRoadmapsOutputItem, len(roadmaps)),
 	}
 
 	for idx, roadmap := range roadmaps {
-		output.Items[idx] = io.ListRoadmapsOutputItem{
+		output.Items[idx] = io.ListBookmarkedRoadmapsOutputItem{
 			ID:                   roadmap.ID,
 			Title:                roadmap.Title,
 			Description:          roadmap.Description,
@@ -41,13 +41,13 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 			CompletionPercentage: roadmap.CompletionPercentage(),
 			CreatedAt:            roadmap.CreatedAt,
 			UpdatedAt:            roadmap.UpdatedAt,
-			PersonalizationOpts: io.ListRoadmapsOutputItemPersonalizationOptions{
+			PersonalizationOpts: io.ListBookmarkedRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},
-			Creator: io.ListRoadmapsOutputItemUser{
+			Creator: io.ListBookmarkedRoadmapsOutputItemUser{
 				ID:          roadmap.Account.ID,
 				Method:      roadmap.Account.Method,
 				Email:       roadmap.Account.Email,

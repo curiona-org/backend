@@ -13,17 +13,12 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 	ctx, span := app.tracer.Start(ctx, "(*application.MarkTopicAsFinished)")
 	defer span.End()
 
-	err := app.repository.Topic.UpdateTopicStatus(ctx, input.Slug, func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error) {
+	err := app.repository.Topic.UpdateTopicStatus(ctx, input.AccountID, input.Slug, func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error) {
 		if topic.AccountID != input.AccountID {
 			return false, cerrors.ErrNotFound
 		}
 
-		if topic.IsFinished {
-			return false, nil
-		}
-
 		topic.MarkAsFinished()
-		roadmap.AddFinishedTopic()
 		return true, nil
 	})
 	if err != nil {

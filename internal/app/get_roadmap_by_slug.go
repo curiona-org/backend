@@ -12,16 +12,29 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.GetRoadmapOutput, error) {
-	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadmapInput) (io.GetRoadmapOutput, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.GetRoadmapBySlug)", trace.WithAttributes(attribute.String("slug", input.Slug)))
 	defer span.End()
 
-	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, slug)
+	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, input.Slug)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
 			return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
 		}
 		return io.GetRoadmapOutput{}, err
+	}
+
+	if input.AccountID != 0 {
+		progression, err := app.repository.Roadmap.GetRoadmapProgression(ctx, input.AccountID, roadmap.ID)
+		if err == nil {
+			for i := range roadmap.Topics {
+				if isFinished, ok := progression.TopicProgressionMap[roadmap.Topics[i].ID]; ok {
+					roadmap.Topics[i].IsFinished = isFinished
+				}
+			}
+		}
+
+		roadmap.SetProgression(&progression)
 	}
 
 	output := io.GetRoadmapOutput{
@@ -30,7 +43,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, slug string) (io.G
 		Slug:                 roadmap.Slug,
 		Description:          roadmap.Description,
 		TotalTopics:          roadmap.TotalTopics,
-		TotalFinishedTopics:  roadmap.TotalFinishedTopics,
+		TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 		CompletionPercentage: roadmap.CompletionPercentage(),
 		CreatedAt:            roadmap.CreatedAt,
 		UpdatedAt:            roadmap.UpdatedAt,

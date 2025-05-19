@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/internal/filter"
 )
 
 func (a *API) AdminGetUser(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +14,15 @@ func (a *API) AdminGetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := a.adminApp.GetUser(r.Context(), id)
+	filters, err := filter.FromRequest(r)
+	if err != nil {
+		a.handleError(w, r, cerrors.ErrInvalidData.With(err))
+		return
+	}
+
+	filters.AccountID = id
+
+	output, err := a.adminApp.GetUser(r.Context(), filters)
 	if err != nil {
 		a.handleError(w, r, err)
 		return

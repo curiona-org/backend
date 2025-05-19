@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/curiona-org/backend/internal/admin/io"
-	"github.com/curiona-org/backend/pkg/filter"
+	"github.com/curiona-org/backend/internal/filter"
 )
 
 func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersInput) (io.ListUsersOutput, error) {

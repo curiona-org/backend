@@ -3,15 +3,14 @@ package io
 import (
 	"time"
 
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
-type ListUserRoadmapsOutput struct {
-	Total int                             `json:"total"`
-	Items []ListUserRoadmapsOutputRoadmap `json:"items"`
-}
+type ListUserRoadmapsInput = filter.Params
+type ListUserRoadmapsOutput = filter.FilteredList[ListUserRoadmapsOutputItem]
 
-type ListUserRoadmapsOutputRoadmap struct {
+type ListUserRoadmapsOutputItem struct {
 	ID                   int                                          `json:"id"`
 	Title                string                                       `json:"title"`
 	Slug                 string                                       `json:"slug"`

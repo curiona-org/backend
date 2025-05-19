@@ -8,7 +8,7 @@ import (
 	"github.com/curiona-org/backend/internal/cerrors"
 )
 
-func (a *API) GetRoadmapBySlug(w http.ResponseWriter, r *http.Request) {
+func (a *API) BookmarkRoadmap(w http.ResponseWriter, r *http.Request) {
 	slug := a.Param(r, "slug")
 	if slug == "" {
 		a.handleError(w, r, cerrors.ErrNotFound)
@@ -17,7 +17,7 @@ func (a *API) GetRoadmapBySlug(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	auth := auth.FromContext(ctx)
-	output, err := a.application.GetRoadmapBySlug(r.Context(), io.GetRoadmapInput{
+	err := a.application.BookmarkRoadmap(ctx, io.BookmarkRoadmapInput{
 		AccountID: auth.AccountID,
 		Slug:      slug,
 	})
@@ -26,5 +26,5 @@ func (a *API) GetRoadmapBySlug(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.render.OK(w, "Roadmap details.", output)
+	a.render.OK(w, "bookmarked roadmap", nil)
 }
