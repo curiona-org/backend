@@ -11,19 +11,26 @@ type ListUserRoadmapsInput = filter.Params
 type ListUserRoadmapsOutput = filter.FilteredList[ListUserRoadmapsOutputItem]
 
 type ListUserRoadmapsOutputItem struct {
-	ID                   int                                          `json:"id"`
-	Title                string                                       `json:"title"`
-	Slug                 string                                       `json:"slug"`
-	Description          string                                       `json:"description"`
-	TotalTopics          int                                          `json:"total_topics"`
-	TotalFinishedTopics  int                                          `json:"finished_topics"`
-	CompletionPercentage float64                                      `json:"completion_percentage"`
-	CreatedAt            time.Time                                    `json:"created_at"`
-	UpdatedAt            time.Time                                    `json:"updated_at"`
-	PersonalizationOpts  ListUserRoadmapsOutputPersonalizationOptions `json:"personalization_options"`
+	ID                  int                                              `json:"id"`
+	Title               string                                           `json:"title"`
+	Slug                string                                           `json:"slug"`
+	Description         string                                           `json:"description"`
+	TotalTopics         int                                              `json:"total_topics"`
+	CreatedAt           time.Time                                        `json:"created_at"`
+	UpdatedAt           time.Time                                        `json:"updated_at"`
+	Progression         ListUserRoadmapsOutputItemProgression            `json:"progression"`
+	PersonalizationOpts ListUserRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`
 }
 
-type ListUserRoadmapsOutputPersonalizationOptions struct {
+type ListUserRoadmapsOutputItemProgression struct {
+	TotalTopics          int       `json:"total_topics"`
+	TotalFinishedTopics  int       `json:"finished_topics"`
+	CompletionPercentage float64   `json:"completion_percentage"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+}
+
+type ListUserRoadmapsOutputItemPersonalizationOptions struct {
 	DailyTimeAvailability interval.Interval `json:"daily_time_availability"`
 	TotalDuration         interval.Interval `json:"total_duration"`
 	SkillLevel            string            `json:"skill_level"`

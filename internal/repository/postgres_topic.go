@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
 	"github.com/jackc/pgx/v5"
@@ -164,6 +166,7 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.UpdateTopicStatus)")
 	defer span.End()
 
+	log := logger.FromContext(ctx)
 	err := r.db.InTx(ctx, func(tx pgx.Tx) error {
 		fetchTopicQuery, fetchTopicArgs := psql.Select(
 			sm.Columns(r.topicColumns()...),
@@ -182,6 +185,14 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 
 		topic := topics[0]
 
+		log.Debug().Msgf("Topic found: %v", topic)
+		topicProgress, _ := r.fetchTopicProgressionByID(ctx, accountID, topic.ID)
+		if !topicProgress.IsZero() {
+			topic.IsFinished = topicProgress.IsFinished
+			topic.FinishedAt = topicProgress.FinishedAt
+			log.Debug().Msgf("Topic progression found: %v", topicProgress)
+		}
+
 		roadmaps, err := r.fetchRoadmapByID(ctx, topic.RoadmapID)
 		if err != nil {
 			return err
@@ -193,26 +204,6 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 
 		roadmap := roadmaps[0]
 
-		progression, _ := r.fetchRoadmapProgressionByID(ctx, accountID, roadmap.ID)
-		if progression.IsZero() {
-			fmt.Println("Creating new roadmap progression")
-			saveInitialProgressionQuery, saveInitialProgressionArgs := psql.Insert(
-				im.Into(domain.RoadmapProgressionTable, "account_id", "roadmap_id", "total_finished_topics"),
-				im.Values(psql.Arg(accountID, roadmap.ID, 0)),
-				im.Returning("id"),
-			).MustBuild(ctx)
-
-			ctx, span := spanWithInsertQuery(traceCtx, r.tracer, "(*TopicRepository.Insert)", saveInitialProgressionQuery)
-			defer span.End()
-
-			err = tx.QueryRow(ctx, saveInitialProgressionQuery, saveInitialProgressionArgs...).Scan(&progression.ID)
-			if err != nil {
-				span.SetStatus(codes.Error, "failed to save roadmap progression")
-				span.RecordError(err)
-				return err
-			}
-		}
-
 		updated, err := updateFn(&roadmap, &topic)
 		if err != nil {
 			return err
@@ -222,11 +213,33 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 			return nil
 		}
 
+		progression, _ := r.fetchRoadmapProgressionByID(ctx, accountID, roadmap.ID)
+		if progression.IsZero() {
+			// Create initial progression
+			saveInitialProgressionQuery, saveInitialProgressionArgs := psql.Insert(
+				im.Into(domain.RoadmapProgressionTable, "account_id", "roadmap_id", "total_topics", "total_finished_topics"),
+				im.Values(psql.Arg(accountID, roadmap.ID, roadmap.TotalTopics, 0)),
+				im.Returning("id"),
+			).MustBuild(ctx)
+
+			ctx, span := spanWithInsertQuery(traceCtx, r.tracer, "(*TopicRepository.Insert)", saveInitialProgressionQuery)
+			defer span.End()
+
+			err = tx.QueryRow(ctx, saveInitialProgressionQuery, saveInitialProgressionArgs...).Scan(&progression.ID)
+			if err != nil {
+				span.SetStatus(codes.Error, "failed to save initial roadmap progression")
+				span.RecordError(err)
+				return err
+			}
+		}
+
 		upsertTopicProgressionQuery, upsertTopicProgressionArgs := psql.Insert(
-			im.Into(domain.RoadmapTopicProgressionTable, "progression_id", "topic_id", "is_finished"),
-			im.Values(psql.Arg(progression.ID, topic.ID, topic.IsFinished)),
+			im.Into(domain.RoadmapTopicProgressionTable, "progression_id", "account_id", "topic_id", "is_finished", "finished_at", "created_at", "updated_at"),
+			im.Values(psql.Arg(progression.ID, accountID, topic.ID, topic.IsFinished, topic.FinishedAt, time.Now(), time.Now())),
 			im.OnConflict("progression_id", "topic_id").DoUpdate(
 				im.SetCol("is_finished").ToArg(topic.IsFinished),
+				im.SetCol("finished_at").ToArg(topic.FinishedAt),
+				im.SetCol("updated_at").ToArg(time.Now()),
 				im.Where(psql.And(
 					psql.Quote(domain.RoadmapTopicProgressionTable, "progression_id").EQ(psql.Arg(progression.ID)),
 					psql.Quote(domain.RoadmapTopicProgressionTable, "topic_id").EQ(psql.Arg(topic.ID)))),
@@ -247,14 +260,35 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 			newTotal = progression.TotalFinishedTopics - 1
 		}
 
-		updateProgressionQuery, updateProgressionArgs := psql.Update(
+		if newTotal < 0 {
+			newTotal = 0
+		}
+
+		var roadmapIsFinished bool
+		if newTotal >= roadmap.TotalTopics {
+			newTotal = roadmap.TotalTopics
+			roadmapIsFinished = true
+		} else {
+			roadmapIsFinished = false
+		}
+
+		updateProgressionQB := psql.Update(
 			um.Table(domain.RoadmapProgressionTable),
 			um.SetCol("total_finished_topics").ToArg(newTotal),
+			um.SetCol("is_finished").ToArg(roadmapIsFinished),
+			um.SetCol("updated_at").ToArg(time.Now()),
+		)
+
+		if roadmapIsFinished {
+			updateProgressionQB.Apply(um.SetCol("finished_at").ToArg(topic.FinishedAt))
+		}
+
+		updateProgressionQB.Apply(
 			um.Where(psql.And(
 				psql.Quote(domain.RoadmapProgressionTable, "id").EQ(psql.Arg(progression.ID)),
-				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").LT(psql.Arg(roadmap.TotalTopics)),
-			)),
-		).MustBuild(ctx)
+			)))
+
+		updateProgressionQuery, updateProgressionArgs := updateProgressionQB.MustBuild(ctx)
 
 		_, updateProgressionSpan := spanWithUpdateQuery(traceCtx, r.tracer, "(*TopicRepository.Update)", updateProgressionQuery)
 		defer updateProgressionSpan.End()
@@ -419,4 +453,32 @@ func (r *TopicRepository) fetchRoadmapProgressionByID(ctx context.Context, accou
 	}
 
 	return roadmapProgression, nil
+}
+
+func (r *TopicRepository) fetchTopicProgressionByID(ctx context.Context, accountID, topicID int) (domain.RoadmapTopicProgression, error) {
+	query, args := psql.Select(
+		sm.Columns("topic_id", "is_finished", "finished_at"),
+		sm.From(domain.RoadmapTopicProgressionTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTopicProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapTopicProgressionTable, "topic_id").EQ(psql.Arg(topicID)),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetTopicProgression)", query)
+	defer span.End()
+
+	var topicProgression domain.RoadmapTopicProgression
+	err := r.db.QueryRow(ctx, query, args...).Scan(
+		&topicProgression.TopicID,
+		&topicProgression.IsFinished,
+		&topicProgression.FinishedAt,
+	)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch topic progression")
+		span.RecordError(err)
+		return domain.RoadmapTopicProgression{}, err
+	}
+
+	return topicProgression, nil
 }

@@ -12,19 +12,29 @@ type GetRoadmapInput struct {
 }
 
 type GetRoadmapOutput struct {
-	ID                   int                                    `json:"id"`
-	Title                string                                 `json:"title"`
-	Slug                 string                                 `json:"slug"`
-	Description          string                                 `json:"description"`
-	TotalTopics          int                                    `json:"total_topics"`
-	TotalFinishedTopics  int                                    `json:"finished_topics"`
-	CompletionPercentage float64                                `json:"completion_percentage"`
-	CreatedAt            time.Time                              `json:"created_at"`
-	UpdatedAt            time.Time                              `json:"updated_at"`
-	Creator              GetRoadmapOutputCreator                `json:"creator"`
-	PersonalizationOpts  GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`
-	Topics               []GetRoadmapOutputTopic                `json:"topics"`
+	ID                  int                                    `json:"id"`
+	Title               string                                 `json:"title"`
+	Slug                string                                 `json:"slug"`
+	Description         string                                 `json:"description"`
+	TotalTopics         int                                    `json:"total_topics"`
+	CreatedAt           time.Time                              `json:"created_at"`
+	UpdatedAt           time.Time                              `json:"updated_at"`
+	Progression         GetRoadmapOutputProgression            `json:"progression"`
+	Creator             GetRoadmapOutputCreator                `json:"creator"`
+	PersonalizationOpts GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`
+	Topics              []GetRoadmapOutputTopic                `json:"topics"`
 }
+
+type GetRoadmapOutputProgression struct {
+	TotalTopics          int       `json:"total_topics"`
+	TotalFinishedTopics  int       `json:"finished_topics"`
+	CompletionPercentage float64   `json:"completion_percentage"`
+	IsFinished           bool      `json:"is_finished"`
+	FinishedAt           time.Time `json:"finished_at"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+}
+
 type GetRoadmapOutputCreator struct {
 	ID     int    `json:"id"`
 	Name   string `json:"name"`
@@ -40,6 +50,7 @@ type GetRoadmapOutputTopic struct {
 	Description         string                  `json:"description"`
 	Order               int                     `json:"order"`
 	IsFinished          bool                    `json:"is_finished"`
+	FinishedAt          time.Time               `json:"finished_at"`
 	ExternalSearchQuery string                  `json:"external_search_query"`
 	Subtopics           []GetRoadmapOutputTopic `json:"subtopics"`
 	CreatedAt           time.Time               `json:"created_at"`

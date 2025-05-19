@@ -34,16 +34,21 @@ func (app *application) ListUserRoadmaps(ctx context.Context, input io.ListUserR
 
 	for idx, roadmap := range roadmaps {
 		output.Items[idx] = io.ListUserRoadmapsOutputItem{
-			ID:                   roadmap.ID,
-			Title:                roadmap.Title,
-			Description:          roadmap.Description,
-			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
-			CompletionPercentage: roadmap.CompletionPercentage(),
-			CreatedAt:            roadmap.CreatedAt,
-			UpdatedAt:            roadmap.UpdatedAt,
-			PersonalizationOpts: io.ListUserRoadmapsOutputPersonalizationOptions{
+			ID:          roadmap.ID,
+			Title:       roadmap.Title,
+			Description: roadmap.Description,
+			Slug:        roadmap.Slug,
+			TotalTopics: roadmap.TotalTopics,
+			CreatedAt:   roadmap.CreatedAt,
+			UpdatedAt:   roadmap.UpdatedAt,
+			Progression: io.ListUserRoadmapsOutputItemProgression{
+				TotalTopics:          roadmap.Progression.TotalTopics,
+				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
+				CompletionPercentage: roadmap.Progression.CompletionPercentage(),
+				CreatedAt:            roadmap.Progression.CreatedAt,
+				UpdatedAt:            roadmap.Progression.UpdatedAt,
+			},
+			PersonalizationOpts: io.ListUserRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),

@@ -32,15 +32,13 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 
 	for idx, roadmap := range roadmaps {
 		output.Items[idx] = io.ListRoadmapsOutputItem{
-			ID:                   roadmap.ID,
-			Title:                roadmap.Title,
-			Description:          roadmap.Description,
-			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
-			CompletionPercentage: roadmap.CompletionPercentage(),
-			CreatedAt:            roadmap.CreatedAt,
-			UpdatedAt:            roadmap.UpdatedAt,
+			ID:          roadmap.ID,
+			Title:       roadmap.Title,
+			Description: roadmap.Description,
+			Slug:        roadmap.Slug,
+			TotalTopics: roadmap.TotalTopics,
+			CreatedAt:   roadmap.CreatedAt,
+			UpdatedAt:   roadmap.UpdatedAt,
 			PersonalizationOpts: io.ListRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),

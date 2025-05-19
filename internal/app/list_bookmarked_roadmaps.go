@@ -32,15 +32,22 @@ func (app *application) ListBookmarkedRoadmaps(ctx context.Context, input io.Lis
 
 	for idx, roadmap := range roadmaps {
 		output.Items[idx] = io.ListBookmarkedRoadmapsOutputItem{
-			ID:                   roadmap.ID,
-			Title:                roadmap.Title,
-			Description:          roadmap.Description,
-			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
-			CompletionPercentage: roadmap.CompletionPercentage(),
-			CreatedAt:            roadmap.CreatedAt,
-			UpdatedAt:            roadmap.UpdatedAt,
+			ID:          roadmap.ID,
+			Title:       roadmap.Title,
+			Description: roadmap.Description,
+			Slug:        roadmap.Slug,
+			TotalTopics: roadmap.TotalTopics,
+			CreatedAt:   roadmap.CreatedAt,
+			UpdatedAt:   roadmap.UpdatedAt,
+			Progression: io.ListBookmarkedRoadmapsOutputItemProgression{
+				TotalTopics:          roadmap.Progression.TotalTopics,
+				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
+				CompletionPercentage: roadmap.Progression.CompletionPercentage(),
+				IsFinished:           roadmap.Progression.IsFinished,
+				FinishedAt:           roadmap.Progression.FinishedAt,
+				CreatedAt:            roadmap.Progression.CreatedAt,
+				UpdatedAt:            roadmap.Progression.UpdatedAt,
+			},
 			PersonalizationOpts: io.ListBookmarkedRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),

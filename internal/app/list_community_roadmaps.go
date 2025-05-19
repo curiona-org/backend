@@ -32,22 +32,20 @@ func (app *application) ListCommunityRoadmaps(ctx context.Context, input io.List
 
 	for idx, roadmap := range roadmaps {
 		output.Items[idx] = io.ListCommunityRoadmapsOutputItem{
-			ID:                   roadmap.ID,
-			Title:                roadmap.Title,
-			Description:          roadmap.Description,
-			Slug:                 roadmap.Slug,
-			TotalTopics:          roadmap.TotalTopics,
-			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
-			CompletionPercentage: roadmap.CompletionPercentage(),
-			CreatedAt:            roadmap.CreatedAt,
-			UpdatedAt:            roadmap.UpdatedAt,
+			ID:          roadmap.ID,
+			Title:       roadmap.Title,
+			Description: roadmap.Description,
+			Slug:        roadmap.Slug,
+			TotalTopics: roadmap.TotalTopics,
+			CreatedAt:   roadmap.CreatedAt,
+			UpdatedAt:   roadmap.UpdatedAt,
 			PersonalizationOpts: io.ListCommunityRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},
-			Creator: io.ListCommunityRoadmapsOutputItemUser{
+			Creator: io.ListCommunityRoadmapsOutputItemCreator{
 				ID:          roadmap.Account.ID,
 				Method:      roadmap.Account.Method,
 				Email:       roadmap.Account.Email,
@@ -56,6 +54,18 @@ func (app *application) ListCommunityRoadmaps(ctx context.Context, input io.List
 				IsSuspended: roadmap.Account.IsSuspended,
 				JoinedAt:    roadmap.Account.CreatedAt,
 			},
+		}
+
+		if input.AccountID != 0 && roadmap.Progression != nil {
+			output.Items[idx].Progression = io.ListCommunityRoadmapsOutputItemProgression{
+				TotalTopics:          roadmap.Progression.TotalTopics,
+				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
+				CompletionPercentage: roadmap.Progression.CompletionPercentage(),
+				IsFinished:           roadmap.Progression.IsFinished,
+				FinishedAt:           roadmap.Progression.FinishedAt,
+				CreatedAt:            roadmap.Progression.CreatedAt,
+				UpdatedAt:            roadmap.Progression.UpdatedAt,
+			}
 		}
 	}
 

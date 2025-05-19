@@ -77,14 +77,6 @@ func (e *Roadmap) AddTopic(topic *Topic) {
 	e.Topics = append(e.Topics, topic)
 }
 
-func (e *Roadmap) CompletionPercentage() float64 {
-	if e.TotalTopics == 0 {
-		return 0
-	}
-
-	return float64(e.Progression.TotalFinishedTopics) / float64(e.TotalTopics) * 100
-}
-
 func (e *Roadmap) SetCreator(acc *Account) {
 	e.Account = acc
 }
@@ -98,6 +90,10 @@ func (e *Roadmap) SetPersonalizationOptions(opts *PersonalizationOptions) {
 }
 
 func (e *Roadmap) SetProgression(progression *RoadmapProgression) {
+	if progression.TopicProgressionMap == nil {
+		progression.TopicProgressionMap = make(map[int]*RoadmapTopicProgression)
+	}
+
 	e.Progression = progression
 }
 
@@ -117,14 +113,14 @@ type RoadmapProgression struct {
 	ID                  int
 	AccountID           int
 	RoadmapID           int
+	TotalTopics         int
 	TotalFinishedTopics int
+	IsFinished          bool
+	FinishedAt          time.Time
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 
-	TopicProgressionMap map[int]bool
-}
-
-type RoadmapTopicProgression struct {
-	TopicID    int
-	IsFinished bool
+	TopicProgressionMap map[int]*RoadmapTopicProgression
 }
 
 func (e *RoadmapProgression) IsZero() bool {
@@ -132,4 +128,28 @@ func (e *RoadmapProgression) IsZero() bool {
 		e.AccountID == 0 &&
 		e.RoadmapID == 0 &&
 		e.TotalFinishedTopics == 0
+}
+
+func (e *RoadmapProgression) CompletionPercentage() float64 {
+	if e == nil {
+		return 0
+	}
+
+	if e.TotalTopics == 0 {
+		return 0
+	}
+
+	return float64(e.TotalFinishedTopics) / float64(e.TotalTopics) * 100
+}
+
+type RoadmapTopicProgression struct {
+	TopicID    int
+	IsFinished bool
+	FinishedAt time.Time
+}
+
+func (e *RoadmapTopicProgression) IsZero() bool {
+	return e.TopicID == 0 &&
+		!e.IsFinished &&
+		e.FinishedAt.IsZero()
 }
