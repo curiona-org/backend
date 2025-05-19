@@ -116,6 +116,8 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
 
+	log := logger.FromContext(ctx)
+
 	query, args := psql.Select(
 		sm.Columns(r.topicColumns()...),
 		sm.From(domain.TopicTable),
@@ -132,6 +134,17 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	}
 
 	topic := topics[0]
+
+	// Fetch topic progression
+	topicProgress, err := r.fetchTopicProgressionByID(traceCtx, topic.AccountID, topic.ID)
+	if err != nil {
+		log.Err(err).Msg("failed to fetch topic progression")
+	}
+
+	if !topicProgress.IsZero() {
+		topic.IsFinished = topicProgress.IsFinished
+		topic.FinishedAt = topicProgress.FinishedAt
+	}
 
 	// Fetch the associated external resources separately, either from cache or postgres.
 	var externalResources []domain.ExternalResource
