@@ -54,6 +54,10 @@ func (r *RoadmapRepository) roadmapColumns(opt roadmapColumnsOptions) []any {
 		psql.Quote(domain.RoadmapTable, "created_at"),
 		psql.Quote(domain.RoadmapTable, "updated_at"),
 		psql.Quote(domain.RoadmapTable, "deleted_at"),
+		psql.Case().
+			When(psql.Quote(domain.BookmarkTable, "account_id").IsNotNull(), psql.S("true")).
+			Else(psql.S("false")).
+			As("is_bookmarked"),
 	}
 
 	if opt.includeProgression {
@@ -127,6 +131,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 	for rows.Next() {
 		var roadmap domain.Roadmap
 		var roadmapDeletedAt pgtype.Timestamp
+		var roadmapIsBookmarked pgtype.Bool
 		dest := []any{
 			&roadmap.ID,
 			&roadmap.AccountID,
@@ -137,6 +142,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 			&roadmapDeletedAt,
+			&roadmapIsBookmarked,
 		}
 
 		var roadmapProgressionID, roadmapProgressionAccountID, roadmapProgressionRoadmapID, roadmapProgressionTotalTopics, roadmapProgressionTotalFinishedTopics pgtype.Int4
@@ -200,6 +206,10 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			roadmap.DeletedAt = roadmapDeletedAt.Time
 		}
 
+		if roadmapIsBookmarked.Valid {
+			roadmap.IsBookmarked = roadmapIsBookmarked.Bool
+		}
+
 		if cfg.includeProgression && roadmapProgressionID.Valid {
 			roadmapProgression := new(domain.RoadmapProgression)
 			if roadmapProgressionFinishedAt.Valid {
@@ -247,6 +257,9 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 			includeAccount:               true,
 		})...),
 		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.BookmarkTable).OnEQ(
+			psql.Quote(domain.BookmarkTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
 			psql.Quote(domain.RoadmapTable, "id")),
@@ -297,6 +310,9 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 			includeAccount:               true,
 		})...),
 		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.BookmarkTable).OnEQ(
+			psql.Quote(domain.BookmarkTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
 		sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
 			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
 			psql.Quote(domain.RoadmapTable, "id")),
@@ -359,13 +375,20 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.
 			psql.Quote(domain.RoadmapTable, "account_id")),
 	)
 
-	if filters.AccountID != 0 {
-		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).On(
-			psql.And(
-				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
-				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+	if filters.AccountID > 0 {
+		selectQuery.Apply(
+			sm.LeftJoin(domain.BookmarkTable).On(
+				psql.And(
+					psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+					psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+				),
 			),
-		))
+			sm.LeftJoin(domain.RoadmapProgressionTable).On(
+				psql.And(
+					psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+					psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+				),
+			))
 	} else {
 		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
 			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
@@ -432,13 +455,20 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 			psql.Quote(domain.RoadmapTable, "account_id")),
 	)
 
-	if filters.AccountID != 0 {
-		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).On(
-			psql.And(
-				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
-				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+	if filters.AccountID > 0 {
+		selectQuery.Apply(
+			sm.LeftJoin(domain.BookmarkTable).On(
+				psql.And(
+					psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+					psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+				),
 			),
-		))
+			sm.LeftJoin(domain.RoadmapProgressionTable).On(
+				psql.And(
+					psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+					psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+				),
+			))
 	} else {
 		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
 			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),

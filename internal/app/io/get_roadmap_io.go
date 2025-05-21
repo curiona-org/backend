@@ -19,6 +19,7 @@ type GetRoadmapOutput struct {
 	TotalTopics         int                                    `json:"total_topics"`
 	CreatedAt           time.Time                              `json:"created_at"`
 	UpdatedAt           time.Time                              `json:"updated_at"`
+	IsBookmarked        bool                                   `json:"is_bookmarked"`
 	Progression         GetRoadmapOutputProgression            `json:"progression"`
 	Creator             GetRoadmapOutputCreator                `json:"creator"`
 	PersonalizationOpts GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`

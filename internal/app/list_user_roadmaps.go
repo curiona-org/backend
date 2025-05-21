@@ -34,13 +34,14 @@ func (app *application) ListUserRoadmaps(ctx context.Context, input io.ListUserR
 
 	for idx, roadmap := range roadmaps {
 		output.Items[idx] = io.ListUserRoadmapsOutputItem{
-			ID:          roadmap.ID,
-			Title:       roadmap.Title,
-			Description: roadmap.Description,
-			Slug:        roadmap.Slug,
-			TotalTopics: roadmap.TotalTopics,
-			CreatedAt:   roadmap.CreatedAt,
-			UpdatedAt:   roadmap.UpdatedAt,
+			ID:           roadmap.ID,
+			Title:        roadmap.Title,
+			Description:  roadmap.Description,
+			Slug:         roadmap.Slug,
+			TotalTopics:  roadmap.TotalTopics,
+			CreatedAt:    roadmap.CreatedAt,
+			UpdatedAt:    roadmap.UpdatedAt,
+			IsBookmarked: roadmap.IsBookmarked,
 			Progression: io.ListUserRoadmapsOutputItemProgression{
 				TotalTopics:          roadmap.Progression.TotalTopics,
 				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
