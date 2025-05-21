@@ -44,13 +44,14 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 	}
 
 	output := io.GetRoadmapOutput{
-		ID:          roadmap.ID,
-		Title:       roadmap.Title,
-		Slug:        roadmap.Slug,
-		Description: roadmap.Description,
-		TotalTopics: roadmap.TotalTopics,
-		CreatedAt:   roadmap.CreatedAt,
-		UpdatedAt:   roadmap.UpdatedAt,
+		ID:           roadmap.ID,
+		Title:        roadmap.Title,
+		Slug:         roadmap.Slug,
+		Description:  roadmap.Description,
+		TotalTopics:  roadmap.TotalTopics,
+		CreatedAt:    roadmap.CreatedAt,
+		UpdatedAt:    roadmap.UpdatedAt,
+		IsBookmarked: roadmap.IsBookmarked,
 		Progression: io.GetRoadmapOutputProgression{
 			TotalTopics:          roadmap.Progression.TotalTopics,
 			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,

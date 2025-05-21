@@ -18,6 +18,7 @@ type ListUserRoadmapsOutputItem struct {
 	TotalTopics         int                                              `json:"total_topics"`
 	CreatedAt           time.Time                                        `json:"created_at"`
 	UpdatedAt           time.Time                                        `json:"updated_at"`
+	IsBookmarked        bool                                             `json:"is_bookmarked"`
 	Progression         ListUserRoadmapsOutputItemProgression            `json:"progression"`
 	PersonalizationOpts ListUserRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`
 }

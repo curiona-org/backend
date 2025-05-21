@@ -36,6 +36,7 @@ type Roadmap struct {
 	Topics                 []*Topic
 	PersonalizationOptions *PersonalizationOptions
 	Progression            *RoadmapProgression
+	IsBookmarked           bool
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

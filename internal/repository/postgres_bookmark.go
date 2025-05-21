@@ -205,6 +205,8 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 			account.SetProfile(&profile)
 			roadmap.SetCreator(&account)
 		}
+
+		roadmap.IsBookmarked = true
 		roadmaps = append(roadmaps, roadmap)
 	}
 
