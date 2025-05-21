@@ -23,7 +23,7 @@ func (app *adminApplication) GetUser(ctx context.Context, input io.GetUserInput)
 		return io.GetUserOutput{}, err
 	}
 
-	count, err := app.repository.Roadmap.CountAccountRoadmaps(ctx, input.AccountID)
+	count, err := app.repository.Roadmap.CountByAccountID(ctx, input.AccountID)
 	if err != nil {
 		return io.GetUserOutput{}, err
 	}

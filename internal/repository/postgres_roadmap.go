@@ -606,7 +606,34 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
-func (r *RoadmapRepository) CountAccountRoadmaps(ctx context.Context, accountID int) (uint64, error) {
+func (r *RoadmapRepository) CountBySearching(ctx context.Context, search string) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.Where(psql.And(
+			psql.Or(
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+search+"%")),
+			),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountBySearching)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count roadmaps by searching")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountByAccountID(ctx context.Context, accountID int) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.RoadmapTable),
@@ -616,13 +643,41 @@ func (r *RoadmapRepository) CountAccountRoadmaps(ctx context.Context, accountID 
 		)),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountRoadmaps)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountByAccountID)", query)
 	defer span.End()
 
 	var count uint64
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to count user roadmaps")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountByAccountIdAndSearch(ctx context.Context, accountID int, search string) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Or(
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+search+"%")),
+			),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountAndSearch)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count user roadmaps by searching")
 		span.RecordError(err)
 		return 0, err
 	}

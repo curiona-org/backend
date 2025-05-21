@@ -14,9 +14,18 @@ func (app *application) ListUserRoadmaps(ctx context.Context, input io.ListUserR
 	ctx, span := app.tracer.Start(ctx, "(*application.ListUserRoadmaps)")
 	defer span.End()
 
-	count, err := app.repository.Roadmap.CountAccountRoadmaps(ctx, input.AccountID)
-	if err != nil {
-		return io.ListUserRoadmapsOutput{}, err
+	var count uint64
+	var err error
+	if input.Search != "" {
+		count, err = app.repository.Roadmap.CountByAccountIdAndSearch(ctx, input.AccountID, input.Search)
+		if err != nil {
+			return io.ListUserRoadmapsOutput{}, err
+		}
+	} else {
+		count, err = app.repository.Roadmap.CountByAccountID(ctx, input.AccountID)
+		if err != nil {
+			return io.ListUserRoadmapsOutput{}, err
+		}
 	}
 
 	filters := filter.New(input, count)

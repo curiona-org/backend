@@ -12,9 +12,18 @@ func (app *application) ListCommunityRoadmaps(ctx context.Context, input io.List
 	ctx, span := app.tracer.Start(ctx, "(*application.ListCommunityRoadmaps)")
 	defer span.End()
 
-	count, err := app.repository.Roadmap.Count(ctx)
-	if err != nil {
-		return io.ListCommunityRoadmapsOutput{}, err
+	var count uint64
+	var err error
+	if input.Search != "" {
+		count, err = app.repository.Roadmap.CountBySearching(ctx, input.Search)
+		if err != nil {
+			return io.ListCommunityRoadmapsOutput{}, err
+		}
+	} else {
+		count, err = app.repository.Roadmap.Count(ctx)
+		if err != nil {
+			return io.ListCommunityRoadmapsOutput{}, err
+		}
 	}
 
 	filters := filter.New(input, count)
