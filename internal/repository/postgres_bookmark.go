@@ -299,6 +299,39 @@ func (r *BookmarkRepository) ListBookmarkedRoadmaps(ctx context.Context, filters
 	})
 }
 
+func (r *BookmarkRepository) RoadmapIsBookmarked(ctx context.Context, accountID int, roadmapID int) (bool, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("EXISTS",
+			psql.Select(
+				sm.Columns(1),
+				sm.From(domain.BookmarkTable),
+				sm.Where(psql.And(
+					psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(accountID)),
+					psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Arg(roadmapID)),
+				)),
+			),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*BookmarkRepository.RoadmapIsBookmarked)", query)
+	defer span.End()
+
+	var exists bool
+	err := r.db.QueryRow(ctx, query, args...).Scan(&exists)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to check if roadmap is bookmarked")
+		span.RecordError(err)
+		return false, err
+	}
+
+	if exists {
+		return true, nil
+	}
+
+	span.SetStatus(codes.Error, "roadmap is not bookmarked")
+	return false, nil
+}
+
 func (r *BookmarkRepository) Count(ctx context.Context, accountID int) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
