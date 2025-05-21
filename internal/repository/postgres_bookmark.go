@@ -352,6 +352,41 @@ func (r *BookmarkRepository) Count(ctx context.Context, accountID int) (uint64, 
 	return count, nil
 }
 
+func (r *BookmarkRepository) CountBySearching(ctx context.Context, accountID int, search string) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.BookmarkTable),
+		sm.LeftJoin(domain.RoadmapTable).OnEQ(
+			psql.Quote(domain.BookmarkTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "account_id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.Where(psql.And(
+			psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Or(
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+search+"%")),
+			),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*BookmarkRepository.CountBySearching)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count bookmarks by searching")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *BookmarkRepository) Save(ctx context.Context, accountID int, slug string) error {
 	findRoadmapQuery, args := psql.Select(
 		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{

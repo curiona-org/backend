@@ -12,9 +12,18 @@ func (app *application) ListBookmarkedRoadmaps(ctx context.Context, input io.Lis
 	ctx, span := app.tracer.Start(ctx, "(*application.ListBookmarkedRoadmaps)")
 	defer span.End()
 
-	count, err := app.repository.Bookmark.Count(ctx, input.AccountID)
-	if err != nil {
-		return io.ListBookmarkedRoadmapsOutput{}, err
+	var count uint64
+	var err error
+	if input.Search != "" {
+		count, err = app.repository.Bookmark.CountBySearching(ctx, input.AccountID, input.Search)
+		if err != nil {
+			return io.ListBookmarkedRoadmapsOutput{}, err
+		}
+	} else {
+		count, err = app.repository.Bookmark.Count(ctx, input.AccountID)
+		if err != nil {
+			return io.ListBookmarkedRoadmapsOutput{}, err
+		}
 	}
 
 	filters := filter.New(input, count)
