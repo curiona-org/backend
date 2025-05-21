@@ -38,6 +38,7 @@ func NewPostgresRoadmapRepository(db database.Connection, cache *cache.Connectio
 }
 
 type roadmapColumnsOptions struct {
+	includeBookmark              bool
 	includeProgression           bool
 	includePersonalizationOption bool
 	includeAccount               bool
@@ -54,10 +55,14 @@ func (r *RoadmapRepository) roadmapColumns(opt roadmapColumnsOptions) []any {
 		psql.Quote(domain.RoadmapTable, "created_at"),
 		psql.Quote(domain.RoadmapTable, "updated_at"),
 		psql.Quote(domain.RoadmapTable, "deleted_at"),
-		psql.Case().
-			When(psql.Quote(domain.BookmarkTable, "account_id").IsNotNull(), psql.S("true")).
-			Else(psql.S("false")).
-			As("is_bookmarked"),
+	}
+
+	if opt.includeBookmark {
+		columns = append(columns,
+			psql.Case().
+				When(psql.Quote(domain.BookmarkTable, "account_id").IsNotNull(), psql.S("true")).
+				Else(psql.S("false")).
+				As("is_bookmarked"))
 	}
 
 	if opt.includeProgression {
@@ -110,6 +115,7 @@ func (r *RoadmapRepository) roadmapColumns(opt roadmapColumnsOptions) []any {
 type roadmapFetchConfig struct {
 	query                        string
 	args                         []any
+	includeBookmark              bool
 	includeProgression           bool
 	includePersonalizationOption bool
 	includeAccount               bool
@@ -131,7 +137,6 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 	for rows.Next() {
 		var roadmap domain.Roadmap
 		var roadmapDeletedAt pgtype.Timestamp
-		var roadmapIsBookmarked pgtype.Bool
 		dest := []any{
 			&roadmap.ID,
 			&roadmap.AccountID,
@@ -142,7 +147,11 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			&roadmap.CreatedAt,
 			&roadmap.UpdatedAt,
 			&roadmapDeletedAt,
-			&roadmapIsBookmarked,
+		}
+
+		var roadmapIsBookmarked pgtype.Bool
+		if cfg.includeBookmark {
+			dest = append(dest, &roadmapIsBookmarked)
 		}
 
 		var roadmapProgressionID, roadmapProgressionAccountID, roadmapProgressionRoadmapID, roadmapProgressionTotalTopics, roadmapProgressionTotalFinishedTopics pgtype.Int4
@@ -252,14 +261,12 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 
 	query, args := psql.Select(
 		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeBookmark:              false,
 			includeProgression:           false,
 			includePersonalizationOption: true,
 			includeAccount:               true,
 		})...),
 		sm.From(domain.RoadmapTable),
-		sm.LeftJoin(domain.BookmarkTable).OnEQ(
-			psql.Quote(domain.BookmarkTable, "roadmap_id"),
-			psql.Quote(domain.RoadmapTable, "id")),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
 			psql.Quote(domain.RoadmapTable, "id")),
@@ -277,6 +284,7 @@ func (r *RoadmapRepository) GetBySlug(ctx context.Context, slug string) (domain.
 	roadmaps, err := r.fetch(ctx, roadmapFetchConfig{
 		query:                        query,
 		args:                         args,
+		includeBookmark:              false,
 		includeProgression:           false,
 		includePersonalizationOption: true,
 		includeAccount:               true,
@@ -359,11 +367,22 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
 	selectQuery := psql.Select(
 		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeBookmark:              true,
 			includeProgression:           true,
 			includePersonalizationOption: true,
 			includeAccount:               true,
 		})...),
 		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.BookmarkTable).On(
+			psql.And(
+				psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			)),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.And(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			)),
 		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
 			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
 			psql.Quote(domain.RoadmapTable, "id")),
@@ -374,27 +393,6 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.
 			psql.Quote(domain.ProfileTable, "id"),
 			psql.Quote(domain.RoadmapTable, "account_id")),
 	)
-
-	if filters.AccountID > 0 {
-		selectQuery.Apply(
-			sm.LeftJoin(domain.BookmarkTable).On(
-				psql.And(
-					psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
-					psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(filters.AccountID)),
-				),
-			),
-			sm.LeftJoin(domain.RoadmapProgressionTable).On(
-				psql.And(
-					psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
-					psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
-				),
-			))
-	} else {
-		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
-			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
-			psql.Quote(domain.RoadmapTable, "id")),
-		)
-	}
 
 	if filters.Search != "" {
 		selectQuery.Apply(
@@ -430,6 +428,7 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.
 	return r.fetch(ctx, roadmapFetchConfig{
 		query:                        query,
 		args:                         args,
+		includeBookmark:              true,
 		includeProgression:           true,
 		includePersonalizationOption: true,
 		includeAccount:               true,
@@ -439,6 +438,7 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.
 func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
 	selectQuery := psql.Select(
 		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeBookmark:              true,
 			includeProgression:           true,
 			includePersonalizationOption: true,
 			includeAccount:               true,
@@ -506,6 +506,7 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 	return r.fetch(ctx, roadmapFetchConfig{
 		query:                        query,
 		args:                         args,
+		includeBookmark:              true,
 		includeProgression:           true,
 		includePersonalizationOption: true,
 		includeAccount:               true,

@@ -29,15 +29,22 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 
 	if input.AccountID != 0 {
 		progression, err := app.repository.Roadmap.GetRoadmapProgression(ctx, input.AccountID, roadmap.ID)
-		if err == nil {
+		if err != nil {
+			log.Err(err).Msg("failed to get roadmap progression")
+		} else {
 			for i := range roadmap.Topics {
 				if topicProgress, ok := progression.TopicProgressionMap[roadmap.Topics[i].ID]; ok {
 					roadmap.Topics[i].IsFinished = topicProgress.IsFinished
 					roadmap.Topics[i].FinishedAt = topicProgress.FinishedAt
 				}
 			}
+		}
+
+		isBookmarked, err := app.repository.Bookmark.RoadmapIsBookmarked(ctx, input.AccountID, roadmap.ID)
+		if err != nil {
+			log.Err(err).Msg("failed to get roadmap bookmark status")
 		} else {
-			log.Err(err).Msg("failed to get roadmap progression")
+			roadmap.IsBookmarked = isBookmarked
 		}
 
 		roadmap.SetProgression(&progression)
