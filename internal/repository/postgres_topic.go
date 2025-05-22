@@ -494,8 +494,6 @@ func (r *TopicRepository) fetchTopicProgressionByID(ctx context.Context, account
 		&topicProgression.FinishedAt,
 	)
 	if err != nil {
-		span.SetStatus(codes.Error, "failed to fetch topic progression")
-		span.RecordError(err)
 		return domain.RoadmapTopicProgression{}, err
 	}
 
