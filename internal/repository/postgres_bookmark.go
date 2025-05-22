@@ -328,7 +328,6 @@ func (r *BookmarkRepository) RoadmapIsBookmarked(ctx context.Context, accountID 
 		return true, nil
 	}
 
-	span.SetStatus(codes.Error, "roadmap is not bookmarked")
 	return false, nil
 }
 
