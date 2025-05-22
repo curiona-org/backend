@@ -91,6 +91,7 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 			Title:               topic.Title,
 			Slug:                topic.Slug,
 			Description:         topic.Description,
+			ProTips:             topic.ProTips,
 			Order:               topic.Order,
 			IsFinished:          topic.IsFinished,
 			FinishedAt:          topic.FinishedAt,

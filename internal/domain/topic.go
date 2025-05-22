@@ -24,6 +24,7 @@ type Topic struct {
 	Title               string
 	Slug                string
 	Description         string
+	ProTips             string
 	Order               int
 	IsFinished          bool
 	FinishedAt          time.Time
@@ -36,12 +37,13 @@ type Topic struct {
 	UpdatedAt time.Time
 }
 
-func NewTopic(accountID int, title, description, externalSearchQuery string) *Topic {
+func NewTopic(accountID int, title, description, proTips, externalSearchQuery string) *Topic {
 	return &Topic{
 		AccountID:           accountID,
 		Title:               title,
 		Slug:                slug.Make(title + " " + str.Random(5)),
 		Description:         description,
+		ProTips:             proTips,
 		IsFinished:          false,
 		ExternalSearchQuery: externalSearchQuery,
 		CreatedAt:           time.Now(),

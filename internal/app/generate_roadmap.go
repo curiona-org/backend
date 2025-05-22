@@ -48,12 +48,12 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	roadmap := domain.NewRoadmap(input.AccountID, generated.Title, generated.Description)
 
 	for _, topic := range generated.Topics {
-		newTopic := domain.NewTopic(input.AccountID, topic.Title, topic.Description, topic.SearchQuery)
+		newTopic := domain.NewTopic(input.AccountID, topic.Title, topic.Description, topic.ProTips, topic.SearchQuery)
 		roadmap.TotalTopics++
 		roadmap.AddTopic(newTopic)
 		if len(topic.Subtopics) > 0 {
 			for _, subtopic := range topic.Subtopics {
-				newSubtopic := domain.NewTopic(input.AccountID, subtopic.Title, subtopic.Description, subtopic.SearchQuery)
+				newSubtopic := domain.NewTopic(input.AccountID, subtopic.Title, subtopic.Description, subtopic.ProTips, subtopic.SearchQuery)
 				roadmap.TotalTopics++
 				newTopic.AddSubtopic(newSubtopic)
 			}
@@ -95,6 +95,7 @@ type chatGeneratePromptPromptResult struct {
 type chatGeneratePromptPromptResultTopic struct {
 	Title       string                                   `json:"title"`
 	Description string                                   `json:"description"`
+	ProTips     string                                   `json:"pro_tips"`
 	Subtopics   []chatGeneratePromptPromptResultSubtopic `json:"subtopics"`
 	SearchQuery string                                   `json:"search_query"`
 }
@@ -102,6 +103,7 @@ type chatGeneratePromptPromptResultTopic struct {
 type chatGeneratePromptPromptResultSubtopic struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	ProTips     string `json:"pro_tips"`
 	SearchQuery string `json:"search_query"`
 }
 
@@ -175,9 +177,10 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 
 	promptSystemGuidelines := []string{
 		"Go into detail about the main topic to provide a comprehensive overview of the subject.",
-		"Each topic should have a title and a brief description to explain the focus of that section.",
+		"Each topic should have a title, a brief description to explain the focus of that section, and a pro tip to help the user understand the topic better.",
 		"Subtopics should be related to the main topic and provide more detailed information on specific aspects of the subject.",
 		"Each description should be clear and informative. It should be long enough to explain the topic but concise enough to maintain the user's interest.",
+		"Pro tips should be practical and relevant to the topic, providing additional insights or shortcuts to help the user learn more effectively.",
 		"Ensure that a topic is broken down into manageable subtopics to help users understand the subject better whenever possible.",
 		"A topic can also not have any subtopics if it is a standalone subject.",
 		"Use only English language for the roadmap.",
@@ -195,16 +198,19 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 			{
 				Title:       "Main Topic",
 				Description: "A one paragraph long explanation of the main topic.",
+				ProTips:     "Some pro tips to help the user understand the topic better.",
 				SearchQuery: "Main Topic",
 				Subtopics: []chatGeneratePromptPromptResultSubtopic{
 					{
 						Title:       "Subtopic 1",
 						Description: "A one paragraph long explanation of Subtopic 1.",
+						ProTips:     "Some pro tips to help the user understand subtopic 1 better.",
 						SearchQuery: "Subtopic 1",
 					},
 					{
 						Title:       "Subtopic 2",
 						Description: "A one paragraph long explanation of Subtopic 2.",
+						ProTips:     "Some pro tips to help the user understand subtopic 2 better.",
 						SearchQuery: "Subtopic 2",
 					},
 				},
@@ -219,26 +225,31 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 			{
 				Title:       "What Is Front End Dev?",
 				Description: "Front end development is the practice of producing HTML, CSS, and JavaScript for a website or web application so a user can see and interact with them directly. It involves the design of the site, the layout, the colors, the fonts, and so on.",
+				ProTips:     "Focus on the basics of HTML, CSS, and JavaScript first.",
 				SearchQuery: "Front End Development",
 				Subtopics: []chatGeneratePromptPromptResultSubtopic{
 					{
 						Title:       "HTML",
 						Description: "HTML is the standard markup language for creating web pages and web applications. It provides the basic structure of sites, which is enhanced and modified by other technologies like CSS and JavaScript.",
+						ProTips:     "Try to understand the semantic structure of HTML.",
 						SearchQuery: "HTML",
 					},
 					{
 						Title:       "CSS",
 						Description: "CSS is a style sheet language used for describing the presentation of a document written in HTML. It controls the layout of multiple web pages all at once.",
+						ProTips:     "Learn about Flexbox and Grid for layout.",
 						SearchQuery: "CSS",
 					},
 					{
 						Title:       "JavaScript",
 						Description: "JavaScript is a programming language that enables you to interact with elements on a webpage. It is used for creating dynamic and interactive web pages.",
+						ProTips:     "Start with the basics of JavaScript syntax and DOM manipulation.",
 						SearchQuery: "JavaScript",
 					},
 					{
 						Title:       "Responsive Design",
 						Description: "Responsive design is an approach to web design that makes web pages render well on a variety of devices and window or screen sizes.",
+						ProTips:     "Learn about media queries and flexible grid layouts.",
 						SearchQuery: "Responsive Design in Web Development",
 					},
 				},
@@ -246,31 +257,37 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 			{
 				Title:       "JavaScript Frameworks and Libraries",
 				Description: "JavaScript frameworks and libraries are pre-written JavaScript code that helps you build interactive web applications. They provide ready-to-use functions and components that you can use in your code.",
+				ProTips:     "Familiarize yourself with the most popular frameworks and libraries.",
 				SearchQuery: "JavaScript Frameworks and Libraries",
 				Subtopics: []chatGeneratePromptPromptResultSubtopic{
 					{
 						Title:       "React",
 						Description: "React is a JavaScript library for building user interfaces. It is maintained by Facebook and a community of individual developers and companies.",
+						ProTips:     "Learn about components and state management.",
 						SearchQuery: "React JavaScript Framework",
 					},
 					{
 						Title:       "Vue.js",
 						Description: "Vue.js is a progressive JavaScript framework used to build interactive web interfaces. It is designed from the ground up to be incrementally adoptable.",
+						ProTips:     "Understand the Vue instance and the Vue CLI.",
 						SearchQuery: "Vue.js Framework",
 					},
 					{
 						Title:       "Angular",
 						Description: "Angular is a platform and framework for building single-page client applications using HTML and TypeScript. It is maintained by Google.",
+						ProTips:     "Learn about components, modules, and services.",
 						SearchQuery: "Angular JavaScript Framework",
 					},
 					{
 						Title:       "Svelte",
 						Description: "Svelte is a radical new approach to building user interfaces. It shifts the work of rendering from the browser to the compile step, resulting in faster load times and a better user experience.",
+						ProTips:     "Understand the Svelte compiler and reactivity.",
 						SearchQuery: "Svelte JavaScript Framework",
 					},
 					{
 						Title:       "Node.js",
 						Description: "Node.js is an open-source, cross-platform, JavaScript runtime environment that executes JavaScript code outside a web browser. It is used to build scalable network applications.",
+						ProTips:     "Learn about the event loop and non-blocking I/O.",
 						SearchQuery: "Node.js",
 					},
 				},
