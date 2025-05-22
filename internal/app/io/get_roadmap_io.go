@@ -49,6 +49,7 @@ type GetRoadmapOutputTopic struct {
 	Title               string                  `json:"title"`
 	Slug                string                  `json:"slug"`
 	Description         string                  `json:"description"`
+	ProTips             string                  `json:"pro_tips"`
 	Order               int                     `json:"order"`
 	IsFinished          bool                    `json:"is_finished"`
 	FinishedAt          time.Time               `json:"finished_at"`
