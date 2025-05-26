@@ -3,7 +3,6 @@ package websocket
 import (
 	"net/http"
 
-	"github.com/curiona-org/backend/internal/config"
 	"github.com/gorilla/websocket"
 )
 
@@ -14,19 +13,20 @@ var wsUpgrader = &websocket.Upgrader{
 }
 
 func checkOrigin(r *http.Request) bool {
-	if config.IsDevelopment() {
-		return true
-	}
+	// if config.IsDevelopment() {
+	// 	return true
+	// }
 
-	origin := r.Header.Get("Origin")
+	// origin := r.Header.Get("Origin")
 
-	origins := map[string]bool{
-		"http://localhost:3000": true,
-		"http://localhost:5000": true,
-	}
+	// origins := map[string]bool{
+	// 	"http://localhost:3000": true,
+	// 	"http://localhost:5000": true,
+	// }
 
-	allowed, ok := origins[origin]
-	return allowed && ok
+	// allowed, ok := origins[origin]
+	// return allowed && ok
+	return true
 }
 
 type Connection interface {
