@@ -10,6 +10,7 @@ var wsUpgrader = &websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin:     checkOrigin,
+	Subprotocols:    []string{"Authorization"},
 }
 
 func checkOrigin(r *http.Request) bool {
@@ -34,3 +35,16 @@ type Connection interface {
 }
 
 const TextMessage = websocket.TextMessage
+
+func GetAuthSubprotocol(r *http.Request) ([]string, bool) {
+	subprotocols := websocket.Subprotocols(r)
+	if len(subprotocols) == 0 {
+		return nil, false
+	}
+
+	authSubprotocol := subprotocols[0]
+	if authSubprotocol == "Authorization" {
+		return subprotocols, true
+	}
+	return nil, false
+}
