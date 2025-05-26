@@ -179,19 +179,28 @@ func (a *API) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCtx := r.Context()
 
-		authorization := r.Header.Get("Authorization")
-		if authorization == "" {
+		var authHeader string
+		fromWebSocket := false
+		if wsAuthProto, ok := websocket.GetAuthSubprotocol(r); ok {
+			authHeader = wsAuthProto[1]
+			fromWebSocket = true
+		} else {
+			authHeader = r.Header.Get("Authorization")
+		}
+
+		bearer := strings.Split(authHeader, " ")
+		if len(bearer) < 2 && !fromWebSocket {
 			a.handleError(w, r, cerrors.ErrUnauthorized)
 			return
 		}
 
-		bearer := strings.Split(authorization, " ")
-		if len(bearer) < 2 {
-			a.handleError(w, r, cerrors.ErrUnauthorized)
-			return
+		var t string
+		if fromWebSocket {
+			t = bearer[0]
+		} else {
+			t = bearer[1]
 		}
 
-		t := bearer[1]
 		token, err := a.application.AuthVerify(reqCtx, t)
 		if err != nil {
 			a.handleError(w, r, cerrors.ErrUnauthorized)
