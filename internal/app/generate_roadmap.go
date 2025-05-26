@@ -111,6 +111,11 @@ func (app *application) chatGeneratePrompt(ctx context.Context, prompt llm.ChatP
 	ctx, span := app.tracer.Start(ctx, "(*application.chatGeneratePrompt)")
 	defer span.End()
 
+	span.SetAttributes(
+		attribute.String("prompt.system", prompt.System),
+		attribute.String("prompt.user", prompt.User),
+	)
+
 	content, err := app.llm.Chat(ctx, prompt)
 	if err != nil {
 		span.RecordError(err)
@@ -188,7 +193,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 		fmt.Sprintf("Must have a maximum of %d topics and %d (or less) subtopics per topic.", domain.RoadmapMaximumTopics, domain.RoadmapMaximumSubtopics),
 		"Each topic and subtopic should have a search query that can be used to find more information on the topic online",
 		"Make sure the search query is relevant to the topic and provides accurate results as it will be used by the system to fetch books, youtube videos, and other resources.",
-		"If of the topic of learning golang be \"Introduction\" make the search query \"Introduction Golang\".",
+		"If for example the topic of learning golang be \"Introduction\" make the search query \"Introduction Golang\".",
 	}
 
 	exampleFormat := chatGeneratePromptPromptResult{
