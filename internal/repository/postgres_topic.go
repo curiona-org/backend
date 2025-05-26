@@ -139,7 +139,7 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 
 	// Fetch topic progression
 	topicProgress, err := r.fetchTopicProgressionByID(traceCtx, topic.AccountID, topic.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		log.Err(err).Msg("failed to fetch topic progression")
 	}
 
@@ -493,7 +493,7 @@ func (r *TopicRepository) fetchTopicProgressionByID(ctx context.Context, account
 		&topicProgression.IsFinished,
 		&topicProgression.FinishedAt,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		span.SetStatus(codes.Error, "failed to fetch topic progression")
 		span.RecordError(err)
 		return domain.RoadmapTopicProgression{}, err
