@@ -1025,7 +1025,9 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 	}
 	defer rows.Close()
 
-	var topics []*domain.Topic
+	allTopics := make(map[int]*domain.Topic)
+	var parentTopics []*domain.Topic
+
 	for rows.Next() {
 		var topic domain.Topic
 		var topicParentID pgtype.Int4
@@ -1059,12 +1061,26 @@ func (r *RoadmapRepository) fetchTopicsByRoadmapID(ctx context.Context, roadmapI
 			topic.ExternalSearchQuery = ""
 		}
 
-		topics = append(topics, &topic)
+		topic.Subtopics = make([]*domain.Topic, 0)
+
+		allTopics[topic.ID] = &topic
+		if topic.ParentID == 0 {
+			parentTopics = append(parentTopics, &topic)
+		}
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return topics, nil
+	// Now link subtopics to their parent topics
+	for _, topic := range allTopics {
+		if topic.ParentID != 0 {
+			if parent, exists := allTopics[topic.ParentID]; exists {
+				parent.Subtopics = append(parent.Subtopics, topic)
+			}
+		}
+	}
+
+	return parentTopics, nil
 }

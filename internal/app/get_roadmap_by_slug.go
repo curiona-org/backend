@@ -81,8 +81,6 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 		},
 	}
 
-	topicMap := make(map[int][]io.GetRoadmapOutputTopic)
-
 	for _, topic := range roadmap.Topics {
 		outputTopic := io.GetRoadmapOutputTopic{
 			ID:                  topic.ID,
@@ -100,23 +98,27 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 			UpdatedAt:           topic.UpdatedAt,
 		}
 
-		topicMap[topic.ParentID] = append(topicMap[topic.ParentID], outputTopic)
-	}
+		for _, subtopic := range topic.Subtopics {
+			outputSubtopic := io.GetRoadmapOutputTopic{
+				ID:                  subtopic.ID,
+				RoadmapID:           subtopic.RoadmapID,
+				ParentID:            subtopic.ParentID,
+				Title:               subtopic.Title,
+				Slug:                subtopic.Slug,
+				Description:         subtopic.Description,
+				ProTips:             subtopic.ProTips,
+				Order:               subtopic.Order,
+				IsFinished:          subtopic.IsFinished,
+				FinishedAt:          subtopic.FinishedAt,
+				ExternalSearchQuery: subtopic.ExternalSearchQuery,
+				CreatedAt:           subtopic.CreatedAt,
+				UpdatedAt:           subtopic.UpdatedAt,
+			}
 
-	var buildTopics func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopic
-	buildTopics = func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopic {
-		traceCtx, buildTopicsSpan := app.tracer.Start(ctx, "buildTopics", trace.WithAttributes(attribute.Int("parentID", parentID)))
-		defer buildTopicsSpan.End()
-
-		outputTopics := topicMap[parentID]
-		for i := range outputTopics {
-			outputTopics[i].Subtopics = buildTopics(traceCtx, outputTopics[i].ID)
+			outputTopic.Subtopics = append(outputTopic.Subtopics, outputSubtopic)
 		}
-
-		return outputTopics
+		output.Topics = append(output.Topics, outputTopic)
 	}
-
-	output.Topics = buildTopics(ctx, 0)
 
 	return output, nil
 }
