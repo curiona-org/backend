@@ -5,6 +5,7 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/internal/config"
 )
 
 func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
@@ -29,14 +30,15 @@ func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
+		Domain:   config.FrontendDomain(),
 		Name:     "refresh_token",
 		Value:    output.RefreshToken,
 		Path:     "/",
 		MaxAge:   output.RefreshTokenExpiresIn,
 		Expires:  output.RefreshTokenExpiresAt,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   config.IsProduction(),
+		SameSite: http.SameSiteNoneMode,
 	})
 
 	if output.Created {

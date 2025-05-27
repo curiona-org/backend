@@ -143,7 +143,14 @@ func (a *API) SetupRoutes() {
 func (a *API) SetupMiddlewares() {
 	a.router.Use(a.populateLog)
 	a.router.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedOrigins: []string{
+			"http://localhost:3000",
+			"https://localhost:3000",
+			"http://web.local.test",
+			"https://web.local.test",
+			"http://web.local.test:3000",
+			"https://web.local.test:3000",
+		},
 		AllowedMethods: []string{
 			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
 			http.MethodDelete, http.MethodHead, http.MethodOptions,
