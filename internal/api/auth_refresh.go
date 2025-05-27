@@ -5,11 +5,15 @@ import (
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
+	"github.com/curiona-org/backend/internal/logger"
 )
 
 func (a *API) AuthRefresh(w http.ResponseWriter, r *http.Request) {
+	log := logger.FromContext(r.Context())
+
 	refreshToken, err := r.Cookie("refresh_token")
 	if err != nil {
+		log.Error().Err(err).Msg("Failed to get refresh token from cookie")
 		a.handleError(w, r, cerrors.ErrUnauthorized)
 		return
 	}
@@ -32,7 +36,7 @@ func (a *API) AuthRefresh(w http.ResponseWriter, r *http.Request) {
 		Expires:  output.RefreshTokenExpiresAt,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	a.render.OK(w, "Successfully refreshed token.", output)

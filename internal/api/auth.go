@@ -36,7 +36,7 @@ func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
 		Expires:  output.RefreshTokenExpiresAt,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	if output.Created {

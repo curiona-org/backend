@@ -24,9 +24,9 @@ type AuthOutput struct {
 	Created               bool              `json:"created"`
 	AccessToken           string            `json:"access_token"`
 	AccessTokenExpiresAt  time.Time         `json:"access_token_expires_at"`
-	RefreshToken          string            `json:"-"`
-	RefreshTokenExpiresIn int               `json:"-"` // in seconds
-	RefreshTokenExpiresAt time.Time         `json:"-"`
+	RefreshToken          string            `json:"refresh_token"`
+	RefreshTokenExpiresIn int               `json:"refresh_token_expires_in"` // in seconds
+	RefreshTokenExpiresAt time.Time         `json:"refresh_token_expires_at"`
 	Account               AuthOutputAccount `json:"account"`
 }
 
