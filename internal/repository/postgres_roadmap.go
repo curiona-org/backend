@@ -364,77 +364,6 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 	return roadmap, nil
 }
 
-func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
-	selectQuery := psql.Select(
-		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
-			includeBookmark:              true,
-			includeProgression:           true,
-			includePersonalizationOption: true,
-			includeAccount:               true,
-		})...),
-		sm.From(domain.RoadmapTable),
-		sm.LeftJoin(domain.BookmarkTable).On(
-			psql.And(
-				psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
-				psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(filters.AccountID)),
-			)),
-		sm.LeftJoin(domain.RoadmapProgressionTable).On(
-			psql.And(
-				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
-				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
-			)),
-		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
-			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
-			psql.Quote(domain.RoadmapTable, "id")),
-		sm.LeftJoin(domain.AccountTable).OnEQ(
-			psql.Quote(domain.AccountTable, "id"),
-			psql.Quote(domain.RoadmapTable, "account_id")),
-		sm.LeftJoin(domain.ProfileTable).OnEQ(
-			psql.Quote(domain.ProfileTable, "id"),
-			psql.Quote(domain.RoadmapTable, "account_id")),
-	)
-
-	if filters.Search != "" {
-		selectQuery.Apply(
-			sm.Where(psql.And(
-				psql.Or(
-					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
-				),
-				psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
-				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
-			))
-	} else {
-		selectQuery.Apply(sm.Where(psql.And(
-			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
-			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
-		)
-	}
-
-	if filters.OrderBy == filter.OrderByOldest {
-		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
-	} else {
-		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc())
-	}
-
-	selectQuery.Apply(
-		sm.Offset(psql.Arg(filters.Paginator.Skip)),
-		sm.Limit(psql.Arg(filters.Paginator.Limit)),
-	)
-
-	query, args := selectQuery.MustBuild(ctx)
-
-	return r.fetch(ctx, roadmapFetchConfig{
-		query:                        query,
-		args:                         args,
-		includeBookmark:              true,
-		includeProgression:           true,
-		includePersonalizationOption: true,
-		includeAccount:               true,
-	})
-}
-
 func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
 	colOpt := roadmapColumnsOptions{
 		includePersonalizationOption: true,
@@ -518,6 +447,224 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 	}
 
 	return r.fetch(ctx, fetchOpt)
+}
+
+func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
+	selectQuery := psql.Select(
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeBookmark:              true,
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.BookmarkTable).On(
+			psql.And(
+				psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			)),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.And(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			)),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+	)
+
+	if filters.Search != "" {
+		selectQuery.Apply(
+			sm.Where(psql.And(
+				psql.Or(
+					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
+				),
+				psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
+			))
+	} else {
+		selectQuery.Apply(sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+		)
+	}
+
+	if filters.OrderBy == filter.OrderByOldest {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Asc())
+	} else {
+		selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapTable, "created_at")).Desc())
+	}
+
+	selectQuery.Apply(
+		sm.Offset(psql.Arg(filters.Paginator.Skip)),
+		sm.Limit(psql.Arg(filters.Paginator.Limit)),
+	)
+
+	query, args := selectQuery.MustBuild(ctx)
+
+	return r.fetch(ctx, roadmapFetchConfig{
+		query:                        query,
+		args:                         args,
+		includeBookmark:              true,
+		includeProgression:           true,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+}
+
+func (r *RoadmapRepository) ListAccountOnProgressRoadmaps(ctx context.Context, accountID int, filters filter.Filters) ([]domain.Roadmap, error) {
+	selectQuery := psql.Select(
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeBookmark:              true,
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.BookmarkTable).On(
+			psql.And(
+				psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(accountID)),
+			)),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.And(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			)),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+	)
+
+	if filters.Search != "" {
+		selectQuery.Apply(
+			sm.Where(psql.And(
+				psql.Or(
+					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
+				),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+				psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
+				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").LT(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
+				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
+			))
+	} else {
+		selectQuery.Apply(sm.Where(psql.And(
+			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
+			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").LT(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)))
+	}
+
+	selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics")).Desc())
+
+	selectQuery.Apply(
+		sm.Offset(psql.Arg(filters.Paginator.Skip)),
+		sm.Limit(psql.Arg(filters.Paginator.Limit)),
+	)
+
+	query, args := selectQuery.MustBuild(ctx)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.ListAccountOnProgressRoadmaps)", query)
+	defer span.End()
+
+	return r.fetch(ctx, roadmapFetchConfig{
+		query:                        query,
+		args:                         args,
+		includeBookmark:              true,
+		includeProgression:           true,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+}
+
+func (r *RoadmapRepository) ListAccountFinishedRoadmaps(ctx context.Context, accountID int, filters filter.Filters) ([]domain.Roadmap, error) {
+	selectQuery := psql.Select(
+		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
+			includeBookmark:              true,
+			includeProgression:           true,
+			includePersonalizationOption: true,
+			includeAccount:               true,
+		})...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.BookmarkTable).On(
+			psql.And(
+				psql.Quote(domain.BookmarkTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(accountID)),
+			)),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.And(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			)),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+	)
+
+	if filters.Search != "" {
+		selectQuery.Apply(
+			sm.Where(psql.And(
+				psql.Or(
+					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
+					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
+				),
+				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+				psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
+				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").EQ(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
+				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
+			))
+	} else {
+		selectQuery.Apply(sm.Where(psql.And(
+			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
+			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").EQ(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)))
+	}
+
+	selectQuery.Apply(sm.OrderBy(psql.Quote(domain.RoadmapProgressionTable, "finished_at")).Desc())
+
+	selectQuery.Apply(
+		sm.Offset(psql.Arg(filters.Paginator.Skip)),
+		sm.Limit(psql.Arg(filters.Paginator.Limit)),
+	)
+
+	query, args := selectQuery.MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.ListAccountFinishedRoadmaps)", query)
+	defer span.End()
+
+	return r.fetch(ctx, roadmapFetchConfig{
+		query:                        query,
+		args:                         args,
+		includeBookmark:              true,
+		includeProgression:           true,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
 }
 
 func (r *RoadmapRepository) GetRoadmapProgression(ctx context.Context, accountID, roadmapID int) (domain.RoadmapProgression, error) {
@@ -685,6 +832,30 @@ func (r *RoadmapRepository) CountByAccountIdAndSearch(ctx context.Context, accou
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to count user roadmaps by searching")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountAccountFinishedRoadmaps(ctx context.Context, accountID int) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapProgressionTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountFinishedRoadmaps)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count finished roadmaps by account ID")
 		span.RecordError(err)
 		return 0, err
 	}
