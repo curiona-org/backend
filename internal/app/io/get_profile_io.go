@@ -7,10 +7,15 @@ import (
 )
 
 type GetProfileOutput struct {
-	ID       int         `json:"id"`
-	Method   auth.Method `json:"method"`
-	Email    string      `json:"email"`
-	Name     string      `json:"name"`
-	Avatar   string      `json:"avatar"`
-	JoinedAt time.Time   `json:"joined_at"`
+	ID         int                        `json:"id"`
+	Method     auth.Method                `json:"method"`
+	Email      string                     `json:"email"`
+	Name       string                     `json:"name"`
+	Avatar     string                     `json:"avatar"`
+	JoinedAt   time.Time                  `json:"joined_at"`
+	Statistics GetProfileOutputStatistics `json:"statistics"`
+}
+
+type GetProfileOutputStatistics struct {
+	TotalFinishedRoadmaps uint64 `json:"total_finished_roadmaps"`
 }

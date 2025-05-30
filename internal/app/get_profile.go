@@ -15,6 +15,11 @@ func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetPr
 		return io.GetProfileOutput{}, err
 	}
 
+	totalFinished, err := app.repository.Roadmap.CountAccountFinishedRoadmaps(ctx, account.ID)
+	if err != nil {
+		return io.GetProfileOutput{}, err
+	}
+
 	return io.GetProfileOutput{
 		ID:       account.ID,
 		Method:   account.Method,
@@ -22,5 +27,8 @@ func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetPr
 		Name:     account.Profile.Name,
 		Avatar:   account.Profile.Avatar,
 		JoinedAt: account.CreatedAt,
+		Statistics: io.GetProfileOutputStatistics{
+			TotalFinishedRoadmaps: totalFinished,
+		},
 	}, nil
 }
