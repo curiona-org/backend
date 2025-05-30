@@ -560,14 +560,14 @@ func (r *RoadmapRepository) ListAccountOnProgressRoadmaps(ctx context.Context, a
 				),
 				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
 				psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
-				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").LT(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
+				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").GT(psql.Arg(0)),
 				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 			))
 	} else {
 		selectQuery.Apply(sm.Where(psql.And(
 			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
 			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
-			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").LT(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
+			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").GT(psql.Arg(0)),
 			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)))
 	}
@@ -856,6 +856,31 @@ func (r *RoadmapRepository) CountAccountFinishedRoadmaps(ctx context.Context, ac
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to count finished roadmaps by account ID")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountAccountOnProgressRoadmaps(ctx context.Context, accountID int) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapProgressionTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
+			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").GT(psql.Arg(0)),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountOnProgressRoadmaps)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count on progress roadmaps by account ID")
 		span.RecordError(err)
 		return 0, err
 	}

@@ -14,18 +14,9 @@ func (app *application) ListUserOnProgressRoadmaps(ctx context.Context, input io
 	ctx, span := app.tracer.Start(ctx, "(*application.ListUserOnProgressRoadmaps)")
 	defer span.End()
 
-	var count uint64
-	var err error
-	if input.Search != "" {
-		count, err = app.repository.Roadmap.CountByAccountIdAndSearch(ctx, input.AccountID, input.Search)
-		if err != nil {
-			return io.ListUserOnProgressRoadmapsOutput{}, err
-		}
-	} else {
-		count, err = app.repository.Roadmap.CountByAccountID(ctx, input.AccountID)
-		if err != nil {
-			return io.ListUserOnProgressRoadmapsOutput{}, err
-		}
+	count, err := app.repository.Roadmap.CountAccountOnProgressRoadmaps(ctx, input.AccountID)
+	if err != nil {
+		return io.ListUserOnProgressRoadmapsOutput{}, err
 	}
 
 	filters := filter.New(input, count)
