@@ -24,8 +24,9 @@ type Account struct {
 	IsSuspended    bool
 	IsAdmin        bool
 
-	Profile  *Profile
-	Roadmaps []*Roadmap
+	Profile       *Profile
+	Roadmaps      []*Roadmap
+	TotalRoadmaps uint64
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

@@ -12,17 +12,15 @@ type ListRoadmapsInput = filter.Params
 type ListRoadmapsOutput = filter.FilteredList[ListRoadmapsOutputItem]
 
 type ListRoadmapsOutputItem struct {
-	ID                   int                                          `json:"id"`
-	Title                string                                       `json:"title"`
-	Slug                 string                                       `json:"slug"`
-	Description          string                                       `json:"description"`
-	TotalTopics          int                                          `json:"total_topics"`
-	TotalFinishedTopics  int                                          `json:"total_finished_topics"`
-	CompletionPercentage float64                                      `json:"completion_percentage"`
-	CreatedAt            time.Time                                    `json:"created_at"`
-	UpdatedAt            time.Time                                    `json:"updated_at"`
-	PersonalizationOpts  ListRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`
-	Creator              ListRoadmapsOutputItemUser                   `json:"creator"`
+	ID                  int                                          `json:"id"`
+	Title               string                                       `json:"title"`
+	Slug                string                                       `json:"slug"`
+	Description         string                                       `json:"description"`
+	TotalTopics         int                                          `json:"total_topics"`
+	CreatedAt           time.Time                                    `json:"created_at"`
+	UpdatedAt           time.Time                                    `json:"updated_at"`
+	PersonalizationOpts ListRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`
+	Creator             ListRoadmapsOutputItemUser                   `json:"creator"`
 }
 
 type ListRoadmapsOutputItemPersonalizationOptions struct {
