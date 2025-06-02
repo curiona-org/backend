@@ -760,6 +760,61 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
+func (r *RoadmapRepository) CountOnProgress(ctx context.Context) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", sm.Distinct(psql.Quote(domain.RoadmapProgressionTable, "roadmap_id")))),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+		),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
+			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").GT(psql.Arg(0)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.Count)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count roadmaps")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountFinished(ctx context.Context) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", sm.Distinct(psql.Quote(domain.RoadmapProgressionTable, "roadmap_id")))),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+		),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.Count)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count roadmaps")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *RoadmapRepository) CountBySearching(ctx context.Context, search string) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),

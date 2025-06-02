@@ -18,6 +18,7 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 	}
 
 	filters := filter.New(input, totalItems)
+
 	roadmaps, err := app.repository.Roadmap.ListAll(ctx, filters)
 	if err != nil {
 		return io.ListRoadmapsOutput{}, err

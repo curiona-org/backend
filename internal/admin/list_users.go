@@ -17,6 +17,11 @@ func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersIn
 	}
 
 	filters := filter.New(input, totalItems)
+
+	filters.Options = map[string]any{
+		"admin.with_total_roadmaps": true,
+	}
+
 	users, err := app.repository.Account.ListAll(ctx, filters)
 	if err != nil {
 		return io.ListUsersOutput{}, err
@@ -31,14 +36,15 @@ func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersIn
 
 	for idx, user := range users {
 		output.Items[idx] = io.ListUsersOutputItem{
-			ID:          user.ID,
-			Method:      user.Method,
-			Email:       user.Email,
-			Name:        user.Profile.Name,
-			Avatar:      user.Profile.Avatar,
-			IsSuspended: user.IsSuspended,
-			IsAdmin:     user.IsAdmin,
-			JoinedAt:    user.CreatedAt,
+			ID:            user.ID,
+			Method:        user.Method,
+			Email:         user.Email,
+			Name:          user.Profile.Name,
+			Avatar:        user.Profile.Avatar,
+			TotalRoadmaps: user.TotalRoadmaps,
+			IsSuspended:   user.IsSuspended,
+			IsAdmin:       user.IsAdmin,
+			JoinedAt:      user.CreatedAt,
 		}
 	}
 

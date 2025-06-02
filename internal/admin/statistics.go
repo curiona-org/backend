@@ -7,19 +7,34 @@ import (
 )
 
 func (app *adminApplication) Statistics(ctx context.Context) (io.StatisticsOutput, error) {
+	accountsCount, err := app.repository.Account.Count(ctx)
+	if err != nil {
+		return io.StatisticsOutput{}, err
+	}
+
 	roadmapsCount, err := app.repository.Roadmap.Count(ctx)
+	if err != nil {
+		return io.StatisticsOutput{}, err
+	}
+
+	roadmapsOnProgressCount, err := app.repository.Roadmap.CountOnProgress(ctx)
+	if err != nil {
+		return io.StatisticsOutput{}, err
+	}
+
+	roadmapsFinishedCount, err := app.repository.Roadmap.CountFinished(ctx)
 	if err != nil {
 		return io.StatisticsOutput{}, err
 	}
 
 	output := io.StatisticsOutput{
 		User: io.StatisticsUser{
-			UsersRegisteredCount: 0,
-			UsersSuspendedCount:  0,
+			UsersRegisteredCount: accountsCount,
 		},
 		Roadmap: io.StatisticsRoadmap{
 			RoadmapsGeneratedCount: roadmapsCount,
-			RoadmapsDroppedCount:   0,
+			RoadmapsOngoingCount:   roadmapsOnProgressCount,
+			RoadmapsFinishedCount:  roadmapsFinishedCount,
 		},
 	}
 

@@ -22,6 +22,7 @@ type Filters struct {
 	Search    string
 	OrderBy   OrderBy
 	Paginator Paginator
+	Options   map[string]any
 }
 
 func New(params Params, total uint64) Filters {

@@ -45,23 +45,31 @@ func (app *adminApplication) GetUser(ctx context.Context, input io.GetUserInput)
 		JoinedAt:    account.CreatedAt,
 	}
 
-	output.Roadmaps = io.ListUserRoadmapOutput{
+	output.Roadmaps = io.ListUserRoadmapsOutput{
 		Total:       filters.Paginator.Total,
 		TotalPages:  filters.Paginator.TotalPages,
 		CurrentPage: filters.Paginator.CurrentPage,
-		Items:       make([]io.ListUserRoadmapItem, len(roadmaps)),
+		Items:       make([]io.ListUserRoadmapsOutputItem, len(roadmaps)),
 	}
 
 	for idx, roadmap := range roadmaps {
-		output.Roadmaps.Items[idx] = io.ListUserRoadmapItem{
-			ID:          roadmap.ID,
-			Title:       roadmap.Title,
-			Description: roadmap.Description,
-			Slug:        roadmap.Slug,
-			TotalTopics: roadmap.TotalTopics,
-			CreatedAt:   roadmap.CreatedAt,
-			UpdatedAt:   roadmap.UpdatedAt,
-			PersonalizationOpts: io.ListUserRoadmapPersonalizationOptions{
+		output.Roadmaps.Items[idx] = io.ListUserRoadmapsOutputItem{
+			ID:           roadmap.ID,
+			Title:        roadmap.Title,
+			Description:  roadmap.Description,
+			Slug:         roadmap.Slug,
+			TotalTopics:  roadmap.TotalTopics,
+			CreatedAt:    roadmap.CreatedAt,
+			UpdatedAt:    roadmap.UpdatedAt,
+			IsBookmarked: roadmap.IsBookmarked,
+			Progression: io.ListUserRoadmapsOutputItemProgression{
+				TotalTopics:          roadmap.Progression.TotalTopics,
+				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
+				CompletionPercentage: roadmap.Progression.CompletionPercentage(),
+				CreatedAt:            roadmap.Progression.CreatedAt,
+				UpdatedAt:            roadmap.Progression.UpdatedAt,
+			},
+			PersonalizationOpts: io.ListUserRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
