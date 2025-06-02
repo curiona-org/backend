@@ -7,6 +7,7 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/interval"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,7 +20,10 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 
 	log := logger.FromContext(ctx)
 
-	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, input.Slug)
+	roadmap, err := app.repository.Roadmap.GetBySlug(ctx, filter.Filters{
+		AccountID: input.AccountID,
+		Slug:      input.Slug,
+	})
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
 			return io.GetRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")

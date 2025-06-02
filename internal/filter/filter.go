@@ -22,6 +22,7 @@ type Filters struct {
 	Search    string
 	OrderBy   OrderBy
 	Paginator Paginator
+	Slug      string
 	Options   map[string]any
 }
 

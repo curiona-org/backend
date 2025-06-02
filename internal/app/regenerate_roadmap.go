@@ -11,6 +11,7 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/interval"
 	"github.com/curiona-org/backend/pkg/llm"
@@ -28,7 +29,9 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 
 	var output io.RegenerateRoadmapOutput
 
-	baseRoadmap, err := app.repository.Roadmap.GetBySlug(ctx, input.Slug)
+	baseRoadmap, err := app.repository.Roadmap.GetBySlug(ctx, filter.Filters{
+		Slug: input.Slug,
+	})
 	if err != nil {
 		if errors.Is(err, domain.ErrRoadmapNotFound) {
 			return io.RegenerateRoadmapOutput{}, cerrors.ErrNotFound.Msg("roadmap")
