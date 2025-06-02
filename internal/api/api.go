@@ -129,6 +129,7 @@ func (a *API) SetupRoutes() {
 		r.Use(a.authMiddleware)
 		r.Use(a.adminMiddleware)
 
+		r.Get("/admin/statistics", a.AdminStatistics)
 		r.Get("/admin/users", a.AdminListUsers)
 		r.Get("/admin/users/{id}", a.AdminGetUser)
 		r.Delete("/admin/users/{id}", a.AdminDeleteUser)

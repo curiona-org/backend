@@ -52,11 +52,18 @@ func (r *AccountRepository) accountWithProfileColumns() []any {
 	)
 }
 
-func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, query string, args ...any) ([]domain.Account, error) {
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetch)", query)
+type accountFetchConfig struct {
+	query                string
+	args                 []any
+	includeProfile       bool
+	includeRoadmapsCount bool
+}
+
+func (r *AccountRepository) fetch(ctx context.Context, cfg accountFetchConfig) ([]domain.Account, error) {
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.fetch)", cfg.query)
 	defer span.End()
 
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.db.Query(ctx, cfg.query, cfg.args...)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to fetch accounts")
 		span.RecordError(err)
@@ -67,38 +74,43 @@ func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, quer
 	var accounts []domain.Account
 	for rows.Next() {
 		var account domain.Account
-		if includeProfile {
-			var profile domain.Profile
-			err = rows.Scan(
-				&account.ID,
-				&account.Method,
-				&account.Email,
-				&account.PasswordDigest,
-				&account.IsSuspended,
-				&account.IsAdmin,
-				&account.CreatedAt,
-				&account.UpdatedAt,
+		var profile domain.Profile
+		var totalRoadmaps uint64
+		dest := []any{
+			&account.ID,
+			&account.Method,
+			&account.Email,
+			&account.PasswordDigest,
+			&account.IsSuspended,
+			&account.IsAdmin,
+			&account.CreatedAt,
+			&account.UpdatedAt,
+		}
+
+		if cfg.includeProfile {
+			dest = append(dest,
 				&profile.ID,
 				&profile.Name,
 				&profile.Avatar,
 				&profile.CreatedAt,
 				&profile.UpdatedAt,
 			)
-			account.SetProfile(&profile)
-		} else {
-			err = rows.Scan(
-				&account.ID,
-				&account.Method,
-				&account.Email,
-				&account.PasswordDigest,
-				&account.IsSuspended,
-				&account.IsAdmin,
-				&account.CreatedAt,
-				&account.UpdatedAt,
-			)
 		}
-		if err != nil {
+
+		if cfg.includeRoadmapsCount {
+			dest = append(dest, &totalRoadmaps)
+		}
+
+		if err := rows.Scan(dest...); err != nil {
 			return nil, err
+		}
+
+		if cfg.includeProfile {
+			account.SetProfile(&profile)
+		}
+
+		if cfg.includeRoadmapsCount {
+			account.TotalRoadmaps = totalRoadmaps
 		}
 
 		accounts = append(accounts, account)
@@ -112,11 +124,26 @@ func (r *AccountRepository) fetch(ctx context.Context, includeProfile bool, quer
 }
 
 func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Account, error) {
+	cols := r.accountWithProfileColumns()
+	adminWithTotalRoadmaps, ok := filters.Options["admin.with_total_roadmaps"].(bool)
+	if ok && adminWithTotalRoadmaps {
+		cols = append(cols, psql.F("COUNT", psql.Quote(domain.RoadmapTable, "id")))
+	}
+
 	selectQuery := psql.Select(
-		sm.Columns(r.accountWithProfileColumns()...),
+		sm.Columns(cols...),
 		sm.From(domain.AccountTable),
 		sm.LeftJoin(domain.ProfileTable).Using("id"),
 	)
+
+	if adminWithTotalRoadmaps {
+		selectQuery.Apply(
+			sm.LeftJoin(domain.RoadmapTable).OnEQ(
+				psql.Quote(domain.RoadmapTable, "account_id"),
+				psql.Quote(domain.AccountTable, "id"),
+			),
+		)
+	}
 
 	if filters.Search != "" {
 		selectQuery.Apply(
@@ -125,10 +152,17 @@ func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters)
 					psql.Quote("email").ILike(psql.Arg("%"+filters.Search+"%")),
 					psql.Quote("name").ILike(psql.Arg("%"+filters.Search+"%")),
 				),
-				psql.Quote("deleted_at").IsNull()),
+				psql.Quote(domain.AccountTable, "deleted_at").IsNull()),
 			))
 	} else {
-		selectQuery.Apply(sm.Where(psql.Quote("deleted_at").IsNull()))
+		selectQuery.Apply(sm.Where(psql.Quote(domain.AccountTable, "deleted_at").IsNull()))
+	}
+
+	if adminWithTotalRoadmaps {
+		selectQuery.Apply(
+			sm.GroupBy(psql.Quote(domain.AccountTable, "id")),
+			sm.GroupBy(psql.Quote(domain.ProfileTable, "id")),
+		)
 	}
 
 	if filters.OrderBy == filter.OrderByOldest {
@@ -144,7 +178,12 @@ func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters)
 
 	query, args := selectQuery.MustBuild(ctx)
 
-	return r.fetch(ctx, true, query, args...)
+	return r.fetch(ctx, accountFetchConfig{
+		query:                query,
+		args:                 args,
+		includeProfile:       true,
+		includeRoadmapsCount: adminWithTotalRoadmaps,
+	})
 }
 
 func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account, error) {
@@ -157,7 +196,12 @@ func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account
 			psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	accounts, err := r.fetch(ctx, true, query, args...)
+	accounts, err := r.fetch(ctx, accountFetchConfig{
+		query:                query,
+		args:                 args,
+		includeProfile:       true,
+		includeRoadmapsCount: false,
+	})
 	if err != nil {
 		return domain.Account{}, err
 	}
@@ -179,7 +223,12 @@ func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domai
 			psql.Quote("deleted_at").IsNull())),
 	).MustBuild(ctx)
 
-	accounts, err := r.fetch(ctx, true, query, args...)
+	accounts, err := r.fetch(ctx, accountFetchConfig{
+		query:                query,
+		args:                 args,
+		includeProfile:       true,
+		includeRoadmapsCount: false,
+	})
 	if err != nil {
 		return domain.Account{}, err
 	}
@@ -273,7 +322,12 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 				psql.Quote("deleted_at").IsNull())),
 		).MustBuild(ctx)
 
-		accounts, err := r.fetch(traceCtx, false, query, args...)
+		accounts, err := r.fetch(traceCtx, accountFetchConfig{
+			query:                query,
+			args:                 args,
+			includeProfile:       false,
+			includeRoadmapsCount: false,
+		})
 		if err != nil {
 			return err
 		}

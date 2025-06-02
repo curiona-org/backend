@@ -7,10 +7,10 @@ type StatisticsOutput struct {
 
 type StatisticsUser struct {
 	UsersRegisteredCount uint64 `json:"users_registered_count"`
-	UsersSuspendedCount  uint64 `json:"users_suspended_count"`
 }
 
 type StatisticsRoadmap struct {
 	RoadmapsGeneratedCount uint64 `json:"roadmaps_generated_count"`
-	RoadmapsDroppedCount   uint64 `json:"roadmaps_dropped_count"`
+	RoadmapsOngoingCount   uint64 `json:"roadmaps_ongoing_count"`
+	RoadmapsFinishedCount  uint64 `json:"roadmaps_finished_count"`
 }
