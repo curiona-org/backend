@@ -256,6 +256,34 @@ func (r *AccountRepository) Count(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
+func (r *AccountRepository) CountBySearching(ctx context.Context, search string) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.AccountTable),
+		sm.LeftJoin(domain.ProfileTable).Using("id"),
+		sm.Where(psql.And(
+			psql.Or(
+				psql.Quote("email").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote("name").ILike(psql.Arg("%"+search+"%")),
+			),
+			psql.Quote(domain.AccountTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.CountBySearching)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count accounts by searching")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *AccountRepository) Save(ctx context.Context, input *domain.Account) (domain.Account, error) {
 	var account domain.Account
 	var profile domain.Profile
