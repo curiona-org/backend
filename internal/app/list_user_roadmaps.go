@@ -55,6 +55,7 @@ func (app *application) ListUserRoadmaps(ctx context.Context, input io.ListUserR
 				TotalTopics:          roadmap.Progression.TotalTopics,
 				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 				CompletionPercentage: roadmap.Progression.CompletionPercentage(),
+				IsFinished:           roadmap.Progression.IsFinished,
 				CreatedAt:            roadmap.Progression.CreatedAt,
 				UpdatedAt:            roadmap.Progression.UpdatedAt,
 			},
