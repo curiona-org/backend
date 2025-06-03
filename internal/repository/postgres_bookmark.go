@@ -335,7 +335,13 @@ func (r *BookmarkRepository) Count(ctx context.Context, accountID int) (uint64, 
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.BookmarkTable),
-		sm.Where(psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(accountID))),
+		sm.LeftJoin(domain.RoadmapTable).OnEQ(
+			psql.Quote(domain.BookmarkTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.Where(psql.And(
+			psql.Quote(domain.BookmarkTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
 	).MustBuild(ctx)
 	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*BookmarkRepository.Count)", query)
 	defer span.End()
