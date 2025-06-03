@@ -14,10 +14,6 @@ func (app *application) MarkTopicAsFinished(ctx context.Context, input io.MarkTo
 	defer span.End()
 
 	err := app.repository.Topic.UpdateTopicStatus(ctx, input.AccountID, input.Slug, func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error) {
-		if topic.AccountID != input.AccountID {
-			return false, cerrors.ErrNotFound
-		}
-
 		if topic.IsFinished {
 			return false, nil
 		}
