@@ -22,5 +22,5 @@ func (a *API) ListCommunityRoadmaps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.render.OK(w, "List User Roadmaps.", output)
+	a.render.OK(w, "List Community Roadmaps.", output)
 }

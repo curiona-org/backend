@@ -213,7 +213,8 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 
 		var totalBookmarks pgtype.Int8
 		adminWithTotalBookmarks, adminWithTotalBookmarksOk := cfg.options["admin.with_total_bookmarks"].(bool)
-		if adminWithTotalBookmarksOk && adminWithTotalBookmarks {
+		withTotalBookMarks := adminWithTotalBookmarks && adminWithTotalBookmarksOk
+		if withTotalBookMarks {
 			dest = append(dest, &totalBookmarks)
 		}
 
@@ -230,7 +231,7 @@ func (r *RoadmapRepository) fetch(ctx context.Context, cfg roadmapFetchConfig) (
 			roadmap.IsBookmarked = roadmapIsBookmarked.Bool
 		}
 
-		if adminWithTotalBookmarksOk && adminWithTotalBookmarks && totalBookmarks.Valid {
+		if withTotalBookMarks && totalBookmarks.Valid {
 			roadmap.TotalBookmarks = int(totalBookmarks.Int64)
 		} else {
 			roadmap.TotalBookmarks = 0
@@ -387,15 +388,16 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 		includeAccount:               true,
 	}
 
-	cols := r.roadmapColumns(colOpt)
-	adminWithTotalBookmarks, adminWithTotalBookmarksOk := filters.Options["admin.with_total_bookmarks"].(bool)
-	if adminWithTotalBookmarksOk && adminWithTotalBookmarks {
-		cols = append(cols, psql.F("COUNT", psql.Quote(domain.BookmarkTable, "roadmap_id")))
-	}
-
 	if filters.AccountID > 0 {
 		colOpt.includeBookmark = true
 		colOpt.includeProgression = true
+	}
+
+	cols := r.roadmapColumns(colOpt)
+	adminWithTotalBookmarks, adminWithTotalBookmarksOk := filters.Options["admin.with_total_bookmarks"].(bool)
+	withTotalBookmarks := adminWithTotalBookmarksOk && adminWithTotalBookmarks
+	if withTotalBookmarks {
+		cols = append(cols, psql.F("COUNT", psql.Quote(domain.BookmarkTable, "roadmap_id")))
 	}
 
 	selectQuery := psql.Select(
@@ -412,7 +414,16 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 			psql.Quote(domain.RoadmapTable, "account_id")),
 	)
 
-	if filters.AccountID > 0 {
+	if withTotalBookmarks {
+		selectQuery.Apply(
+			sm.LeftJoin(domain.BookmarkTable).OnEQ(
+				psql.Quote(domain.BookmarkTable, "roadmap_id"),
+				psql.Quote(domain.RoadmapTable, "id")),
+			sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+				psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+				psql.Quote(domain.RoadmapTable, "id")),
+		)
+	} else if !withTotalBookmarks && filters.AccountID > 0 {
 		selectQuery.Apply(
 			sm.LeftJoin(domain.BookmarkTable).On(
 				psql.And(
@@ -433,14 +444,6 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 		)
 	}
 
-	if adminWithTotalBookmarksOk && adminWithTotalBookmarks {
-		selectQuery.Apply(
-			sm.LeftJoin(domain.BookmarkTable).OnEQ(
-				psql.Quote(domain.BookmarkTable, "roadmap_id"),
-				psql.Quote(domain.RoadmapTable, "id")),
-		)
-	}
-
 	if filters.Search != "" {
 		selectQuery.Apply(
 			sm.Where(psql.And(
@@ -455,7 +458,7 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 		selectQuery.Apply(sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()))
 	}
 
-	if adminWithTotalBookmarksOk && adminWithTotalBookmarks {
+	if withTotalBookmarks {
 		selectQuery.Apply(
 			sm.GroupBy(psql.Quote(domain.RoadmapTable, "id")),
 			sm.GroupBy(psql.Quote(domain.PersonalizationOptionsTable, "id")),
