@@ -25,12 +25,13 @@ var (
 )
 
 type Roadmap struct {
-	ID          int
-	AccountID   int
-	Title       string
-	Slug        string
-	Description string
-	TotalTopics int
+	ID             int
+	AccountID      int
+	Title          string
+	Slug           string
+	Description    string
+	TotalTopics    int
+	TotalBookmarks int
 
 	Account                *Account
 	Topics                 []*Topic

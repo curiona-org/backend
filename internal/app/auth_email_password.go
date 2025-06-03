@@ -52,6 +52,10 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 			return registrationResult{}, cerrors.ErrInvalidCredentials
 		}
 
+		if input.IsAdmin && !existingAccount.IsAdmin {
+			return registrationResult{}, cerrors.ErrUnauthorized
+		}
+
 		return registrationResult{
 			id:       existingAccount.ID,
 			created:  false,

@@ -16,6 +16,8 @@ func (a *API) AdminListRoadmaps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	filters.AccountID = 0
+
 	output, err := a.adminApp.ListRoadmaps(ctx, filters)
 	if err != nil {
 		a.handleError(w, r, err)

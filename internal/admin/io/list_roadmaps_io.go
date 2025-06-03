@@ -17,6 +17,7 @@ type ListRoadmapsOutputItem struct {
 	Slug                string                                       `json:"slug"`
 	Description         string                                       `json:"description"`
 	TotalTopics         int                                          `json:"total_topics"`
+	TotalBookmarks      int                                          `json:"total_bookmarks"`
 	CreatedAt           time.Time                                    `json:"created_at"`
 	UpdatedAt           time.Time                                    `json:"updated_at"`
 	PersonalizationOpts ListRoadmapsOutputItemPersonalizationOptions `json:"personalization_options"`

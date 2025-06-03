@@ -16,6 +16,7 @@ type AuthInput struct {
 	UserAgent string `json:"-"`
 	ClientIP  string `json:"-"`
 
+	IsAdmin             bool        `json:"-"`
 	Method              auth.Method `json:"-"`
 	IgnorePasswordCheck bool        `json:"-"` // used to skip password check in some cases
 }
@@ -27,6 +28,7 @@ type AuthOutput struct {
 	RefreshToken          string            `json:"refresh_token"`
 	RefreshTokenExpiresIn int               `json:"refresh_token_expires_in"` // in seconds
 	RefreshTokenExpiresAt time.Time         `json:"refresh_token_expires_at"`
+	IsAdmin               bool              `json:"is_admin,omitempty"`
 	Account               AuthOutputAccount `json:"account"`
 }
 

@@ -38,7 +38,7 @@ func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.
 			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 		},
-		Creator: io.GetRoadmapOutputUser{
+		Creator: io.GetRoadmapOutputCreator{
 			ID:          roadmap.Account.ID,
 			Method:      roadmap.Account.Method,
 			Email:       roadmap.Account.Email,
@@ -60,7 +60,7 @@ func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.
 			Slug:                topic.Slug,
 			Description:         topic.Description,
 			Order:               topic.Order,
-			Finished:            topic.IsFinished,
+			IsFinished:          topic.IsFinished,
 			ExternalSearchQuery: topic.ExternalSearchQuery,
 			CreatedAt:           topic.CreatedAt,
 			UpdatedAt:           topic.UpdatedAt,
