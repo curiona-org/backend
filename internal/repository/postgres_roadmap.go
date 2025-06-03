@@ -967,6 +967,7 @@ func (r *RoadmapRepository) CountAccountOnProgressRoadmaps(ctx context.Context, 
 			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
 			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
 			psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").GT(psql.Arg(0)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)),
 	).MustBuild(ctx)
 
