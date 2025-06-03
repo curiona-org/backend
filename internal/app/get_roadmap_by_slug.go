@@ -42,7 +42,6 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 					roadmap.Topics[i].FinishedAt = topicProgress.FinishedAt
 				}
 			}
-			roadmap.SetProgression(&progression)
 		}
 
 		rating, err := app.repository.Rating.GetRoadmapRatingByAccountID(ctx, input.AccountID, input.Slug)
@@ -50,8 +49,6 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 			if !errors.Is(err, domain.ErrRatingNotFound) {
 				log.Err(err).Msg("failed to get roadmap rating")
 			}
-		} else {
-			roadmap.SetRating(&rating)
 		}
 
 		isBookmarked, err := app.repository.Bookmark.RoadmapIsBookmarked(ctx, input.AccountID, roadmap.ID)
@@ -60,6 +57,9 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 		} else {
 			roadmap.IsBookmarked = isBookmarked
 		}
+
+		roadmap.SetProgression(&progression)
+		roadmap.SetRating(&rating)
 	}
 
 	output := io.GetRoadmapOutput{
