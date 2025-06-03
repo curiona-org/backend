@@ -23,6 +23,12 @@ func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
 
 	input.UserAgent = r.UserAgent()
 	input.ClientIP = r.RemoteAddr
+
+	isAdmin := r.Header.Get("X-Admin") == "true"
+	if isAdmin {
+		input.IsAdmin = true
+	}
+
 	output, err := a.application.Auth(r.Context(), input)
 	if err != nil {
 		a.handleError(w, r, err)

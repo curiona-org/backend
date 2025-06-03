@@ -18,7 +18,9 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 	}
 
 	filters := filter.New(input, totalItems)
-
+	filters.Options = map[string]any{
+		"admin.with_total_bookmarks": true,
+	}
 	roadmaps, err := app.repository.Roadmap.ListAll(ctx, filters)
 	if err != nil {
 		return io.ListRoadmapsOutput{}, err
@@ -33,13 +35,14 @@ func (app *adminApplication) ListRoadmaps(ctx context.Context, input io.ListRoad
 
 	for idx, roadmap := range roadmaps {
 		output.Items[idx] = io.ListRoadmapsOutputItem{
-			ID:          roadmap.ID,
-			Title:       roadmap.Title,
-			Description: roadmap.Description,
-			Slug:        roadmap.Slug,
-			TotalTopics: roadmap.TotalTopics,
-			CreatedAt:   roadmap.CreatedAt,
-			UpdatedAt:   roadmap.UpdatedAt,
+			ID:             roadmap.ID,
+			Title:          roadmap.Title,
+			Description:    roadmap.Description,
+			Slug:           roadmap.Slug,
+			TotalTopics:    roadmap.TotalTopics,
+			TotalBookmarks: roadmap.TotalBookmarks,
+			CreatedAt:      roadmap.CreatedAt,
+			UpdatedAt:      roadmap.UpdatedAt,
 			PersonalizationOpts: io.ListRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),

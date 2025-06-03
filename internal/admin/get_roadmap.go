@@ -8,8 +8,6 @@ import (
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/pkg/interval"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.GetRoadmapOutput, error) {
@@ -38,7 +36,7 @@ func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.
 			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
 			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 		},
-		Creator: io.GetRoadmapOutputUser{
+		Creator: io.GetRoadmapOutputCreator{
 			ID:          roadmap.Account.ID,
 			Method:      roadmap.Account.Method,
 			Email:       roadmap.Account.Email,
@@ -49,8 +47,6 @@ func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.
 		},
 	}
 
-	topicMap := make(map[int][]io.GetRoadmapOutputTopic)
-
 	for _, topic := range roadmap.Topics {
 		outputTopic := io.GetRoadmapOutputTopic{
 			ID:                  topic.ID,
@@ -59,30 +55,36 @@ func (app *adminApplication) GetRoadmap(ctx context.Context, roadmapID int) (io.
 			Title:               topic.Title,
 			Slug:                topic.Slug,
 			Description:         topic.Description,
+			ProTips:             topic.ProTips,
 			Order:               topic.Order,
-			Finished:            topic.IsFinished,
+			IsFinished:          topic.IsFinished,
+			FinishedAt:          topic.FinishedAt,
 			ExternalSearchQuery: topic.ExternalSearchQuery,
 			CreatedAt:           topic.CreatedAt,
 			UpdatedAt:           topic.UpdatedAt,
 		}
 
-		topicMap[topic.ParentID] = append(topicMap[topic.ParentID], outputTopic)
-	}
+		for _, subtopic := range topic.Subtopics {
+			outputSubtopic := io.GetRoadmapOutputTopic{
+				ID:                  subtopic.ID,
+				RoadmapID:           subtopic.RoadmapID,
+				ParentID:            subtopic.ParentID,
+				Title:               subtopic.Title,
+				Slug:                subtopic.Slug,
+				Description:         subtopic.Description,
+				ProTips:             subtopic.ProTips,
+				Order:               subtopic.Order,
+				IsFinished:          subtopic.IsFinished,
+				FinishedAt:          subtopic.FinishedAt,
+				ExternalSearchQuery: subtopic.ExternalSearchQuery,
+				CreatedAt:           subtopic.CreatedAt,
+				UpdatedAt:           subtopic.UpdatedAt,
+			}
 
-	var buildTopics func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopic
-	buildTopics = func(ctx context.Context, parentID int) []io.GetRoadmapOutputTopic {
-		traceCtx, buildTopicsSpan := app.tracer.Start(ctx, "buildTopics", trace.WithAttributes(attribute.Int("parentID", parentID)))
-		defer buildTopicsSpan.End()
-
-		outputTopics := topicMap[parentID]
-		for i := range outputTopics {
-			outputTopics[i].Subtopics = buildTopics(traceCtx, outputTopics[i].ID)
+			outputTopic.Subtopics = append(outputTopic.Subtopics, outputSubtopic)
 		}
-
-		return outputTopics
+		output.Topics = append(output.Topics, outputTopic)
 	}
-
-	output.Topics = buildTopics(ctx, 0)
 
 	return output, nil
 }

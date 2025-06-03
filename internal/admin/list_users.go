@@ -11,12 +11,21 @@ func (app *adminApplication) ListUsers(ctx context.Context, input io.ListUsersIn
 	ctx, span := app.tracer.Start(ctx, "(*adminApplication.ListUsers)")
 	defer span.End()
 
-	totalItems, err := app.repository.Account.Count(ctx)
-	if err != nil {
-		return io.ListUsersOutput{}, err
+	var count uint64
+	var err error
+	if input.Search != "" {
+		count, err = app.repository.Account.CountBySearching(ctx, input.Search)
+		if err != nil {
+			return io.ListUsersOutput{}, err
+		}
+	} else {
+		count, err = app.repository.Account.Count(ctx)
+		if err != nil {
+			return io.ListUsersOutput{}, err
+		}
 	}
 
-	filters := filter.New(input, totalItems)
+	filters := filter.New(input, count)
 
 	filters.Options = map[string]any{
 		"admin.with_total_roadmaps": true,

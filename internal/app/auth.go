@@ -70,6 +70,7 @@ func (app *application) Auth(ctx context.Context, input io.AuthInput) (io.AuthOu
 			Avatar:   result.avatar,
 			JoinedAt: result.joinedAt,
 		},
+		IsAdmin: input.IsAdmin,
 	}
 
 	return output, nil

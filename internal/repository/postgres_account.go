@@ -53,10 +53,10 @@ func (r *AccountRepository) accountWithProfileColumns() []any {
 }
 
 type accountFetchConfig struct {
-	query                string
-	args                 []any
-	includeProfile       bool
-	includeRoadmapsCount bool
+	query          string
+	args           []any
+	includeProfile bool
+	options        map[string]any
 }
 
 func (r *AccountRepository) fetch(ctx context.Context, cfg accountFetchConfig) ([]domain.Account, error) {
@@ -97,7 +97,13 @@ func (r *AccountRepository) fetch(ctx context.Context, cfg accountFetchConfig) (
 			)
 		}
 
-		if cfg.includeRoadmapsCount {
+		if cfg.options == nil {
+			// avoid nil map access
+			cfg.options = make(map[string]any)
+		}
+
+		adminWithTotalRoadmaps, adminWithTotalRoadmapsOk := cfg.options["admin.with_total_roadmaps"].(bool)
+		if adminWithTotalRoadmapsOk && adminWithTotalRoadmaps {
 			dest = append(dest, &totalRoadmaps)
 		}
 
@@ -109,7 +115,7 @@ func (r *AccountRepository) fetch(ctx context.Context, cfg accountFetchConfig) (
 			account.SetProfile(&profile)
 		}
 
-		if cfg.includeRoadmapsCount {
+		if adminWithTotalRoadmapsOk && adminWithTotalRoadmaps {
 			account.TotalRoadmaps = totalRoadmaps
 		}
 
@@ -179,10 +185,10 @@ func (r *AccountRepository) ListAll(ctx context.Context, filters filter.Filters)
 	query, args := selectQuery.MustBuild(ctx)
 
 	return r.fetch(ctx, accountFetchConfig{
-		query:                query,
-		args:                 args,
-		includeProfile:       true,
-		includeRoadmapsCount: adminWithTotalRoadmaps,
+		query:          query,
+		args:           args,
+		includeProfile: true,
+		options:        filters.Options,
 	})
 }
 
@@ -197,10 +203,9 @@ func (r *AccountRepository) GetByID(ctx context.Context, id int) (domain.Account
 	).MustBuild(ctx)
 
 	accounts, err := r.fetch(ctx, accountFetchConfig{
-		query:                query,
-		args:                 args,
-		includeProfile:       true,
-		includeRoadmapsCount: false,
+		query:          query,
+		args:           args,
+		includeProfile: true,
 	})
 	if err != nil {
 		return domain.Account{}, err
@@ -224,10 +229,9 @@ func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (domai
 	).MustBuild(ctx)
 
 	accounts, err := r.fetch(ctx, accountFetchConfig{
-		query:                query,
-		args:                 args,
-		includeProfile:       true,
-		includeRoadmapsCount: false,
+		query:          query,
+		args:           args,
+		includeProfile: true,
 	})
 	if err != nil {
 		return domain.Account{}, err
@@ -250,6 +254,34 @@ func (r *AccountRepository) Count(ctx context.Context) (uint64, error) {
 	var count uint64
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *AccountRepository) CountBySearching(ctx context.Context, search string) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.AccountTable),
+		sm.LeftJoin(domain.ProfileTable).Using("id"),
+		sm.Where(psql.And(
+			psql.Or(
+				psql.Quote("email").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote("name").ILike(psql.Arg("%"+search+"%")),
+			),
+			psql.Quote(domain.AccountTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*AccountRepository.CountBySearching)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count accounts by searching")
+		span.RecordError(err)
 		return 0, err
 	}
 
@@ -323,10 +355,9 @@ func (r *AccountRepository) Update(ctx context.Context, id int, updateFn func(*d
 		).MustBuild(ctx)
 
 		accounts, err := r.fetch(traceCtx, accountFetchConfig{
-			query:                query,
-			args:                 args,
-			includeProfile:       false,
-			includeRoadmapsCount: false,
+			query:          query,
+			args:           args,
+			includeProfile: false,
 		})
 		if err != nil {
 			return err
