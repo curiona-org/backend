@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/filter"
@@ -380,6 +381,31 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 	roadmap.SetTopics(topics)
 
 	return roadmap, nil
+}
+
+func (r *RoadmapRepository) ExistsBySlug(ctx context.Context, slug string) (int, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.Quote(domain.RoadmapTable, "id")),
+		sm.From(domain.RoadmapTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "slug").EQ(psql.Arg(slug)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.ExistsBySlug)", query)
+	defer span.End()
+
+	var id int
+	err := r.db.QueryRow(ctx, query, args...).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, domain.ErrRoadmapNotFound
+		}
+		log.Error().Err(err).Msg("failed to check if roadmap exists by slug")
+		return 0, err
+	}
+
+	return id, nil
 }
 
 func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters) ([]domain.Roadmap, error) {
