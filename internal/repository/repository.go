@@ -13,6 +13,7 @@ type Repository struct {
 	Profile                *ProfileRepository
 	Roadmap                *RoadmapRepository
 	Topic                  *TopicRepository
+	Rating                 *RatingRepository
 	ExternalResource       *ExternalResourceRepository
 	PersonalizationOptions *PersonalizationOptionsRepository
 	Bookmark               *BookmarkRepository
@@ -26,6 +27,7 @@ func NewPostgresRepository(db database.Connection, cache *cache.Connection) *Rep
 		Profile:                NewPostgresProfileRepository(db),
 		Roadmap:                NewPostgresRoadmapRepository(db, cache),
 		Topic:                  NewPostgresTopicRepository(db, cache),
+		Rating:                 NewPostgresRatingRepository(db),
 		ExternalResource:       NewPostgresExternalResourceRepository(db, cache),
 		PersonalizationOptions: NewPostgresPersonalizationOptionsRepository(db),
 		Bookmark:               NewPostgresBookmarkRepository(db, cache),
