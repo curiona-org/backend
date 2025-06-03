@@ -21,6 +21,7 @@ type GetRoadmapOutput struct {
 	UpdatedAt           time.Time                              `json:"updated_at"`
 	IsBookmarked        bool                                   `json:"is_bookmarked"`
 	Progression         GetRoadmapOutputProgression            `json:"progression"`
+	Rating              GetRoadmapOutputRating                 `json:"rating"`
 	Creator             GetRoadmapOutputCreator                `json:"creator"`
 	PersonalizationOpts GetRoadmapOutputPersonalizationOptions `json:"personalization_options"`
 	Topics              []GetRoadmapOutputTopic                `json:"topics"`
@@ -64,4 +65,15 @@ type GetRoadmapOutputPersonalizationOptions struct {
 	TotalDuration         interval.Interval `json:"total_duration"`
 	SkillLevel            string            `json:"skill_level"`
 	AdditionalInfo        string            `json:"additional_info"`
+}
+
+type GetRoadmapOutputRating struct {
+	IsRated                        bool      `json:"is_rated"`
+	RoadmapID                      int       `json:"roadmap_id"`
+	ProgressionTotalTopics         int       `json:"progression_total_topics"`
+	ProgressionTotalFinishedTopics int       `json:"progression_total_finished_topics"`
+	Rating                         int       `json:"rating"`
+	Comment                        string    `json:"comment"`
+	CreatedAt                      time.Time `json:"created_at"`
+	UpdatedAt                      time.Time `json:"updated_at"`
 }

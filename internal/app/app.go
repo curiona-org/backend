@@ -34,6 +34,9 @@ type CurionaApplication interface {
 	ListUserOnProgressRoadmaps(ctx context.Context, input io.ListUserOnProgressRoadmapsInput) (io.ListUserOnProgressRoadmapsOutput, error)
 	DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) error
 
+	GetUserRoadmapRating(ctx context.Context, input io.GetUserRoadmapRatingInput) (io.GetUserRoadmapRatingOutput, error)
+	RateRoadmap(ctx context.Context, input io.RateRoadmapInput) error
+
 	// RoadmapChatAssistStream handles chat assistance functionality. It interacts with the LLM stream
 	// provider to send and receive messages.
 	RoadmapChatAssistStream(ctx context.Context, input io.RoadmapChatAssistStreamInput) (llm.Stream, error)

@@ -37,6 +37,7 @@ type Roadmap struct {
 	Topics                 []*Topic
 	PersonalizationOptions *PersonalizationOptions
 	Progression            *RoadmapProgression
+	Rating                 *Rating
 	IsBookmarked           bool
 
 	CreatedAt time.Time
@@ -97,6 +98,10 @@ func (e *Roadmap) SetProgression(progression *RoadmapProgression) {
 	}
 
 	e.Progression = progression
+}
+
+func (e *Roadmap) SetRating(rating *Rating) {
+	e.Rating = rating
 }
 
 func (e *Roadmap) IsDeleted() bool {
