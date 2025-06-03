@@ -180,8 +180,8 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 			roadmap.DeletedAt = roadmapDeletedAt.Time
 		}
 
+		roadmapProgression := new(domain.RoadmapProgression)
 		if cfg.includeProgression && roadmapProgressionID.Valid {
-			roadmapProgression := new(domain.RoadmapProgression)
 			if roadmapProgressionFinishedAt.Valid {
 				roadmapProgression.FinishedAt = roadmapProgressionFinishedAt.Time
 			}
@@ -194,8 +194,8 @@ func (r *BookmarkRepository) fetchRoadmap(ctx context.Context, cfg roadmapFetchC
 			roadmapProgression.IsFinished = roadmapProgressionIsFinished.Bool
 			roadmapProgression.CreatedAt = roadmapProgressionCreatedAt.Time
 			roadmapProgression.UpdatedAt = roadmapProgressionUpdatedAt.Time
-			roadmap.SetProgression(roadmapProgression)
 		}
+		roadmap.SetProgression(roadmapProgression)
 
 		if cfg.includePersonalizationOption {
 			roadmap.SetPersonalizationOptions(&personalizationOptions)
