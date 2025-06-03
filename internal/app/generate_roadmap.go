@@ -30,6 +30,25 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	))
 	defer span.End()
 
+	// Validate if user already hit the limit of generating roadmaps
+	account, err := app.repository.Account.GetByID(ctx, input.AccountID)
+	if err != nil {
+		return io.GenerateRoadmapOutput{}, cerrors.ErrUnauthorized
+	}
+
+	if !account.IsAdmin {
+		// Check if the account has reached the maximum number of generated roadmaps by
+		// checking the number of unfinished roadmaps.
+		accountRoadmapsCount, err := app.repository.Roadmap.CountUnfinishedRoadmapsByAccountID(ctx, input.AccountID)
+		if err != nil {
+			return io.GenerateRoadmapOutput{}, err
+		}
+
+		if accountRoadmapsCount >= uint64(account.Profile.MaxGeneratedRoadmaps) {
+			return io.GenerateRoadmapOutput{}, cerrors.ErrLLMMaximumRoadmapGenerationReached
+		}
+	}
+
 	var output io.GenerateRoadmapOutput
 
 	systemPrompt := app.makeGenerateRoadmapSystemPrompt(traceCtx)
