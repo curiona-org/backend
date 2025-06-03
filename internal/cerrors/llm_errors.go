@@ -28,4 +28,11 @@ var (
 		InternalMessage: "LLM Invalid Data Provided",
 		ExternalMessage: "There was an issue with the data you provided. Please check and try again.",
 	}
+
+	ErrLLMMaximumRoadmapGenerationReached = &curionaError{
+		Code:            "LLM_MAXIMUM_ROADMAP_GENERATION_REACHED",
+		StatusCode:      http.StatusTooManyRequests,
+		InternalMessage: "Maximum Roadmap Generation Limit Reached",
+		ExternalMessage: "You have reached the maximum limit for roadmap generations. Either finish a roadmap or delete an existing one to continue.",
+	}
 )

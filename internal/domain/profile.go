@@ -8,6 +8,8 @@ import (
 
 const (
 	ProfileTable = "profiles"
+
+	DefaultMaxGeneratedRoadmaps = 5 // Default maximum number of generated roadmaps per profile
 )
 
 var (
@@ -19,6 +21,8 @@ type Profile struct {
 	Name   string
 	Avatar string
 
+	MaxGeneratedRoadmaps int
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -29,10 +33,11 @@ func NewProfile(name, avatar string) *Profile {
 	}
 
 	return &Profile{
-		Name:      name,
-		Avatar:    avatar,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Name:                 name,
+		Avatar:               avatar,
+		MaxGeneratedRoadmaps: DefaultMaxGeneratedRoadmaps,
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
 	}
 }
 

@@ -29,6 +29,25 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 
 	var output io.RegenerateRoadmapOutput
 
+	// Validate if user already hit the limit of generating roadmaps
+	account, err := app.repository.Account.GetByID(ctx, input.AccountID)
+	if err != nil {
+		return io.RegenerateRoadmapOutput{}, cerrors.ErrUnauthorized
+	}
+
+	if !account.IsAdmin {
+		// Check if the account has reached the maximum number of generated roadmaps by
+		// checking the number of unfinished roadmaps.
+		accountRoadmapsCount, err := app.repository.Roadmap.CountUnfinishedRoadmapsByAccountID(ctx, input.AccountID)
+		if err != nil {
+			return io.RegenerateRoadmapOutput{}, err
+		}
+
+		if accountRoadmapsCount >= uint64(account.Profile.MaxGeneratedRoadmaps) {
+			return io.RegenerateRoadmapOutput{}, cerrors.ErrLLMMaximumRoadmapGenerationReached
+		}
+	}
+
 	baseRoadmap, err := app.repository.Roadmap.GetBySlug(ctx, filter.Filters{
 		Slug: input.Slug,
 	})
