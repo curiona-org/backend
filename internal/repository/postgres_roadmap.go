@@ -910,6 +910,42 @@ func (r *RoadmapRepository) CountByAccountID(ctx context.Context, accountID int)
 	return count, nil
 }
 
+func (r *RoadmapRepository) CountUnfinishedRoadmapsByAccountID(ctx context.Context, accountID int) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.RoadmapProgressionTable).On(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id").EQ(psql.Quote(domain.RoadmapTable, "id")),
+			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
+		),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+			psql.Or(
+				psql.Quote(domain.RoadmapProgressionTable, "is_finished").IsNull(),
+				psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
+			),
+			psql.Or(
+				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").IsNull(),
+				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").LT(psql.Quote(domain.RoadmapTable, "total_topics")),
+			),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountByAccountID)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count user roadmaps")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *RoadmapRepository) CountByAccountIdAndSearch(ctx context.Context, accountID int, search string) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),

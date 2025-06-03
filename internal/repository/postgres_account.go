@@ -47,6 +47,7 @@ func (r *AccountRepository) accountWithProfileColumns() []any {
 		psql.Quote(domain.ProfileTable, "id"),
 		psql.Quote(domain.ProfileTable, "name"),
 		psql.Quote(domain.ProfileTable, "avatar"),
+		psql.Quote(domain.ProfileTable, "max_generated_roadmaps"),
 		psql.Quote(domain.ProfileTable, "created_at"),
 		psql.Quote(domain.ProfileTable, "updated_at"),
 	)
@@ -92,6 +93,7 @@ func (r *AccountRepository) fetch(ctx context.Context, cfg accountFetchConfig) (
 				&profile.ID,
 				&profile.Name,
 				&profile.Avatar,
+				&profile.MaxGeneratedRoadmaps,
 				&profile.CreatedAt,
 				&profile.UpdatedAt,
 			)
