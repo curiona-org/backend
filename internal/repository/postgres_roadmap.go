@@ -395,7 +395,12 @@ func (r *RoadmapRepository) GetHighestRated(ctx context.Context) (domain.Roadmap
 	// Add average rating and rating count columns
 	cols = append(cols,
 		psql.F("COALESCE", psql.F("AVG", psql.Quote(domain.RatingTable, "rating")), 0)().As("average_rating"),
-		psql.F("COUNT", psql.Quote(domain.RatingTable, "roadmap_id")))
+		psql.F("COUNT", psql.Quote(domain.RatingTable, "roadmap_id")),
+		`(
+        (COUNT("roadmap_ratings"."roadmap_id") / (COUNT("roadmap_ratings"."roadmap_id") + 50.0)) * COALESCE(AVG("roadmap_ratings"."rating"), 0)
+        + (50.0 / (COUNT("roadmap_ratings"."roadmap_id") + 50.0)) * 3.5
+    ) AS "weighted_rating"`,
+	)
 
 	query, args := psql.Select(
 		sm.Columns(cols...),
@@ -419,7 +424,7 @@ func (r *RoadmapRepository) GetHighestRated(ctx context.Context) (domain.Roadmap
 		sm.GroupBy(psql.Quote(domain.AccountTable, "id")),
 		sm.GroupBy(psql.Quote(domain.ProfileTable, "id")),
 		sm.GroupBy(psql.Quote(domain.RatingTable, "roadmap_id")),
-		sm.OrderBy("average_rating").Desc(),
+		sm.OrderBy("weighted_rating").Desc(),
 		sm.Limit(1),
 	).MustBuild(ctx)
 
@@ -465,7 +470,8 @@ func (r *RoadmapRepository) GetHighestRated(ctx context.Context) (domain.Roadmap
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 		&roadmapRating,
-		&roadmapRatingCount)
+		&roadmapRatingCount,
+		nil)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to fetch roadmaps")
 		span.RecordError(err)
