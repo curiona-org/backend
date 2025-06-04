@@ -2,6 +2,11 @@ package io
 
 import "time"
 
+type GetTopicInput struct {
+	AccountID int
+	Slug      string
+}
+
 type GetTopicOutput struct {
 	ID          int       `json:"id"`
 	AccountID   int       `json:"account_id"`

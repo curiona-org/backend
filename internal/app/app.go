@@ -41,7 +41,7 @@ type CurionaApplication interface {
 	// provider to send and receive messages.
 	RoadmapChatAssistStream(ctx context.Context, input io.RoadmapChatAssistStreamInput) (llm.Stream, error)
 
-	GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error)
+	GetTopicBySlug(ctx context.Context, input io.GetTopicInput) (io.GetTopicOutput, error)
 	MarkTopicAsFinished(ctx context.Context, input io.MarkTopicInput) error
 	MarkTopicAsIncomplete(ctx context.Context, input io.MarkTopicInput) error
 

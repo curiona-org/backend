@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/pkg/cache"
 	"github.com/curiona-org/backend/pkg/database"
@@ -114,7 +115,7 @@ func (r *TopicRepository) fetch(ctx context.Context, query string, args ...any) 
 	return topics, nil
 }
 
-func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.Topic, error) {
+func (r *TopicRepository) GetBySlug(ctx context.Context, filter filter.Filters) (domain.Topic, error) {
 	traceCtx, span := r.tracer.Start(ctx, "(*TopicRepository.GetBySlug)")
 	defer span.End()
 
@@ -123,7 +124,7 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	query, args := psql.Select(
 		sm.Columns(r.topicColumns()...),
 		sm.From(domain.TopicTable),
-		sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(slug))),
+		sm.Where(psql.Quote(domain.TopicTable, "slug").EQ(psql.Arg(filter.Slug))),
 	).MustBuild(ctx)
 
 	topics, err := r.fetch(traceCtx, query, args...)
@@ -138,7 +139,7 @@ func (r *TopicRepository) GetBySlug(ctx context.Context, slug string) (domain.To
 	topic := topics[0]
 
 	// Fetch topic progression
-	topicProgress, err := r.fetchTopicProgressionByID(traceCtx, topic.AccountID, topic.ID)
+	topicProgress, err := r.fetchTopicProgressionByID(traceCtx, filter.AccountID, topic.ID)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		log.Err(err).Msg("failed to fetch topic progression")
 	}
@@ -232,6 +233,7 @@ func (r *TopicRepository) UpdateTopicStatus(ctx context.Context, accountID int, 
 
 		progression, _ := r.fetchRoadmapProgressionByID(ctx, accountID, roadmap.ID)
 		if progression.IsZero() {
+			span.AddEvent("initial progression not found, creating new progression")
 			// Create initial progression
 			saveInitialProgressionQuery, saveInitialProgressionArgs := psql.Insert(
 				im.Into(domain.RoadmapProgressionTable, "account_id", "roadmap_id", "total_topics", "total_finished_topics"),
