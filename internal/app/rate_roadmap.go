@@ -29,7 +29,7 @@ func (app *application) RateRoadmap(ctx context.Context, input io.RateRoadmapInp
 	rating := domain.NewRating(
 		roadmap.ID,
 		input.AccountID,
-		progression.TotalTopics,
+		roadmap.TotalTopics,
 		progression.TotalFinishedTopics,
 		input.Rating,
 		input.Comment,

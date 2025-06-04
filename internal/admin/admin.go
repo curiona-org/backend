@@ -23,6 +23,7 @@ type Application interface {
 
 	ListRoadmaps(ctx context.Context, input io.ListRoadmapsInput) (io.ListRoadmapsOutput, error)
 	GetRoadmap(ctx context.Context, roadmapID int) (io.GetRoadmapOutput, error)
+	ListRoadmapRatings(ctx context.Context, input io.ListRoadmapRatingsInput) (io.ListRoadmapRatingsOutput, error)
 	DeleteRoadmap(ctx context.Context, roadmapID int) error
 }
 

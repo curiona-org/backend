@@ -20,8 +20,11 @@ type Rating struct {
 	ProgressionTotalFinishedTopics int
 	Rating                         int
 	Comment                        string
-	CreatedAt                      time.Time
-	UpdatedAt                      time.Time
+
+	Account *Account
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func NewRating(roadmapID, accountID, progressionTotalTopics, progressionTotalFinishedTopics, rating int, comment string) *Rating {
@@ -44,4 +47,8 @@ func (r *Rating) IsZero() bool {
 		r.ProgressionTotalFinishedTopics == 0 &&
 		r.Rating == 0 &&
 		r.Comment == ""
+}
+
+func (r *Rating) SetAccount(account *Account) {
+	r.Account = account
 }
