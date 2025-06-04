@@ -30,10 +30,14 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	))
 	defer span.End()
 
-	// Validate if user already hit the limit of generating roadmaps
+	// Validate if user already hit the limit of generating roadmaps or suspended
 	account, err := app.repository.Account.GetByID(ctx, input.AccountID)
 	if err != nil {
 		return io.GenerateRoadmapOutput{}, cerrors.ErrUnauthorized
+	}
+
+	if account.IsSuspended {
+		return io.GenerateRoadmapOutput{}, cerrors.ErrForbidden
 	}
 
 	if !account.IsAdmin {
