@@ -156,7 +156,5 @@ type RoadmapTopicProgression struct {
 }
 
 func (e *RoadmapTopicProgression) IsZero() bool {
-	return e.TopicID == 0 &&
-		!e.IsFinished &&
-		e.FinishedAt.IsZero()
+	return e.TopicID == 0
 }

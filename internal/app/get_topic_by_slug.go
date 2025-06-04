@@ -9,6 +9,7 @@ import (
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/cerrors"
 	"github.com/curiona-org/backend/internal/domain"
+	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/worker"
 	"github.com/sosodev/duration"
@@ -17,11 +18,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (app *application) GetTopicBySlug(ctx context.Context, slug string) (io.GetTopicOutput, error) {
-	traceCtx, span := app.tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", slug)))
+func (app *application) GetTopicBySlug(ctx context.Context, input io.GetTopicInput) (io.GetTopicOutput, error) {
+	traceCtx, span := app.tracer.Start(ctx, "(*application.GetTopicBySlug)", trace.WithAttributes(attribute.String("slug", input.Slug)))
 	defer span.End()
 
-	topic, err := app.repository.Topic.GetBySlug(traceCtx, slug)
+	topic, err := app.repository.Topic.GetBySlug(traceCtx, filter.Filters{
+		AccountID: input.AccountID,
+		Slug:      input.Slug,
+	})
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
 			return io.GetTopicOutput{}, cerrors.ErrNotFound.Msg("topic")

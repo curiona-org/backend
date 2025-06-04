@@ -14,10 +14,6 @@ func (app *application) MarkTopicAsIncomplete(ctx context.Context, input io.Mark
 	defer span.End()
 
 	err := app.repository.Topic.UpdateTopicStatus(ctx, input.AccountID, input.Slug, func(roadmap *domain.Roadmap, topic *domain.Topic) (bool, error) {
-		if !topic.IsFinished {
-			return false, nil
-		}
-
 		topic.MarkAsIncomplete()
 		return true, nil
 	})
