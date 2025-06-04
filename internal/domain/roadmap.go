@@ -21,7 +21,8 @@ const (
 )
 
 var (
-	ErrRoadmapNotFound = errors.New("roadmap not found")
+	ErrRoadmapNotFound            = errors.New("roadmap not found")
+	ErrRoadmapProgressionNotFound = errors.New("roadmap progression not found")
 )
 
 type Roadmap struct {
@@ -32,6 +33,9 @@ type Roadmap struct {
 	Description    string
 	TotalTopics    int
 	TotalBookmarks int
+	AverageRating  float64
+	TotalRatings   uint64
+	TotalActive    uint64
 
 	Account                *Account
 	Topics                 []*Topic

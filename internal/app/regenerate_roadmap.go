@@ -35,6 +35,10 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 		return io.RegenerateRoadmapOutput{}, cerrors.ErrUnauthorized
 	}
 
+	if account.IsSuspended {
+		return io.RegenerateRoadmapOutput{}, cerrors.ErrForbidden
+	}
+
 	if !account.IsAdmin {
 		// Check if the account has reached the maximum number of generated roadmaps by
 		// checking the number of unfinished roadmaps.

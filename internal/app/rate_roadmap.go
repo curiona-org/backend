@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/curiona-org/backend/internal/app/io"
 	"github.com/curiona-org/backend/internal/domain"
@@ -21,14 +22,14 @@ func (app *application) RateRoadmap(ctx context.Context, input io.RateRoadmapInp
 	}
 
 	progression, err := app.repository.Roadmap.GetRoadmapProgression(ctx, input.AccountID, roadmap.ID)
-	if err != nil {
+	if err != nil && !errors.Is(err, domain.ErrRoadmapProgressionNotFound) {
 		return err
 	}
 
 	rating := domain.NewRating(
 		roadmap.ID,
 		input.AccountID,
-		progression.TotalTopics,
+		roadmap.TotalTopics,
 		progression.TotalFinishedTopics,
 		input.Rating,
 		input.Comment,

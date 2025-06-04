@@ -109,7 +109,6 @@ func (a *API) SetupRoutes() {
 		r.Get("/profile/roadmaps/on-progress", a.ListUserOnProgressRoadmaps)
 		r.Get("/profile/roadmaps/finished", a.ListUserFinishedRoadmaps)
 
-		r.Get("/roadmaps/{slug}/rating", a.GetUserRoadmapRating)
 		r.Post("/roadmaps/{slug}/rating", a.RateRoadmap)
 		r.Patch("/roadmaps/{slug}/regenerate", a.RegenerateRoadmap)
 		r.Get("/roadmaps/{slug}", a.GetRoadmapBySlug)
@@ -141,6 +140,7 @@ func (a *API) SetupRoutes() {
 		r.Get("/admin/roadmaps", a.AdminListRoadmaps)
 		r.Get("/admin/roadmaps/{id}", a.AdminGetRoadmap)
 		r.Delete("/admin/roadmaps/{id}", a.AdminDeleteRoadmap)
+		r.Get("/admin/roadmaps/{id}/ratings", a.AdminListRoadmapRatings)
 	})
 
 }

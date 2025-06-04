@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
 	"github.com/curiona-org/backend/internal/filter"
@@ -379,6 +380,320 @@ func (r *RoadmapRepository) GetByID(ctx context.Context, id int) (domain.Roadmap
 	}
 
 	roadmap.SetTopics(topics)
+
+	return roadmap, nil
+}
+
+func (r *RoadmapRepository) GetHighestRated(ctx context.Context) (domain.Roadmap, error) {
+	cols := r.roadmapColumns(roadmapColumnsOptions{
+		includeBookmark:              false,
+		includeProgression:           false,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+
+	// Add average rating and rating count columns
+	cols = append(cols,
+		psql.F("COALESCE", psql.F("AVG", psql.Quote(domain.RatingTable, "rating")), 0)().As("average_rating"),
+		psql.F("COUNT", psql.Quote(domain.RatingTable, "roadmap_id")),
+		`(
+        (COUNT("roadmap_ratings"."roadmap_id") / (COUNT("roadmap_ratings"."roadmap_id") + 50.0)) * COALESCE(AVG("roadmap_ratings"."rating"), 0)
+        + (50.0 / (COUNT("roadmap_ratings"."roadmap_id") + 50.0)) * 3.5
+    ) AS "weighted_rating"`,
+	)
+
+	query, args := psql.Select(
+		sm.Columns(cols...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.RatingTable).OnEQ(
+			psql.Quote(domain.RatingTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+		sm.GroupBy(psql.Quote(domain.RoadmapTable, "id")),
+		sm.GroupBy(psql.Quote(domain.PersonalizationOptionsTable, "id")),
+		sm.GroupBy(psql.Quote(domain.AccountTable, "id")),
+		sm.GroupBy(psql.Quote(domain.ProfileTable, "id")),
+		sm.GroupBy(psql.Quote(domain.RatingTable, "roadmap_id")),
+		sm.OrderBy("weighted_rating").Desc(),
+		sm.Limit(1),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetHighestRated)", query)
+	defer span.End()
+
+	var roadmap domain.Roadmap
+	var personalizationOptions domain.PersonalizationOptions
+	var account domain.Account
+	var profile domain.Profile
+	var roadmapDeletedAt pgtype.Timestamp
+	var roadmapRating pgtype.Float8
+	var roadmapRatingCount pgtype.Int8
+	err := r.db.QueryRow(ctx, query, args...).Scan(
+		&roadmap.ID,
+		&roadmap.AccountID,
+		&roadmap.Title,
+		&roadmap.Slug,
+		&roadmap.Description,
+		&roadmap.TotalTopics,
+		&roadmap.CreatedAt,
+		&roadmap.UpdatedAt,
+		&roadmapDeletedAt,
+		&personalizationOptions.ID,
+		&personalizationOptions.AccountID,
+		&personalizationOptions.RoadmapID,
+		&personalizationOptions.DailyTimeAvailability,
+		&personalizationOptions.TotalDuration,
+		&personalizationOptions.SkillLevel,
+		&personalizationOptions.AdditionalInfo,
+		&personalizationOptions.CreatedAt,
+		&personalizationOptions.UpdatedAt,
+		&account.ID,
+		&account.Method,
+		&account.Email,
+		&account.IsSuspended,
+		&account.IsAdmin,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&profile.ID,
+		&profile.Name,
+		&profile.Avatar,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+		&roadmapRating,
+		&roadmapRatingCount,
+		nil)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return domain.Roadmap{}, err
+	}
+
+	if roadmapDeletedAt.Valid {
+		roadmap.DeletedAt = roadmapDeletedAt.Time
+	}
+
+	if roadmapRating.Valid {
+		roadmap.AverageRating = roadmapRating.Float64
+	}
+
+	if roadmapRatingCount.Valid {
+		roadmap.TotalRatings = uint64(roadmapRatingCount.Int64)
+	}
+
+	roadmap.SetPersonalizationOptions(&personalizationOptions)
+	account.SetProfile(&profile)
+	roadmap.SetCreator(&account)
+
+	return roadmap, nil
+}
+
+func (r *RoadmapRepository) GetMostBookmarked(ctx context.Context) (domain.Roadmap, error) {
+	cols := r.roadmapColumns(roadmapColumnsOptions{
+		includeBookmark:              false,
+		includeProgression:           false,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+
+	// Add total bookmarks column
+	cols = append(cols,
+		psql.F("COUNT", psql.Quote(domain.BookmarkTable, "roadmap_id"))().As("total_bookmarks"))
+
+	query, args := psql.Select(
+		sm.Columns(cols...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.BookmarkTable).OnEQ(
+			psql.Quote(domain.BookmarkTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull())),
+		sm.GroupBy(psql.Quote(domain.RoadmapTable, "id")),
+		sm.GroupBy(psql.Quote(domain.PersonalizationOptionsTable, "id")),
+		sm.GroupBy(psql.Quote(domain.AccountTable, "id")),
+		sm.GroupBy(psql.Quote(domain.ProfileTable, "id")),
+		sm.GroupBy(psql.Quote(domain.BookmarkTable, "roadmap_id")),
+		sm.OrderBy("total_bookmarks").Desc(),
+		sm.Limit(1),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetMostBookmarked)", query)
+	defer span.End()
+
+	var roadmap domain.Roadmap
+	var personalizationOptions domain.PersonalizationOptions
+	var account domain.Account
+	var profile domain.Profile
+	var roadmapDeletedAt pgtype.Timestamp
+	var roadmapTotalBookmarks pgtype.Int8
+	err := r.db.QueryRow(ctx, query, args...).Scan(
+		&roadmap.ID,
+		&roadmap.AccountID,
+		&roadmap.Title,
+		&roadmap.Slug,
+		&roadmap.Description,
+		&roadmap.TotalTopics,
+		&roadmap.CreatedAt,
+		&roadmap.UpdatedAt,
+		&roadmapDeletedAt,
+		&personalizationOptions.ID,
+		&personalizationOptions.AccountID,
+		&personalizationOptions.RoadmapID,
+		&personalizationOptions.DailyTimeAvailability,
+		&personalizationOptions.TotalDuration,
+		&personalizationOptions.SkillLevel,
+		&personalizationOptions.AdditionalInfo,
+		&personalizationOptions.CreatedAt,
+		&personalizationOptions.UpdatedAt,
+		&account.ID,
+		&account.Method,
+		&account.Email,
+		&account.IsSuspended,
+		&account.IsAdmin,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&profile.ID,
+		&profile.Name,
+		&profile.Avatar,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+		&roadmapTotalBookmarks)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return domain.Roadmap{}, err
+	}
+
+	if roadmapDeletedAt.Valid {
+		roadmap.DeletedAt = roadmapDeletedAt.Time
+	}
+
+	if roadmapTotalBookmarks.Valid {
+		roadmap.TotalBookmarks = int(roadmapTotalBookmarks.Int64)
+	}
+
+	roadmap.SetPersonalizationOptions(&personalizationOptions)
+	account.SetProfile(&profile)
+	roadmap.SetCreator(&account)
+
+	return roadmap, nil
+}
+
+func (r *RoadmapRepository) GetMostActive(ctx context.Context) (domain.Roadmap, error) {
+	cols := r.roadmapColumns(roadmapColumnsOptions{
+		includeBookmark:              false,
+		includeProgression:           false,
+		includePersonalizationOption: true,
+		includeAccount:               true,
+	})
+
+	// Add total accounts that is working on the roadmap
+	cols = append(cols,
+		psql.F("COUNT", psql.Quote(domain.RoadmapProgressionTable, "account_id"))().As("total_active"))
+
+	query, args := psql.Select(
+		sm.Columns(cols...),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.PersonalizationOptionsTable).OnEQ(
+			psql.Quote(domain.PersonalizationOptionsTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.LeftJoin(domain.AccountTable).OnEQ(
+			psql.Quote(domain.AccountTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id")),
+		sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id")),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")))),
+		sm.GroupBy(psql.Quote(domain.RoadmapTable, "id")),
+		sm.GroupBy(psql.Quote(domain.PersonalizationOptionsTable, "id")),
+		sm.GroupBy(psql.Quote(domain.AccountTable, "id")),
+		sm.GroupBy(psql.Quote(domain.ProfileTable, "id")),
+		sm.GroupBy(psql.Quote(domain.RoadmapProgressionTable, "roadmap_id")),
+		sm.OrderBy("total_active").Desc(),
+		sm.Limit(1),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.GetMostActive)", query)
+	defer span.End()
+
+	var roadmap domain.Roadmap
+	var personalizationOptions domain.PersonalizationOptions
+	var account domain.Account
+	var profile domain.Profile
+	var roadmapDeletedAt pgtype.Timestamp
+	var roadmapTotalActive pgtype.Int8
+	err := r.db.QueryRow(ctx, query, args...).Scan(
+		&roadmap.ID,
+		&roadmap.AccountID,
+		&roadmap.Title,
+		&roadmap.Slug,
+		&roadmap.Description,
+		&roadmap.TotalTopics,
+		&roadmap.CreatedAt,
+		&roadmap.UpdatedAt,
+		&roadmapDeletedAt,
+		&personalizationOptions.ID,
+		&personalizationOptions.AccountID,
+		&personalizationOptions.RoadmapID,
+		&personalizationOptions.DailyTimeAvailability,
+		&personalizationOptions.TotalDuration,
+		&personalizationOptions.SkillLevel,
+		&personalizationOptions.AdditionalInfo,
+		&personalizationOptions.CreatedAt,
+		&personalizationOptions.UpdatedAt,
+		&account.ID,
+		&account.Method,
+		&account.Email,
+		&account.IsSuspended,
+		&account.IsAdmin,
+		&account.CreatedAt,
+		&account.UpdatedAt,
+		&profile.ID,
+		&profile.Name,
+		&profile.Avatar,
+		&profile.CreatedAt,
+		&profile.UpdatedAt,
+		&roadmapTotalActive)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to fetch roadmaps")
+		span.RecordError(err)
+		return domain.Roadmap{}, err
+	}
+
+	if roadmapDeletedAt.Valid {
+		roadmap.DeletedAt = roadmapDeletedAt.Time
+	}
+
+	if roadmapTotalActive.Valid {
+		roadmap.TotalActive = uint64(roadmapTotalActive.Int64)
+	}
+
+	roadmap.SetPersonalizationOptions(&personalizationOptions)
+	account.SetProfile(&profile)
+	roadmap.SetCreator(&account)
 
 	return roadmap, nil
 }
@@ -763,10 +1078,15 @@ func (r *RoadmapRepository) GetRoadmapProgression(ctx context.Context, accountID
 		&roadmapProgression.CreatedAt,
 		&roadmapProgression.UpdatedAt,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		span.SetStatus(codes.Error, "failed to fetch roadmap progression")
 		span.RecordError(err)
 		return domain.RoadmapProgression{}, err
+	}
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		span.SetStatus(codes.Error, "roadmap progression not found")
+		return domain.RoadmapProgression{}, domain.ErrRoadmapProgressionNotFound
 	}
 
 	if roadmapProgressionFinishedAt.Valid {
@@ -1047,6 +1367,30 @@ func (r *RoadmapRepository) CountAccountOnProgressRoadmaps(ctx context.Context, 
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to count on progress roadmaps by account ID")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *RoadmapRepository) CountGeneratedToday(ctx context.Context) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "created_at").GTE(psql.Arg(time.Now().Truncate(24*time.Hour))),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountGeneratedToday)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count roadmaps generated today")
 		span.RecordError(err)
 		return 0, err
 	}

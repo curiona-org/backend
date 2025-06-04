@@ -18,6 +18,7 @@ type FilteredList[T any] struct {
 }
 
 type Filters struct {
+	ID        int
 	AccountID int
 	Search    string
 	OrderBy   OrderBy
@@ -29,6 +30,7 @@ type Filters struct {
 func New(params Params, total uint64) Filters {
 	paginator := NewOffsetPaginator(params.CurrentPage, params.Limit, total)
 	return Filters{
+		ID:        params.ID,
 		AccountID: params.AccountID,
 		Search:    params.Search,
 		OrderBy:   params.OrderBy,
@@ -37,6 +39,8 @@ func New(params Params, total uint64) Filters {
 }
 
 type Params struct {
+	// ID is a generic identifier for the resource being filtered.
+	ID          int
 	AccountID   int
 	Search      string
 	OrderBy     OrderBy
