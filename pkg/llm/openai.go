@@ -12,9 +12,10 @@ import (
 )
 
 type openAiClient struct {
-	client *openai.Client
-	model  string
-	tracer trace.Tracer
+	client   *openai.Client
+	model    string
+	tracer   trace.Tracer
+	provider Provider
 }
 
 var _ Client = (*openAiClient)(nil)
@@ -97,4 +98,41 @@ func (o *openAiClient) Stream(ctx context.Context, prompt ChatPrompt) (Stream, e
 	return NewStreamHandler(&streamHandlerConfig{
 		openai: stream,
 	}), err
+}
+
+func (o *openAiClient) Moderate(ctx context.Context, userPrompt string) (bool, error) {
+	ctx, span := o.tracer.Start(ctx, "(*openAiClient.Moderate)")
+	defer span.End()
+
+	// Groq supports moderation but requires a different endpoint or method.
+	// Since we use Groq only for development, we can skip moderation for now.
+	if o.provider == Groq {
+		span.SetAttributes(attribute.String("provider", "groq"))
+		span.SetStatus(codes.Ok, "Skipping moderation for Groq provider")
+		return true, nil
+	}
+
+	response, err := o.client.Moderations(ctx, openai.ModerationRequest{
+		Input: userPrompt,
+		Model: "text-moderation-stable",
+	})
+	if err != nil {
+		span.RecordError(err, trace.WithStackTrace(true))
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+
+	if len(response.Results) == 0 {
+		return false, errors.New("openai: no results in moderation response")
+	}
+
+	result := response.Results[0]
+
+	span.SetAttributes(
+		attribute.String("id", response.ID),
+		attribute.String("model", response.Model),
+		attribute.Bool("flagged", result.Flagged),
+	)
+
+	return result.Flagged, nil
 }

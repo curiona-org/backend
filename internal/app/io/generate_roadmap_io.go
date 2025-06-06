@@ -22,5 +22,7 @@ type GenerateRoadmapInput struct {
 }
 
 type GenerateRoadmapOutput struct {
-	Slug string `json:"slug"`
+	Flagged bool   `json:"flagged"`
+	Reason  string `json:"reason"`
+	Slug    string `json:"slug"`
 }

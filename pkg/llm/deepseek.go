@@ -81,3 +81,10 @@ func (d *deepSeekClient) Stream(ctx context.Context, prompt ChatPrompt) (Stream,
 		deepseek: stream,
 	}), err
 }
+
+func (d *deepSeekClient) Moderate(ctx context.Context, userPrompt string) (bool, error) {
+	_, span := d.tracer.Start(ctx, "(*deepSeekClient.Moderate)")
+	defer span.End()
+
+	return true, nil // DeepSeek does not currently support moderation, so we return true by default.
+}
