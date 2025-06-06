@@ -158,6 +158,7 @@ func (a *API) SetupMiddlewares() {
 			"https://web.local.test",
 			"http://web.local.test:3000",
 			"https://web.local.test:3000",
+			"https://curiona-app.netlify.app/",
 		},
 		AllowedMethods: []string{
 			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
