@@ -26,13 +26,15 @@ type CurionaApplication interface {
 	UpdateProfile(ctx context.Context, input io.UpdateProfileInput) (io.UpdateProfileOutput, error)
 
 	GetRoadmapBySlug(ctx context.Context, input io.GetRoadmapInput) (io.GetRoadmapOutput, error)
-	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
-	RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 	ListCommunityRoadmaps(ctx context.Context, input io.ListCommunityRoadmapsInput) (io.ListCommunityRoadmapsOutput, error)
 	ListUserRoadmaps(ctx context.Context, input io.ListUserRoadmapsInput) (io.ListUserRoadmapsOutput, error)
 	ListUserFinishedRoadmaps(ctx context.Context, input io.ListUserFinishedRoadmapsInput) (io.ListUserFinishedRoadmapsOutput, error)
 	ListUserOnProgressRoadmaps(ctx context.Context, input io.ListUserOnProgressRoadmapsInput) (io.ListUserOnProgressRoadmapsOutput, error)
 	DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) error
+
+	PromptModeration(ctx context.Context, input io.PromptModerationInput) (io.PromptModerationOutput, error)
+	GenerateRoadmap(ctx context.Context, input io.GenerateRoadmapInput) (io.GenerateRoadmapOutput, error)
+	RegenerateRoadmap(ctx context.Context, input io.RegenerateRoadmapInput) (io.RegenerateRoadmapOutput, error)
 
 	RateRoadmap(ctx context.Context, input io.RateRoadmapInput) error
 

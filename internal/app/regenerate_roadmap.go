@@ -52,6 +52,18 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 		}
 	}
 
+	flagged, err := app.llm.Moderate(traceCtx, input.Reason)
+	if err != nil {
+		return io.RegenerateRoadmapOutput{}, err
+	}
+
+	if flagged {
+		return io.RegenerateRoadmapOutput{
+			Flagged: true,
+			Reason:  cerrors.ErrLLMFlaggedContentDetected.Message(),
+		}, nil
+	}
+
 	baseRoadmap, err := app.repository.Roadmap.GetBySlug(ctx, filter.Filters{
 		Slug: input.Slug,
 	})

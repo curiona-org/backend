@@ -53,6 +53,18 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 		}
 	}
 
+	flagged, err := app.llm.Moderate(traceCtx, input.Topic)
+	if err != nil {
+		return io.GenerateRoadmapOutput{}, err
+	}
+
+	if flagged {
+		return io.GenerateRoadmapOutput{
+			Flagged: true,
+			Reason:  cerrors.ErrLLMFlaggedContentDetected.Message(),
+		}, nil
+	}
+
 	var output io.GenerateRoadmapOutput
 
 	systemPrompt := app.makeGenerateRoadmapSystemPrompt(traceCtx)

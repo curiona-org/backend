@@ -29,10 +29,19 @@ var (
 		ExternalMessage: "There was an issue with the data you provided. Please check and try again.",
 	}
 
+	// ErrLLMMaximumRoadmapGenerationReached occurs when the user has reached the maximum limit for roadmap generations.
 	ErrLLMMaximumRoadmapGenerationReached = &curionaError{
 		Code:            "LLM_MAXIMUM_ROADMAP_GENERATION_REACHED",
 		StatusCode:      http.StatusTooManyRequests,
 		InternalMessage: "Maximum Roadmap Generation Limit Reached",
 		ExternalMessage: "You have reached the maximum limit for roadmap generations. Either finish a roadmap or delete an existing one to continue.",
+	}
+
+	// ErrLLMFlaggedContentDetected occurs when the LLM detects flagged content in the user's input.
+	ErrLLMFlaggedContentDetected = &curionaError{
+		Code:            "LLM_FLAGGED_CONTENT_DETECTED",
+		StatusCode:      http.StatusForbidden,
+		InternalMessage: "Flagged Content Detected",
+		ExternalMessage: "Your prompt contains content that violates our guidelines. Please modify your prompt and try again.",
 	}
 )

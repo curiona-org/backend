@@ -21,5 +21,7 @@ type RegenerateRoadmapInput struct {
 }
 
 type RegenerateRoadmapOutput struct {
-	Slug string `json:"slug"`
+	Flagged bool   `json:"flagged"`
+	Reason  string `json:"reason"`
+	Slug    string `json:"slug"`
 }

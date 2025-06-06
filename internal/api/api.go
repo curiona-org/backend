@@ -109,16 +109,19 @@ func (a *API) SetupRoutes() {
 		r.Get("/profile/roadmaps/on-progress", a.ListUserOnProgressRoadmaps)
 		r.Get("/profile/roadmaps/finished", a.ListUserFinishedRoadmaps)
 
-		r.Post("/roadmaps/{slug}/rating", a.RateRoadmap)
-		r.Patch("/roadmaps/{slug}/regenerate", a.RegenerateRoadmap)
 		r.Get("/roadmaps/{slug}", a.GetRoadmapBySlug)
-		r.Post("/roadmaps", a.GenerateRoadmap)
 		r.Delete("/roadmaps/{slug}", a.DeleteUserRoadmap)
+
+		r.Post("/roadmaps/moderation", a.PromptModeration)
+		r.Patch("/roadmaps/{slug}/regenerate", a.RegenerateRoadmap)
+		r.Post("/roadmaps", a.GenerateRoadmap)
 
 		r.Get("/roadmaps/topic/{slug}", a.GetTopicBySlug)
 		r.Patch("/roadmaps/topic/{slug}/finish", a.MarkTopicAsFinished)
 		r.Patch("/roadmaps/topic/{slug}/incomplete", a.MarkTopicAsIncomplete)
 		r.Handle("/roadmaps/{slug}/assist", http.HandlerFunc(a.RoadmapChatAssist))
+
+		r.Post("/roadmaps/{slug}/rating", a.RateRoadmap)
 
 		r.Get("/bookmarks", a.ListBookmarkedRoadmaps)
 		r.Post("/roadmaps/{slug}/bookmark", a.BookmarkRoadmap)

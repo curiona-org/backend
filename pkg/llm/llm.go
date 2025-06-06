@@ -16,6 +16,7 @@ var (
 type Client interface {
 	Chat(ctx context.Context, prompt ChatPrompt) (string, error)
 	Stream(ctx context.Context, prompt ChatPrompt) (Stream, error)
+	Moderate(ctx context.Context, userPrompt string) (bool, error)
 }
 
 type Provider string
