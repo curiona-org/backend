@@ -26,36 +26,57 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	}
 
 	// sign in if account already exists
-	if !existingAccount.IsZero() {
-		span.SetAttributes(attribute.Bool("create_account", false))
+	if input.IsRegister && existingAccount.IsZero() {
+		span.SetAttributes(attribute.Bool("create_account", true))
 
-		// check if user already registered with a different method
-		if existingAccount.Method != input.Method {
-			return registrationResult{}, cerrors.ErrSignUpDifferentMethod
+		password := auth.NewPassword(input.Password)
+
+		if err := password.Validate(); err != nil {
+			return registrationResult{}, err
 		}
 
-		// ignore password check if user is signing in with google
-		if input.IgnorePasswordCheck {
-			return registrationResult{
-				id:       existingAccount.ID,
-				created:  false,
-				email:    existingAccount.Email,
-				name:     existingAccount.Profile.Name,
-				avatar:   existingAccount.Profile.Avatar,
-				joinedAt: existingAccount.CreatedAt,
-			}, nil
+		profile := domain.NewProfile(input.Name, input.Avatar)
+		account, err := domain.NewAccount(input.Email, password, input.Method, profile)
+		if err != nil {
+			return registrationResult{}, err
 		}
 
-		plainPassword := auth.NewPassword(input.Password)
-		matched := existingAccount.CheckPassword(plainPassword)
-		if !matched {
-			return registrationResult{}, cerrors.ErrInvalidCredentials
+		// Hash the password before saving
+		if err := account.HashPassword(); err != nil {
+			return registrationResult{}, err
 		}
 
-		if input.IsAdmin && !existingAccount.IsAdmin {
-			return registrationResult{}, cerrors.ErrUnauthorized
+		createdAccount, err := app.repository.Account.Save(ctx, account)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return registrationResult{}, err
 		}
 
+		return registrationResult{
+			id:       createdAccount.ID,
+			created:  true,
+			email:    createdAccount.Email,
+			name:     createdAccount.Profile.Name,
+			avatar:   createdAccount.Profile.Avatar,
+			joinedAt: createdAccount.CreatedAt,
+		}, nil
+
+	}
+
+	span.SetAttributes(attribute.Bool("create_account", false))
+
+	if existingAccount.IsZero() {
+		return registrationResult{}, cerrors.ErrInvalidCredentials
+	}
+
+	// check if user already registered with a different method
+	if existingAccount.Method != input.Method {
+		return registrationResult{}, cerrors.ErrSignUpDifferentMethod
+	}
+
+	// ignore password check if user is signing in with google
+	if input.IgnorePasswordCheck {
 		return registrationResult{
 			id:       existingAccount.ID,
 			created:  false,
@@ -66,38 +87,22 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		}, nil
 	}
 
-	span.SetAttributes(attribute.Bool("create_account", true))
-
-	password := auth.NewPassword(input.Password)
-
-	if err := password.Validate(); err != nil {
-		return registrationResult{}, err
+	plainPassword := auth.NewPassword(input.Password)
+	matched := existingAccount.CheckPassword(plainPassword)
+	if !matched {
+		return registrationResult{}, cerrors.ErrInvalidCredentials
 	}
 
-	profile := domain.NewProfile(input.Name, input.Avatar)
-	account, err := domain.NewAccount(input.Email, password, input.Method, profile)
-	if err != nil {
-		return registrationResult{}, err
-	}
-
-	// Hash the password before saving
-	if err := account.HashPassword(); err != nil {
-		return registrationResult{}, err
-	}
-
-	createdAccount, err := app.repository.Account.Save(ctx, account)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		return registrationResult{}, err
+	if input.IsAdmin && !existingAccount.IsAdmin {
+		return registrationResult{}, cerrors.ErrUnauthorized
 	}
 
 	return registrationResult{
-		id:       createdAccount.ID,
-		created:  true,
-		email:    createdAccount.Email,
-		name:     createdAccount.Profile.Name,
-		avatar:   createdAccount.Profile.Avatar,
-		joinedAt: createdAccount.CreatedAt,
+		id:       existingAccount.ID,
+		created:  false,
+		email:    existingAccount.Email,
+		name:     existingAccount.Profile.Name,
+		avatar:   existingAccount.Profile.Avatar,
+		joinedAt: existingAccount.CreatedAt,
 	}, nil
 }

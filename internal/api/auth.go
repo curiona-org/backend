@@ -24,6 +24,11 @@ func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
 	input.UserAgent = r.UserAgent()
 	input.ClientIP = r.RemoteAddr
 
+	isRegister := r.Header.Get("X-Register") == "true"
+	if isRegister {
+		input.IsRegister = true
+	}
+
 	isAdmin := r.Header.Get("X-Admin") == "true"
 	if isAdmin {
 		input.IsAdmin = true
