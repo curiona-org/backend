@@ -1324,9 +1324,14 @@ func (r *RoadmapRepository) CountAccountFinishedRoadmaps(ctx context.Context, ac
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.RoadmapProgressionTable),
+		sm.LeftJoin(domain.RoadmapTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id"),
+		),
 		sm.Where(psql.And(
 			psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
 			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)),
 	).MustBuild(ctx)
 
