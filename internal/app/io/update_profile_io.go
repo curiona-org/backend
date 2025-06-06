@@ -4,7 +4,7 @@ import "time"
 
 type UpdateProfileInput struct {
 	AccountID int    `json:"-"`
-	Name      string `json:"name" validate:"required"`
+	Name      string `json:"name" validate:"required,max=100"`
 }
 
 type UpdateProfileOutput struct {
