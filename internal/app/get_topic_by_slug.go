@@ -34,19 +34,20 @@ func (app *application) GetTopicBySlug(ctx context.Context, input io.GetTopicInp
 	}
 
 	output := io.GetTopicOutput{
-		ID:          topic.ID,
-		AccountID:   topic.AccountID,
-		RoadmapID:   topic.RoadmapID,
-		ParentID:    topic.ParentID,
-		Title:       topic.Title,
-		Slug:        topic.Slug,
-		Description: topic.Description,
-		ProTips:     topic.ProTips,
-		Order:       topic.Order,
-		IsFinished:  topic.IsFinished,
-		FinishedAt:  topic.FinishedAt,
-		CreatedAt:   topic.CreatedAt,
-		UpdatedAt:   topic.UpdatedAt,
+		ID:                  topic.ID,
+		AccountID:           topic.AccountID,
+		RoadmapID:           topic.RoadmapID,
+		ParentID:            topic.ParentID,
+		Title:               topic.Title,
+		Slug:                topic.Slug,
+		Description:         topic.Description,
+		ProTips:             topic.ProTips,
+		Order:               topic.Order,
+		IsFinished:          topic.IsFinished,
+		FinishedAt:          topic.FinishedAt,
+		ExternalSearchQuery: topic.ExternalSearchQuery,
+		CreatedAt:           topic.CreatedAt,
+		UpdatedAt:           topic.UpdatedAt,
 	}
 
 	if !topic.HasResources() {
