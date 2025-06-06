@@ -1,10 +1,12 @@
 package io
 
 type PromptModerationInput struct {
-	Prompt string `json:"prompt" validate:"required,max=150"`
+	AccountID int    `json:"-"`
+	Prompt    string `json:"prompt" validate:"required,max=150"`
 }
 
 type PromptModerationOutput struct {
-	Flagged bool   `json:"flagged"`
-	Reason  string `json:"reason"`
+	Flagged               bool   `json:"flagged"`
+	IsMaxGeneratedRoadmap bool   `json:"is_max_generated_roadmap"`
+	Reason                string `json:"reason"`
 }

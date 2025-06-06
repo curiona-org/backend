@@ -34,7 +34,7 @@ var (
 		Code:            "LLM_MAXIMUM_ROADMAP_GENERATION_REACHED",
 		StatusCode:      http.StatusTooManyRequests,
 		InternalMessage: "Maximum Roadmap Generation Limit Reached",
-		ExternalMessage: "You have reached the maximum limit for roadmap generations. Either finish a roadmap or delete an existing one to continue.",
+		ExternalMessage: "You have reached the maximum limit for roadmap generations (maximum of 5). Either finish a roadmap or delete an existing one to continue.",
 	}
 
 	// ErrLLMFlaggedContentDetected occurs when the LLM detects flagged content in the user's input.
