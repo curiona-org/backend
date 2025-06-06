@@ -151,15 +151,7 @@ func (a *API) SetupRoutes() {
 func (a *API) SetupMiddlewares() {
 	a.router.Use(a.populateLog)
 	a.router.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{
-			"http://localhost:3000",
-			"https://localhost:3000",
-			"http://web.local.test",
-			"https://web.local.test",
-			"http://web.local.test:3000",
-			"https://web.local.test:3000",
-			"https://curiona.netlify.app/",
-		},
+		AllowedOrigins: []string{"https://*", "http://*"},
 		AllowedMethods: []string{
 			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
 			http.MethodDelete, http.MethodHead, http.MethodOptions,
