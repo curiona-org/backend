@@ -77,12 +77,19 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 		}
 
 		if item.Id.Kind == "youtube#video" {
+			var thumbnail string
+			if item.Snippet.Thumbnails != nil && item.Snippet.Thumbnails.High != nil {
+				thumbnail = item.Snippet.Thumbnails.High.Url
+			} else {
+				thumbnail = "https://placehold.co/400x200?text=No+Thumbnail"
+			}
+
 			videoURL := "https://www.youtube.com/watch?v=" + item.Id.VideoId
 			video := SearchResult{
 				Title:     item.Snippet.Title,
 				URL:       videoURL,
 				Channel:   item.Snippet.ChannelTitle,
-				Thumbnail: item.Snippet.Thumbnails.High.Url,
+				Thumbnail: thumbnail,
 				Duration:  item.Id.VideoId,
 			}
 			span.AddEvent("video", trace.WithAttributes(

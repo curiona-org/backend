@@ -75,10 +75,17 @@ func (b *googleBooksClient) Search(ctx context.Context, query string) ([]*Volume
 			break
 		}
 
+		var cover string
+		if item.VolumeInfo.ImageLinks != nil {
+			cover = item.VolumeInfo.ImageLinks.Thumbnail
+		} else {
+			cover = "https://placehold.co/160x224?text=No+Cover"
+		}
+
 		volume := Volume{
 			Title:   item.VolumeInfo.Title,
 			Authors: strings.Join(item.VolumeInfo.Authors, ", "),
-			Cover:   item.VolumeInfo.ImageLinks.Thumbnail,
+			Cover:   cover,
 			URL:     item.VolumeInfo.CanonicalVolumeLink,
 			Pages:   item.VolumeInfo.PageCount,
 		}
