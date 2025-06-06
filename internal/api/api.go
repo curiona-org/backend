@@ -168,7 +168,7 @@ func (a *API) SetupMiddlewares() {
 	a.router.Use(middleware.Recoverer)
 	a.router.Use(middleware.Compress(5))
 	if config.IsProduction() {
-		a.router.Use(httprate.LimitByIP(100, time.Minute))
+		a.router.Use(httprate.LimitByIP(2000, time.Minute))
 	}
 }
 
