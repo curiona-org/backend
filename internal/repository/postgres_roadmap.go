@@ -1209,10 +1209,15 @@ func (r *RoadmapRepository) CountBySearching(ctx context.Context, search string)
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.ProfileTable).OnEQ(
+			psql.Quote(domain.ProfileTable, "id"),
+			psql.Quote(domain.RoadmapTable, "account_id"),
+		),
 		sm.Where(psql.And(
 			psql.Or(
 				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
 				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+search+"%")),
+				psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+search+"%")),
 			),
 			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)),
