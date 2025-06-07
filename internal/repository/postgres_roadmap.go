@@ -778,11 +778,6 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 					psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(filters.AccountID)),
 				),
 			))
-	} else {
-		selectQuery.Apply(sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
-			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
-			psql.Quote(domain.RoadmapTable, "id")),
-		)
 	}
 
 	if filters.Search != "" {
