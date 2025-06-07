@@ -56,7 +56,8 @@ func (app *application) makeSystemPrompt(input io.RoadmapChatAssistStreamInput) 
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString("Your answer should be relevant to the roadmap and the user's question. Your output format must be in plain text.\n\n")
+	sb.WriteString("Your answer should be relevant to the roadmap and the user's question. Your output format should be in markdown.\n")
+	sb.WriteString("If you don't know the answer, say 'I don't know' or ask for clarification.\n")
 
 	return sb.String()
 }
