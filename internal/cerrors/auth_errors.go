@@ -38,6 +38,13 @@ var (
 		ExternalMessage: "An account with this email already exists, but it uses a different sign-in method. Please try signing in with another method.",
 	}
 
+	ErrAccountAlreadyExists = &curionaError{
+		Code:            "ACCOUNT_ALREADY_EXISTS",
+		StatusCode:      http.StatusConflict,
+		InternalMessage: "Account already exists",
+		ExternalMessage: "An account with this email already exists. Please try signing in or use a different email to register.",
+	}
+
 	ErrSessionExpired = &curionaError{
 		Code:            "SESSION_EXPIRED",
 		StatusCode:      http.StatusUnauthorized,

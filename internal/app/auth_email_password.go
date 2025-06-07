@@ -60,7 +60,10 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 			avatar:   createdAccount.Profile.Avatar,
 			joinedAt: createdAccount.CreatedAt,
 		}, nil
+	}
 
+	if input.IsRegister && !existingAccount.IsZero() {
+		return registrationResult{}, cerrors.ErrAccountAlreadyExists
 	}
 
 	span.SetAttributes(attribute.Bool("create_account", false))
