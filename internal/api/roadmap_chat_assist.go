@@ -98,9 +98,8 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 
-				sanitizedContent := html.EscapeString(content)
 				chunk := websocket.RoadmapChatAssistChunkEvent{
-					Content: sanitizedContent,
+					Content: content,
 					Done:    false,
 				}
 
@@ -110,7 +109,7 @@ func (a *API) RoadmapChatAssist(w http.ResponseWriter, r *http.Request) {
 					// in case of error while marshalling, we'll send a literal json string
 					log.Err(err).Msg("error marshalling message, sending literal json string")
 					data = append(data, []byte(`{"content":"`)...)
-					data = append(data, []byte(sanitizedContent)...)
+					data = append(data, []byte(content)...)
 					data = append(data, []byte(`","done":false}`)...)
 				}
 
