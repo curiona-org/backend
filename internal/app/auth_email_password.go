@@ -25,8 +25,7 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		return registrationResult{}, cerrors.ErrAccountSuspended
 	}
 
-	// sign in if account already exists
-	if input.IsRegister && existingAccount.IsZero() {
+	if (input.IsRegister || input.Method.IsGoogle()) && existingAccount.IsZero() {
 		span.SetAttributes(attribute.Bool("create_account", true))
 
 		password := auth.NewPassword(input.Password)
