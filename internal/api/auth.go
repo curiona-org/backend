@@ -31,7 +31,7 @@ func (a *API) Auth(w http.ResponseWriter, r *http.Request) {
 
 	isAdmin := r.Header.Get("X-Admin") == "true"
 	if isAdmin {
-		input.IsAdmin = true
+		input.CheckAdmin = true
 	}
 
 	output, err := a.application.Auth(r.Context(), input)

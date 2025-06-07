@@ -17,7 +17,7 @@ type AuthInput struct {
 	ClientIP  string `json:"-"`
 
 	IsRegister          bool        `json:"-"`
-	IsAdmin             bool        `json:"-"`
+	CheckAdmin          bool        `json:"-"`
 	Method              auth.Method `json:"-"`
 	IgnorePasswordCheck bool        `json:"-"` // used to skip password check in some cases
 }

@@ -77,6 +77,10 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		return registrationResult{}, cerrors.ErrSignUpDifferentMethod
 	}
 
+	if input.CheckAdmin && !existingAccount.IsAdmin {
+		return registrationResult{}, cerrors.ErrUnauthorized
+	}
+
 	// ignore password check if user is signing in with google
 	if input.IgnorePasswordCheck {
 		return registrationResult{
@@ -93,10 +97,6 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 	matched := existingAccount.CheckPassword(plainPassword)
 	if !matched {
 		return registrationResult{}, cerrors.ErrInvalidCredentials
-	}
-
-	if input.IsAdmin && !existingAccount.IsAdmin {
-		return registrationResult{}, cerrors.ErrUnauthorized
 	}
 
 	return registrationResult{
