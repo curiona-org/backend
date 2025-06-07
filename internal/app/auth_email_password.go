@@ -21,8 +21,8 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		return registrationResult{}, err
 	}
 
-	if existingAccount.IsSuspended {
-		return registrationResult{}, cerrors.ErrAccountSuspended
+	if input.IsRegister && !existingAccount.IsZero() {
+		return registrationResult{}, cerrors.ErrAccountAlreadyExists
 	}
 
 	if (input.IsRegister || input.Method.IsGoogle()) && existingAccount.IsZero() {
@@ -62,8 +62,8 @@ func (app *application) authEmailPassword(ctx context.Context, input io.AuthInpu
 		}, nil
 	}
 
-	if input.IsRegister && !existingAccount.IsZero() {
-		return registrationResult{}, cerrors.ErrAccountAlreadyExists
+	if existingAccount.IsSuspended {
+		return registrationResult{}, cerrors.ErrAccountSuspended
 	}
 
 	span.SetAttributes(attribute.Bool("create_account", false))
