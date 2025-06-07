@@ -1,7 +1,6 @@
 package render_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,7 +11,7 @@ import (
 
 func TestRenderer_OK(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 	msg := "Success"
 	data := map[string]string{"key": "value"}
@@ -31,7 +30,7 @@ func TestRenderer_OK(t *testing.T) {
 
 func TestRenderer_Created(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 	msg := "Resource created"
 	data := map[string]string{"key": "value"}
@@ -50,7 +49,7 @@ func TestRenderer_Created(t *testing.T) {
 
 func TestRenderer_Error(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 	msg := "An error occurred"
 	err := "error details"
@@ -70,7 +69,7 @@ func TestRenderer_Error(t *testing.T) {
 
 func TestRenderer_JSON(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 	data := render.Response{
 		Success: true,
@@ -92,7 +91,7 @@ func TestRenderer_JSON(t *testing.T) {
 
 func TestRenderer_JSON_EmptyResponse(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 
 	renderer.JSON(w, http.StatusOK, render.Response{})
@@ -109,7 +108,7 @@ func TestRenderer_JSON_EmptyResponse(t *testing.T) {
 
 func TestRenderer_JSON_EmptyResponseError(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 
 	renderer.JSON(w, http.StatusInternalServerError, render.Response{})
@@ -126,7 +125,7 @@ func TestRenderer_JSON_EmptyResponseError(t *testing.T) {
 
 func TestRenderer_JSON_ErrorEncoding(t *testing.T) {
 	t.Parallel()
-	renderer := render.New(context.Background())
+	renderer := render.New(t.Context())
 	w := httptest.NewRecorder()
 
 	// Use a channel to cause json.Marshal to fail
