@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/curiona-org/backend/internal/domain"
@@ -1048,6 +1049,7 @@ func (r *RoadmapRepository) ListAccountFinishedRoadmaps(ctx context.Context, acc
 }
 
 func (r *RoadmapRepository) GetRoadmapProgression(ctx context.Context, accountID, roadmapID int) (domain.RoadmapProgression, error) {
+	fmt.Println("GetRoadmapProgression called with accountID:", accountID, "and roadmapID:", roadmapID)
 	query, args := psql.Select(
 		sm.Columns("id", "account_id", "roadmap_id", "total_topics", "total_finished_topics", "is_finished", "finished_at", "created_at", "updated_at"),
 		sm.From(domain.RoadmapProgressionTable),
@@ -1093,7 +1095,7 @@ func (r *RoadmapRepository) GetRoadmapProgression(ctx context.Context, accountID
 		sm.Columns("topic_id", "is_finished", "finished_at"),
 		sm.From(domain.RoadmapTopicProgressionTable),
 		sm.Where(psql.And(
-			psql.Quote("account_id").EQ(psql.Arg(roadmapProgression.AccountID)),
+			psql.Quote("account_id").EQ(psql.Arg(accountID)),
 			psql.Quote("progression_id").EQ(psql.Arg(roadmapProgression.ID))),
 		),
 	).MustBuild(ctx)
