@@ -2,7 +2,9 @@ package youtube
 
 import (
 	"context"
+	"sync/atomic"
 
+	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
 
 	"go.opentelemetry.io/otel"
@@ -21,15 +23,16 @@ type Client interface {
 }
 
 type client struct {
-	secret string
-	tracer trace.Tracer
+	secrets           []string
+	nextSecretCounter uint32
+	tracer            trace.Tracer
 }
 
-func New(secret string) Client {
+func New(secrets []string) Client {
 	tracer := otel.Tracer("youtube")
 	return &client{
-		secret: secret,
-		tracer: tracer,
+		secrets: secrets,
+		tracer:  tracer,
 	}
 }
 
@@ -47,7 +50,7 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 	defer span.End()
 
 	service, err := baseyoutube.NewService(ctx,
-		option.WithAPIKey(c.secret),
+		option.WithAPIKey(c.nextSecret()),
 		option.WithScopes(baseyoutube.YoutubeReadonlyScope))
 	if err != nil {
 		return nil, err
@@ -127,4 +130,16 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 	}
 
 	return videos, nil
+}
+
+func (c *client) nextSecret() string {
+	if len(c.secrets) == 0 {
+		return ""
+	}
+
+	n := atomic.AddUint32(&c.nextSecretCounter, 1)
+	key := c.secrets[(int(n)-1)%len(c.secrets)]
+
+	log.Debug().Msgf("Using YouTube API key: %s", key)
+	return key
 }

@@ -45,7 +45,7 @@ type Config struct {
 	googleClientSecret string
 
 	googleBooksAPIKey string
-	youtubeAPIKey     string
+	youtubeAPIKeys    []string
 
 	otlpExporterEndpoint string
 }
@@ -91,7 +91,7 @@ func Init() {
 		googleClientSecret: env.LookupEnv("GOOGLE_CLIENT_SECRET", ""),
 
 		googleBooksAPIKey: env.LookupEnv("GOOGLE_BOOKS_API_KEY", ""),
-		youtubeAPIKey:     env.LookupEnv("YOUTUBE_API_KEY", ""),
+		youtubeAPIKeys:    env.LookupEnv("YOUTUBE_API_KEY", []string{}),
 
 		otlpExporterEndpoint: env.LookupEnv("OTLP_EXPORTER_ENDPOINT", "localhost:4317"),
 	}
@@ -142,6 +142,6 @@ func GoogleClientID() string     { return config.googleClientID }
 func GoogleClientSecret() string { return config.googleClientSecret }
 
 func GoogleBooksAPIKey() string { return config.googleBooksAPIKey }
-func YoutubeAPIKey() string     { return config.youtubeAPIKey }
+func YoutubeAPIKeys() []string  { return config.youtubeAPIKeys }
 
 func OTLPExporterEndpoint() string { return config.otlpExporterEndpoint }

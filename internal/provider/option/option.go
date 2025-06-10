@@ -165,7 +165,7 @@ type withYoutubeClientProviderOption struct{}
 
 func (*withYoutubeClientProviderOption) Apply(p *provider.Provider) {
 	p.Group.Go(func() error {
-		p.Youtube = youtube.New(config.YoutubeAPIKey())
+		p.Youtube = youtube.New(config.YoutubeAPIKeys())
 		log := logger.Get()
 		log.Info().Msg("initialized youtube client")
 		return nil
