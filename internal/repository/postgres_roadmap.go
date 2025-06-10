@@ -1092,7 +1092,10 @@ func (r *RoadmapRepository) GetRoadmapProgression(ctx context.Context, accountID
 	topicsProgressionQuery, topicsProgressionArgs := psql.Select(
 		sm.Columns("topic_id", "is_finished", "finished_at"),
 		sm.From(domain.RoadmapTopicProgressionTable),
-		sm.Where(psql.Quote("progression_id").EQ(psql.Arg(roadmapProgression.ID))),
+		sm.Where(psql.And(
+			psql.Quote("account_id").EQ(psql.Arg(roadmapProgression.AccountID)),
+			psql.Quote("progression_id").EQ(psql.Arg(roadmapProgression.ID))),
+		),
 	).MustBuild(ctx)
 
 	topicsProgressionRows, err := r.db.Query(ctx, topicsProgressionQuery, topicsProgressionArgs...)
