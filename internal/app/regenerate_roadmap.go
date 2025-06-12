@@ -177,10 +177,9 @@ func (app *application) chatRegeneratePrompt(ctx context.Context, prompt llm.Cha
 
 func (app *application) makeRegenerateRoadmapUserPrompt(input io.RegenerateRoadmapInput) string {
 	var sb strings.Builder
-	sb.WriteString(`I will give you a topic and you need to generate a learning roadmap for it. Just reply to the question without adding any other information about the prompt and use simple language.
-`)
+	sb.WriteString(`I'd like to refine my existing learning roadmap for "Learning Frontend with VueJS". Here's why I need changes:\n`)
 
-	sb.WriteString("Generate a structured learning roadmap for the topic: ")
+	sb.WriteString("Reason for regeneration: ")
 	sb.WriteString(input.Reason)
 
 	sb.WriteString("\nHere are my personalization options:\n")
@@ -207,6 +206,8 @@ func (app *application) makeRegenerateRoadmapUserPrompt(input io.RegenerateRoadm
 		sb.WriteString("\n \"\"\"\n")
 	}
 
+	sb.WriteString("Please adjust the roadmap to better match my needs while keeping the same overall structure. Thank you!\n")
+
 	return sb.String()
 }
 
@@ -214,56 +215,6 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 	var sb strings.Builder
 
 	log := logger.FromContext(ctx)
-
-	promptUserPersonalizationOptions := []string{
-		"Daily Time Availability: How much time the user can dedicate daily (e.g., 15 minutes, 30 minutes, 1 hour).",
-		"Total Duration: The overall duration of the roadmap (e.g., 1 week, 3 months).",
-		"Skill Level: The user's experience level (e.g., Beginner, Intermediate, Advanced).",
-		"Additional Info: Any other user-provided goals or preferences. This is Optional for the user.",
-	}
-
-	promptSystemGuidelines := []string{
-		"Go into detail about the main topic to provide a comprehensive overview of the subject.",
-		"Each topic should have a title, a brief description to explain the focus of that section, and a pro tip to help the user understand the topic better.",
-		"Subtopics should be related to the main topic and provide more detailed information on specific aspects of the subject.",
-		"Each description should be clear and informative. It should be long enough to explain the topic but concise enough to maintain the user's interest.",
-		"Pro tips should be practical and relevant to the topic, providing additional insights or shortcuts to help the user learn more effectively.",
-		"Ensure that a topic is broken down into manageable subtopics to help users understand the subject better whenever possible.",
-		"A topic can also not have any subtopics if it is a standalone subject.",
-		"Use only English language for the roadmap.",
-		fmt.Sprintf("Must have a minimum of %d topics and %d (or more) subtopics per topic.", domain.RoadmapMinimumTopics, domain.RoadmapMinimumSubtopics),
-		fmt.Sprintf("Must have a maximum of %d topics and %d (or less) subtopics per topic.", domain.RoadmapMaximumTopics, domain.RoadmapMaximumSubtopics),
-		"Each topic and subtopic should have a search query that can be used to find more information on the topic online",
-		"Make sure the search query is relevant to the topic and provides accurate results as it will be used by the system to fetch books, youtube videos, and other resources.",
-		"If for example the topic of learning golang be \"Introduction\" make the search query \"Introduction Golang\".",
-	}
-
-	exampleFormat := chatRegeneratePromptPromptResult{
-		Title:       "Example Topic",
-		Description: "An extensive overview of the topic to set the stage for learning.",
-		Topics: []chatRegeneratePromptPromptResultTopic{
-			{
-				Title:       "Main Topic",
-				Description: "A one paragraph long explanation of the main topic.",
-				ProTips:     "Some pro tips to help the user understand the topic better.",
-				SearchQuery: "Main Topic",
-				Subtopics: []chatRegeneratePromptPromptResultSubtopic{
-					{
-						Title:       "Subtopic 1",
-						Description: "A one paragraph long explanation of Subtopic 1.",
-						ProTips:     "Some pro tips to help the user understand subtopic 1 better.",
-						SearchQuery: "Subtopic 1",
-					},
-					{
-						Title:       "Subtopic 2",
-						Description: "A one paragraph long explanation of Subtopic 2.",
-						ProTips:     "Some pro tips to help the user understand subtopic 2 better.",
-						SearchQuery: "Subtopic 2",
-					},
-				},
-			},
-		},
-	}
 
 	baseRoadmapPrompt := chatRegeneratePromptPromptResult{
 		Title:       baseRoadmap.Title,
@@ -291,9 +242,9 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 		baseRoadmapPrompt.Topics = append(baseRoadmapPrompt.Topics, newTopic)
 	}
 
-	sb.WriteString(`You are an expert in refining existing learning roadmaps based on the given roadmap the user needed revision on, user feedback and new requirements. Your task is to modify an existing roadmap according to the provided regeneration request while maintaining all original structural requirements. The regeneration process will:
-1. Use the provided roadmap as a base, because the user wants to regenerate it, not create a new one from scratch. Here is the base roadmap:
-`)
+	sb.WriteString(`You are an expert in refining learning roadmaps. Your task is to modify the existing roadmap based on user feedback and requirements while preserving the original structure.\n\n`)
+
+	sb.WriteString(`Here is the base roadmap:\n`)
 
 	baseRoadmapJSON, err := json.MarshalIndent(baseRoadmapPrompt, "", "    ")
 	if err != nil {
@@ -303,62 +254,48 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 	sb.Write(baseRoadmapJSON)
 
 	sb.WriteString("\n")
-	sb.WriteString(`
-2. Analyze the user's stated reason for regeneration (e.g., difficulty mismatch, time constraints, content preferences)
-3. Be tailored based on user-provided personalization options:
-`)
-
-	for _, userPersonalizationOpt := range promptUserPersonalizationOptions {
-		sb.WriteString(" - ")
-		sb.WriteString(userPersonalizationOpt)
-		sb.WriteString("\n")
-	}
-
-	sb.WriteString(`
-3. Preserve all original roadmap requirements:
- - 5-10 topics with 3-5 subtopics each
- - English-only content
- - Search queries for all entries
- - Pro tips in every section
-4. Make targeted adjustments to:
- - Topic/subtopic selection and depth
- - Time allocation per section
- - Difficulty progression
- - Content focus areas
- - Resource search queries
-
-# Regeneration Guidelines:
-1. Start by analyzing the user's reason to identify required changes
-2. Adjust timeline distribution based on new daily/time total constraints
-3. Modify complexity based on updated skill level (Beginner/Intermediate/Advanced)
-4. Add/remove topics based on user feedback and personalization options
-5. Maintain JSON structure integrity throughout modifications
-6. Preserve valuable content from original roadmap where appropriate
-7. Ensure search queries remain relevant to modified content
-8. Update pro tips to match adjusted difficulty level
-9. Verify all descriptions remain clear and concise
-10. Strictly follow original format requirements for subtopic nesting`)
-
-	sb.WriteString("# Guidelines:\n")
-	for _, guideline := range promptSystemGuidelines {
-		sb.WriteString(" - ")
-		sb.WriteString(guideline)
-		sb.WriteString("\n")
-	}
-
-	sb.WriteString("# Example Format:\n")
-
-	exampleFormatJSON, err := json.MarshalIndent(exampleFormat, "", "    ")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to marshal example format")
-		return ""
-	}
-
-	sb.Write(exampleFormatJSON)
+	sb.WriteString("INPUT:\n")
+	sb.WriteString("1. Base roadmap (JSON): The existing roadmap structure the user wants to modify\n")
+	sb.WriteString("2. User's reason for regeneration: Difficulty mismatch, time constraints, etc.\n")
+	sb.WriteString("3. Personalization options:\n")
+	sb.WriteString("   - Daily Time Availability (e.g., 15 min, 30 min, 1 hour)\n")
+	sb.WriteString("   - Total Duration (e.g., 1 week, 3 months)\n")
+	sb.WriteString("   - Skill Level (Beginner, Intermediate, Advanced)\n")
+	sb.WriteString("   - Additional Goals/Preferences (optional)\n")
 
 	sb.WriteString("\n")
-	sb.WriteString("The roadmap must adhere to this format while reflecting the user's provided topic and personalization preferences. Do not use markdown symbols such as the triple backticks or quotes, you must only respond with the raw json itself.")
+	sb.WriteString("REQUIREMENTS:\n")
+	sb.WriteString("1. Preserve structural elements:\n")
+	sb.WriteString("   - Search queries for all topics/subtopics\n")
+	sb.WriteString("   - Pro tips in every section\n")
+	sb.WriteString("   - JSON format integrity\n")
+	sb.WriteString("2. Make targeted adjustments to:\n")
+	sb.WriteString("   - Topic selection and depth\n")
+	sb.WriteString("   - Time allocation\n")
+	sb.WriteString("   - Difficulty progression\n")
+	sb.WriteString("   - Content focus areas\n")
+
 	sb.WriteString("\n")
+	sb.WriteString("PROCESS:\n")
+	sb.WriteString("1. Analyze the user's reason for regeneration\n")
+	sb.WriteString("2. Adjust timeline based on new time constraints\n")
+	sb.WriteString("3. Modify complexity to match skill level\n")
+	sb.WriteString("4. Add/remove topics based on user feedback\n")
+	sb.WriteString("5. Ensure search queries remain relevant\n")
+	sb.WriteString("6. Update pro tips to match difficulty level\n")
+
+	sb.WriteString("\n")
+	sb.WriteString("FORMAT RULES:\n")
+	sb.WriteString(fmt.Sprintf("- Maximum %d topics with up to %d subtopics each.\n", domain.RoadmapMaximumTopics, domain.RoadmapMaximumSubtopics))
+	sb.WriteString("- Each topic needs: title, description, pro_tips, search_query\n")
+	sb.WriteString("- Each subtopic needs: title, description, pro_tips, search_query\n")
+	sb.WriteString("- Descriptions should be clear, informative paragraphs\n")
+	sb.WriteString("- Pro tips should provide practical insights\n")
+	sb.WriteString("- Search queries must be relevant for finding resources\n")
+	sb.WriteString("- Return only raw JSON without markdown formatting\n")
+
+	sb.WriteString("\n")
+	sb.WriteString("The final output must maintain the original JSON structure while incorporating the user's personalization preferences. Do not use markdown symbols such as the triple backticks or quotes, you must only respond with the raw json itself.\n")
 
 	return sb.String()
 }

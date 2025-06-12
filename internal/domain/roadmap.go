@@ -11,10 +11,8 @@ import (
 const (
 	RoadmapTable = "roadmaps"
 
-	RoadmapMinimumTopics    = 5
 	RoadmapMaximumTopics    = 10
-	RoadmapMinimumSubtopics = 3
-	RoadmapMaximumSubtopics = 5
+	RoadmapMaximumSubtopics = 3
 
 	RoadmapProgressionTable      = "roadmap_progressions"
 	RoadmapTopicProgressionTable = "roadmap_topic_progressions"
