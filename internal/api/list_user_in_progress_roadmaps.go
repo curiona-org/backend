@@ -7,7 +7,7 @@ import (
 	"github.com/curiona-org/backend/internal/filter"
 )
 
-func (a *API) ListUserOnProgressRoadmaps(w http.ResponseWriter, r *http.Request) {
+func (a *API) ListUserInProgressRoadmaps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	filters, err := filter.FromRequest(r)
@@ -16,11 +16,11 @@ func (a *API) ListUserOnProgressRoadmaps(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	output, err := a.application.ListUserOnProgressRoadmaps(ctx, filters)
+	output, err := a.application.ListUserInProgressRoadmaps(ctx, filters)
 	if err != nil {
 		a.handleError(w, r, err)
 		return
 	}
 
-	a.render.OK(w, "List User On Progress Roadmaps.", output)
+	a.render.OK(w, "List User In Progress Roadmaps.", output)
 }

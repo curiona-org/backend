@@ -29,7 +29,7 @@ type CurionaApplication interface {
 	ListCommunityRoadmaps(ctx context.Context, input io.ListCommunityRoadmapsInput) (io.ListCommunityRoadmapsOutput, error)
 	ListUserRoadmaps(ctx context.Context, input io.ListUserRoadmapsInput) (io.ListUserRoadmapsOutput, error)
 	ListUserFinishedRoadmaps(ctx context.Context, input io.ListUserFinishedRoadmapsInput) (io.ListUserFinishedRoadmapsOutput, error)
-	ListUserOnProgressRoadmaps(ctx context.Context, input io.ListUserOnProgressRoadmapsInput) (io.ListUserOnProgressRoadmapsOutput, error)
+	ListUserInProgressRoadmaps(ctx context.Context, input io.ListUserInProgressRoadmapsInput) (io.ListUserInProgressRoadmapsOutput, error)
 	DeleteUserRoadmap(ctx context.Context, input io.DeleteUserRoadmapInput) error
 
 	PromptModeration(ctx context.Context, input io.PromptModerationInput) (io.PromptModerationOutput, error)

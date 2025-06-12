@@ -106,7 +106,7 @@ func (a *API) SetupRoutes() {
 		r.Get("/profile", a.GetProfile)
 		r.Patch("/profile", a.UpdateProfile)
 		r.Get("/profile/roadmaps", a.ListUserRoadmaps)
-		r.Get("/profile/roadmaps/on-progress", a.ListUserOnProgressRoadmaps)
+		r.Get("/profile/roadmaps/on-progress", a.ListUserInProgressRoadmaps)
 		r.Get("/profile/roadmaps/finished", a.ListUserFinishedRoadmaps)
 
 		r.Get("/roadmaps/{slug}", a.GetRoadmapBySlug)

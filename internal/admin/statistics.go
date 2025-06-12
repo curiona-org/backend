@@ -22,10 +22,10 @@ func (app *adminApplication) Statistics(ctx context.Context) (io.StatisticsOutpu
 		return err
 	})
 
-	var roadmapsOnProgressCount uint64
+	var roadmapsInProgressCount uint64
 	group.Go(func() error {
 		var err error
-		roadmapsOnProgressCount, err = app.repository.Roadmap.CountOnProgress(ctx)
+		roadmapsInProgressCount, err = app.repository.Roadmap.CountInProgress(ctx)
 		return err
 	})
 
@@ -71,7 +71,7 @@ func (app *adminApplication) Statistics(ctx context.Context) (io.StatisticsOutpu
 		Roadmap: io.StatisticsRoadmap{
 			RoadmapsGeneratedCount:      roadmapsCount,
 			RoadmapsGeneratedTodayCount: roadmapsGeneratedTodayCount,
-			RoadmapsOngoingCount:        roadmapsOnProgressCount,
+			RoadmapsOngoingCount:        roadmapsInProgressCount,
 			RoadmapsFinishedCount:       roadmapsFinishedCount,
 
 			HighestRatedRoadmapOutput: io.HighestRatedRoadmapOutput{

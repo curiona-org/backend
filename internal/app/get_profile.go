@@ -20,7 +20,7 @@ func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetPr
 		return io.GetProfileOutput{}, err
 	}
 
-	totalInProgress, err := app.repository.Roadmap.CountAccountOnProgressRoadmaps(ctx, account.ID)
+	totalInProgress, err := app.repository.Roadmap.CountAccountInProgressRoadmaps(ctx, account.ID)
 	if err != nil {
 		return io.GetProfileOutput{}, err
 	}

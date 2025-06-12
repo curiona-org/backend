@@ -901,7 +901,7 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.
 	})
 }
 
-func (r *RoadmapRepository) ListAccountOnProgressRoadmaps(ctx context.Context, accountID int, filters filter.Filters) ([]domain.Roadmap, error) {
+func (r *RoadmapRepository) ListAccountInProgressRoadmaps(ctx context.Context, accountID int, filters filter.Filters) ([]domain.Roadmap, error) {
 	selectQuery := psql.Select(
 		sm.Columns(r.roadmapColumns(roadmapColumnsOptions{
 			includeBookmark:              true,
@@ -961,7 +961,7 @@ func (r *RoadmapRepository) ListAccountOnProgressRoadmaps(ctx context.Context, a
 	)
 
 	query, args := selectQuery.MustBuild(ctx)
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.ListAccountOnProgressRoadmaps)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.ListAccountInProgressRoadmaps)", query)
 	defer span.End()
 
 	return r.fetch(ctx, roadmapFetchConfig{
@@ -1150,7 +1150,7 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
-func (r *RoadmapRepository) CountOnProgress(ctx context.Context) (uint64, error) {
+func (r *RoadmapRepository) CountInProgress(ctx context.Context) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", sm.Distinct(psql.Quote(domain.RoadmapProgressionTable, "roadmap_id")))),
 		sm.From(domain.RoadmapTable),
@@ -1354,7 +1354,7 @@ func (r *RoadmapRepository) CountAccountFinishedRoadmaps(ctx context.Context, ac
 	return count, nil
 }
 
-func (r *RoadmapRepository) CountAccountOnProgressRoadmaps(ctx context.Context, accountID int) (uint64, error) {
+func (r *RoadmapRepository) CountAccountInProgressRoadmaps(ctx context.Context, accountID int) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.RoadmapProgressionTable),
@@ -1370,7 +1370,7 @@ func (r *RoadmapRepository) CountAccountOnProgressRoadmaps(ctx context.Context, 
 		)),
 	).MustBuild(ctx)
 
-	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountOnProgressRoadmaps)", query)
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountInProgressRoadmaps)", query)
 	defer span.End()
 
 	var count uint64

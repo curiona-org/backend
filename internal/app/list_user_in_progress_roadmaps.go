@@ -10,30 +10,30 @@ import (
 	"github.com/curiona-org/backend/pkg/interval"
 )
 
-func (app *application) ListUserOnProgressRoadmaps(ctx context.Context, input io.ListUserOnProgressRoadmapsInput) (io.ListUserOnProgressRoadmapsOutput, error) {
-	ctx, span := app.tracer.Start(ctx, "(*application.ListUserOnProgressRoadmaps)")
+func (app *application) ListUserInProgressRoadmaps(ctx context.Context, input io.ListUserInProgressRoadmapsInput) (io.ListUserInProgressRoadmapsOutput, error) {
+	ctx, span := app.tracer.Start(ctx, "(*application.ListUserInProgressRoadmaps)")
 	defer span.End()
 
-	count, err := app.repository.Roadmap.CountAccountOnProgressRoadmaps(ctx, input.AccountID)
+	count, err := app.repository.Roadmap.CountAccountInProgressRoadmaps(ctx, input.AccountID)
 	if err != nil {
-		return io.ListUserOnProgressRoadmapsOutput{}, err
+		return io.ListUserInProgressRoadmapsOutput{}, err
 	}
 
 	filters := filter.New(input, count)
-	roadmaps, err := app.repository.Roadmap.ListAccountOnProgressRoadmaps(ctx, input.AccountID, filters)
+	roadmaps, err := app.repository.Roadmap.ListAccountInProgressRoadmaps(ctx, input.AccountID, filters)
 	if err != nil && !errors.Is(err, domain.ErrRoadmapNotFound) {
-		return io.ListUserOnProgressRoadmapsOutput{}, err
+		return io.ListUserInProgressRoadmapsOutput{}, err
 	}
 
-	output := io.ListUserOnProgressRoadmapsOutput{
+	output := io.ListUserInProgressRoadmapsOutput{
 		Total:       filters.Paginator.Total,
 		TotalPages:  filters.Paginator.TotalPages,
 		CurrentPage: filters.Paginator.CurrentPage,
-		Items:       make([]io.ListUserOnProgressRoadmapsOutputItem, len(roadmaps)),
+		Items:       make([]io.ListUserInProgressRoadmapsOutputItem, len(roadmaps)),
 	}
 
 	for idx, roadmap := range roadmaps {
-		output.Items[idx] = io.ListUserOnProgressRoadmapsOutputItem{
+		output.Items[idx] = io.ListUserInProgressRoadmapsOutputItem{
 			ID:           roadmap.ID,
 			Title:        roadmap.Title,
 			Description:  roadmap.Description,
@@ -42,7 +42,7 @@ func (app *application) ListUserOnProgressRoadmaps(ctx context.Context, input io
 			CreatedAt:    roadmap.CreatedAt,
 			UpdatedAt:    roadmap.UpdatedAt,
 			IsBookmarked: roadmap.IsBookmarked,
-			Progression: io.ListUserOnProgressRoadmapsOutputItemProgression{
+			Progression: io.ListUserInProgressRoadmapsOutputItemProgression{
 				TotalTopics:          roadmap.Progression.TotalTopics,
 				TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 				CompletionPercentage: roadmap.Progression.CompletionPercentage(),
@@ -50,7 +50,7 @@ func (app *application) ListUserOnProgressRoadmaps(ctx context.Context, input io
 				CreatedAt:            roadmap.Progression.CreatedAt,
 				UpdatedAt:            roadmap.Progression.UpdatedAt,
 			},
-			PersonalizationOpts: io.ListUserOnProgressRoadmapsOutputItemPersonalizationOptions{
+			PersonalizationOpts: io.ListUserInProgressRoadmapsOutputItemPersonalizationOptions{
 				DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
 				TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
 				SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
