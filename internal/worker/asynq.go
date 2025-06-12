@@ -95,7 +95,10 @@ func (w *asynqWorker) searchYoutubeExternalResources(ctx context.Context, task *
 		return err
 	}
 
-	searchResult, err := w.youtube.Search(traceCtx, payload.SearchQuery)
+	searchResult, err := w.youtube.Search(traceCtx, youtube.SearchRequest{
+		Query:    payload.SearchQuery,
+		Duration: payload.DesiredDuration,
+	})
 	if err != nil {
 		return err
 	}

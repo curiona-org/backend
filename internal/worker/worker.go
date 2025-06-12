@@ -2,11 +2,14 @@ package worker
 
 import (
 	"context"
+
+	"github.com/curiona-org/backend/pkg/googleapi/youtube"
 )
 
 type SearchYoutubeExternalResourcesInput struct {
-	TopicID     int
-	SearchQuery string
+	TopicID         int
+	SearchQuery     string
+	DesiredDuration youtube.SearchRequestDuration
 }
 
 type SearchGoogleBooksExternalResourcesInput struct {

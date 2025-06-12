@@ -12,6 +12,8 @@ import (
 	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/internal/logger"
 	"github.com/curiona-org/backend/internal/worker"
+	"github.com/curiona-org/backend/pkg/googleapi/youtube"
+	"github.com/curiona-org/backend/pkg/interval"
 	"github.com/sosodev/duration"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,6 +31,14 @@ func (app *application) GetTopicBySlug(ctx context.Context, input io.GetTopicInp
 	if err != nil {
 		if errors.Is(err, domain.ErrTopicNotFound) {
 			return io.GetTopicOutput{}, cerrors.ErrNotFound.Msg("topic")
+		}
+		return io.GetTopicOutput{}, err
+	}
+
+	po, err := app.repository.PersonalizationOptions.GetByRoadmapID(traceCtx, input.AccountID, topic.RoadmapID)
+	if err != nil {
+		if errors.Is(err, domain.ErrPersonalizationOptionsNotFound) {
+			return io.GetTopicOutput{}, cerrors.ErrNotFound.Msg("personalization options")
 		}
 		return io.GetTopicOutput{}, err
 	}
@@ -55,7 +65,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, input io.GetTopicInp
 		var mu sync.Mutex
 
 		group.Go(func() error {
-			return app.searchYoutubeExternalResources(traceCtx, &mu, &topic)
+			return app.searchYoutubeExternalResources(traceCtx, &mu, &topic, &po)
 		})
 
 		group.Go(func() error {
@@ -72,13 +82,32 @@ func (app *application) GetTopicBySlug(ctx context.Context, input io.GetTopicInp
 	return output, nil
 }
 
-func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic) error {
+func (app *application) searchYoutubeExternalResources(ctx context.Context, mu *sync.Mutex, topic *domain.Topic, po *domain.PersonalizationOptions) error {
 	youtubeSearchCtx, youtubeSearchSpan := app.tracer.Start(ctx, "(*application.GetTopicBySlug).youtubeSearch")
 	defer youtubeSearchSpan.End()
 
 	log := logger.FromContext(youtubeSearchCtx)
 
-	searchResult, err := app.youtube.Search(youtubeSearchCtx, topic.ExternalSearchQuery)
+	dailyTimeAvailability := interval.FromDuration(po.DailyTimeAvailability)
+
+	desiredDuration := youtube.SearchRequestDurationMedium
+
+	if dailyTimeAvailability.Unit == interval.UnitHours {
+		if dailyTimeAvailability.Value < 1 {
+			desiredDuration = youtube.SearchRequestDurationShort
+		} else if dailyTimeAvailability.Value < 2 {
+			desiredDuration = youtube.SearchRequestDurationMedium
+		} else {
+			desiredDuration = youtube.SearchRequestDurationLong
+		}
+	} else if dailyTimeAvailability.Unit == interval.UnitMinutes {
+		desiredDuration = youtube.SearchRequestDurationShort
+	}
+
+	searchResult, err := app.youtube.Search(youtubeSearchCtx, youtube.SearchRequest{
+		Query:    topic.ExternalSearchQuery,
+		Duration: desiredDuration,
+	})
 	if err != nil {
 		log.Warn().Msg("failed to search youtube")
 		err := app.worker.EnqueueSearchYoutubeExternalResources(youtubeSearchCtx,

@@ -18,8 +18,30 @@ const (
 	maxResults = 2
 )
 
+type SearchRequestDuration string
+
+const (
+	SearchRequestDurationShort  SearchRequestDuration = "short"
+	SearchRequestDurationMedium SearchRequestDuration = "medium"
+	SearchRequestDurationLong   SearchRequestDuration = "long"
+)
+
+type SearchRequest struct {
+	Query    string                `json:"query"`
+	Duration SearchRequestDuration `json:"duration"`
+}
+
+type SearchResult struct {
+	id        string
+	Title     string
+	URL       string
+	Channel   string
+	Thumbnail string
+	Duration  string
+}
+
 type Client interface {
-	Search(ctx context.Context, query string) ([]*SearchResult, error)
+	Search(ctx context.Context, request SearchRequest) ([]*SearchResult, error)
 }
 
 type client struct {
@@ -36,17 +58,12 @@ func New(secrets []string) Client {
 	}
 }
 
-type SearchResult struct {
-	id        string
-	Title     string
-	URL       string
-	Channel   string
-	Thumbnail string
-	Duration  string
-}
-
-func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, error) {
-	ctx, span := c.tracer.Start(ctx, "(*client).Search", trace.WithAttributes(attribute.String("query", query)))
+func (c *client) Search(ctx context.Context, request SearchRequest) ([]*SearchResult, error) {
+	ctx, span := c.tracer.Start(ctx, "(*client).Search", trace.WithAttributes(
+		attribute.String("query", request.Query),
+		attribute.String("duration", string(request.Duration)),
+		attribute.Int("max_results", maxResults),
+	))
 	defer span.End()
 
 	service, err := baseyoutube.NewService(ctx,
@@ -58,7 +75,9 @@ func (c *client) Search(ctx context.Context, query string) ([]*SearchResult, err
 
 	searchCall := service.Search.
 		List([]string{"snippet"}).
-		Q(query).
+		Q(request.Query).
+		Type("video").
+		VideoDuration(string(request.Duration)).
 		MaxResults(maxResults)
 
 	searchResponse, err := searchCall.Do()
