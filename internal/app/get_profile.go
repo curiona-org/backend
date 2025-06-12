@@ -15,7 +15,22 @@ func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetPr
 		return io.GetProfileOutput{}, err
 	}
 
+	totalGenerated, err := app.repository.Roadmap.CountByAccountID(ctx, account.ID)
+	if err != nil {
+		return io.GetProfileOutput{}, err
+	}
+
+	totalInProgress, err := app.repository.Roadmap.CountAccountOnProgressRoadmaps(ctx, account.ID)
+	if err != nil {
+		return io.GetProfileOutput{}, err
+	}
+
 	totalFinished, err := app.repository.Roadmap.CountAccountFinishedRoadmaps(ctx, account.ID)
+	if err != nil {
+		return io.GetProfileOutput{}, err
+	}
+
+	totalBookmarked, err := app.repository.Bookmark.Count(ctx, account.ID)
 	if err != nil {
 		return io.GetProfileOutput{}, err
 	}
@@ -28,7 +43,10 @@ func (app *application) GetProfile(ctx context.Context, accountID int) (io.GetPr
 		Avatar:   account.Profile.Avatar,
 		JoinedAt: account.CreatedAt,
 		Statistics: io.GetProfileOutputStatistics{
-			TotalFinishedRoadmaps: totalFinished,
+			TotalGeneratedRoadmaps:  totalGenerated,
+			TotalInProgressRoadmaps: totalInProgress,
+			TotalFinishedRoadmaps:   totalFinished,
+			TotalBookmarkedRoadmaps: totalBookmarked,
 		},
 	}, nil
 }

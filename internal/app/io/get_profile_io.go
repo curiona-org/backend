@@ -17,5 +17,8 @@ type GetProfileOutput struct {
 }
 
 type GetProfileOutputStatistics struct {
-	TotalFinishedRoadmaps uint64 `json:"total_finished_roadmaps"`
+	TotalGeneratedRoadmaps  uint64 `json:"total_generated_roadmaps"`
+	TotalInProgressRoadmaps uint64 `json:"total_in_progress_roadmaps"`
+	TotalFinishedRoadmaps   uint64 `json:"total_finished_roadmaps"`
+	TotalBookmarkedRoadmaps uint64 `json:"total_bookmarked_roadmaps"`
 }
