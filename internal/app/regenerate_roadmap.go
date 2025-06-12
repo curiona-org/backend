@@ -81,7 +81,7 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 
 	generated, err := app.chatRegeneratePrompt(traceCtx, llm.ChatPrompt{
 		System: systemPrompt,
-		User:   app.makeRegenerateRoadmapUserPrompt(input),
+		User:   app.makeRegenerateRoadmapUserPrompt(baseRoadmap.Title, input),
 	})
 	if err != nil {
 		return io.RegenerateRoadmapOutput{}, err
@@ -175,9 +175,9 @@ func (app *application) chatRegeneratePrompt(ctx context.Context, prompt llm.Cha
 	return result, nil
 }
 
-func (app *application) makeRegenerateRoadmapUserPrompt(input io.RegenerateRoadmapInput) string {
+func (app *application) makeRegenerateRoadmapUserPrompt(roadmapTitle string, input io.RegenerateRoadmapInput) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`I'd like to refine my existing learning roadmap for "%s". Here's why I need changes:\n`, input.Reason))
+	sb.WriteString(fmt.Sprintf(`I'd like to refine my existing learning roadmap for "%s". Here's why I need changes:\n`, roadmapTitle))
 
 	sb.WriteString("Reason for regeneration: ")
 	sb.WriteString(input.Reason)
