@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/curiona-org/backend/internal/app/io"
@@ -17,6 +18,11 @@ func (a *API) GetTopicBySlug(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	auth := auth.FromContext(ctx)
+
+	fmt.Printf("%+v\n", io.GetTopicInput{
+		AccountID: auth.AccountID,
+		Slug:      slug,
+	})
 	output, err := a.application.GetTopicBySlug(r.Context(), io.GetTopicInput{
 		AccountID: auth.AccountID,
 		Slug:      slug,

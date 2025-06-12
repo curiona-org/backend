@@ -35,7 +35,7 @@ func (app *application) GetTopicBySlug(ctx context.Context, input io.GetTopicInp
 		return io.GetTopicOutput{}, err
 	}
 
-	po, err := app.repository.PersonalizationOptions.GetByRoadmapID(traceCtx, input.AccountID, topic.RoadmapID)
+	po, err := app.repository.PersonalizationOptions.GetByRoadmapID(traceCtx, topic.AccountID, topic.RoadmapID)
 	if err != nil {
 		if errors.Is(err, domain.ErrPersonalizationOptionsNotFound) {
 			return io.GetTopicOutput{}, cerrors.ErrNotFound.Msg("personalization options")
