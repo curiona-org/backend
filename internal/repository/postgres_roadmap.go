@@ -784,11 +784,7 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 	if filters.Search != "" {
 		selectQuery.Apply(
 			sm.Where(psql.And(
-				psql.Or(
-					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
-				),
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
 				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 			))
 	} else {
@@ -863,11 +859,7 @@ func (r *RoadmapRepository) ListByAccountID(ctx context.Context, filters filter.
 	if filters.Search != "" {
 		selectQuery.Apply(
 			sm.Where(psql.And(
-				psql.Or(
-					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
-				),
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
 				psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(filters.AccountID)),
 				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
 			))
@@ -934,11 +926,7 @@ func (r *RoadmapRepository) ListAccountInProgressRoadmaps(ctx context.Context, a
 	if filters.Search != "" {
 		selectQuery.Apply(
 			sm.Where(psql.And(
-				psql.Or(
-					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
-				),
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
 				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
 				psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("false")),
 				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").GT(psql.Arg(0)),
@@ -1007,11 +995,7 @@ func (r *RoadmapRepository) ListAccountFinishedRoadmaps(ctx context.Context, acc
 	if filters.Search != "" {
 		selectQuery.Apply(
 			sm.Where(psql.And(
-				psql.Or(
-					psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+filters.Search+"%")),
-					psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+filters.Search+"%")),
-				),
+				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
 				psql.Quote(domain.RoadmapProgressionTable, "account_id").EQ(psql.Arg(accountID)),
 				psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
 				psql.Quote(domain.RoadmapProgressionTable, "total_finished_topics").EQ(psql.Quote(domain.RoadmapProgressionTable, "total_topics")),
@@ -1214,11 +1198,7 @@ func (r *RoadmapRepository) CountBySearching(ctx context.Context, search string)
 			psql.Quote(domain.RoadmapTable, "account_id"),
 		),
 		sm.Where(psql.And(
-			psql.Or(
-				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
-				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+search+"%")),
-				psql.Quote(domain.ProfileTable, "name").ILike(psql.Arg("%"+search+"%")),
-			),
+			psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
 			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)),
 	).MustBuild(ctx)
@@ -1303,10 +1283,7 @@ func (r *RoadmapRepository) CountByAccountIdAndSearch(ctx context.Context, accou
 		sm.From(domain.RoadmapTable),
 		sm.Where(psql.And(
 			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)),
-			psql.Or(
-				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
-				psql.Quote(domain.RoadmapTable, "description").ILike(psql.Arg("%"+search+"%")),
-			),
+			psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
 			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)),
 	).MustBuild(ctx)
