@@ -177,7 +177,7 @@ func (app *application) chatRegeneratePrompt(ctx context.Context, prompt llm.Cha
 
 func (app *application) makeRegenerateRoadmapUserPrompt(input io.RegenerateRoadmapInput) string {
 	var sb strings.Builder
-	sb.WriteString(`I'd like to refine my existing learning roadmap for "Learning Frontend with VueJS". Here's why I need changes:\n`)
+	sb.WriteString(fmt.Sprintf(`I'd like to refine my existing learning roadmap for "%s". Here's why I need changes:\n`, input.Reason))
 
 	sb.WriteString("Reason for regeneration: ")
 	sb.WriteString(input.Reason)
