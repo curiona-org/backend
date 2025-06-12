@@ -782,13 +782,30 @@ func (r *RoadmapRepository) ListAll(ctx context.Context, filters filter.Filters)
 	}
 
 	if filters.Search != "" {
-		selectQuery.Apply(
-			sm.Where(psql.And(
-				psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+filters.Search+"%")),
-				psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()),
-			))
+		conditions := []bob.Expression{
+			psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%" + filters.Search + "%")),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		}
+
+		if filters.AccountID > 0 {
+			conditions = append(conditions, psql.Quote(domain.RoadmapTable, "account_id").NE(psql.Arg(filters.AccountID)))
+		}
+
+		selectQuery.Apply(sm.Where(psql.And(conditions...)))
 	} else {
-		selectQuery.Apply(sm.Where(psql.Quote(domain.RoadmapTable, "deleted_at").IsNull()))
+		conditions := []bob.Expression{
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		}
+
+		if filters.AccountID > 0 {
+			conditions = append(conditions, psql.Quote(domain.RoadmapTable, "account_id").NE(psql.Arg(filters.AccountID)))
+		}
+
+		if len(conditions) == 1 {
+			selectQuery.Apply(sm.Where(conditions[0]))
+		} else {
+			selectQuery.Apply(sm.Where(psql.And(conditions...)))
+		}
 	}
 
 	if withTotalBookmarks {
@@ -1134,6 +1151,30 @@ func (r *RoadmapRepository) Count(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
+func (r *RoadmapRepository) CountOmitAccountID(ctx context.Context, accountID int) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").NE(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountOmitAccountID)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count roadmaps")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *RoadmapRepository) CountInProgress(ctx context.Context) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", sm.Distinct(psql.Quote(domain.RoadmapProgressionTable, "roadmap_id")))),
@@ -1189,7 +1230,7 @@ func (r *RoadmapRepository) CountFinished(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
-func (r *RoadmapRepository) CountBySearching(ctx context.Context, search string) (uint64, error) {
+func (r *RoadmapRepository) CountBySearching(ctx context.Context, accountID int, search string) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
 		sm.From(domain.RoadmapTable),
@@ -1199,6 +1240,7 @@ func (r *RoadmapRepository) CountBySearching(ctx context.Context, search string)
 		),
 		sm.Where(psql.And(
 			psql.Quote(domain.RoadmapTable, "title").ILike(psql.Arg("%"+search+"%")),
+			psql.Quote(domain.RoadmapTable, "account_id").NE(psql.Arg(accountID)),
 			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
 		)),
 	).MustBuild(ctx)

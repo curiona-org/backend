@@ -15,12 +15,12 @@ func (app *application) ListCommunityRoadmaps(ctx context.Context, input io.List
 	var count uint64
 	var err error
 	if input.Search != "" {
-		count, err = app.repository.Roadmap.CountBySearching(ctx, input.Search)
+		count, err = app.repository.Roadmap.CountBySearching(ctx, input.AccountID, input.Search)
 		if err != nil {
 			return io.ListCommunityRoadmapsOutput{}, err
 		}
 	} else {
-		count, err = app.repository.Roadmap.Count(ctx)
+		count, err = app.repository.Roadmap.CountOmitAccountID(ctx, input.AccountID)
 		if err != nil {
 			return io.ListCommunityRoadmapsOutput{}, err
 		}
