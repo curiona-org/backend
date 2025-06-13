@@ -58,7 +58,6 @@ func (app *application) ListCommunityRoadmaps(ctx context.Context, input io.List
 			Creator: io.ListCommunityRoadmapsOutputItemCreator{
 				ID:          roadmap.Account.ID,
 				Method:      roadmap.Account.Method,
-				Email:       roadmap.Account.Email,
 				Name:        roadmap.Account.Profile.Name,
 				Avatar:      roadmap.Account.Profile.Avatar,
 				IsSuspended: roadmap.Account.IsSuspended,

@@ -45,7 +45,6 @@ type ListCommunityRoadmapsOutputItemPersonalizationOptions struct {
 type ListCommunityRoadmapsOutputItemCreator struct {
 	ID          int         `json:"id"`
 	Method      auth.Method `json:"method"`
-	Email       string      `json:"email"`
 	Name        string      `json:"name"`
 	Avatar      string      `json:"avatar"`
 	IsSuspended bool        `json:"is_suspended"`
