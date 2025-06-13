@@ -3,7 +3,6 @@ package io
 import (
 	"time"
 
-	"github.com/curiona-org/backend/internal/auth"
 	"github.com/curiona-org/backend/internal/filter"
 	"github.com/curiona-org/backend/pkg/interval"
 )
@@ -43,10 +42,8 @@ type ListCommunityRoadmapsOutputItemPersonalizationOptions struct {
 }
 
 type ListCommunityRoadmapsOutputItemCreator struct {
-	ID          int         `json:"id"`
-	Method      auth.Method `json:"method"`
-	Name        string      `json:"name"`
-	Avatar      string      `json:"avatar"`
-	IsSuspended bool        `json:"is_suspended"`
-	JoinedAt    time.Time   `json:"joined_at"`
+	ID       int       `json:"id"`
+	Name     string    `json:"name"`
+	Avatar   string    `json:"avatar"`
+	JoinedAt time.Time `json:"joined_at"`
 }

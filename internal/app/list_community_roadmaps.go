@@ -56,12 +56,10 @@ func (app *application) ListCommunityRoadmaps(ctx context.Context, input io.List
 				AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
 			},
 			Creator: io.ListCommunityRoadmapsOutputItemCreator{
-				ID:          roadmap.Account.ID,
-				Method:      roadmap.Account.Method,
-				Name:        roadmap.Account.Profile.Name,
-				Avatar:      roadmap.Account.Profile.Avatar,
-				IsSuspended: roadmap.Account.IsSuspended,
-				JoinedAt:    roadmap.Account.CreatedAt,
+				ID:       roadmap.Account.ID,
+				Name:     roadmap.Account.Profile.Name,
+				Avatar:   roadmap.Account.Profile.Avatar,
+				JoinedAt: roadmap.Account.CreatedAt,
 			},
 		}
 
