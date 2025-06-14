@@ -204,6 +204,7 @@ func (app *application) mapExternalResourcesOutput(ctx context.Context, resource
 
 		if resource.IsYoutube() {
 			// Parse ISO 8601 duration
+			log.Debug().Str("length", resource.Length).Msg("parsing youtube video duration")
 			parsedContentLength, err := duration.Parse(resource.Length)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to parse youtube video duration")

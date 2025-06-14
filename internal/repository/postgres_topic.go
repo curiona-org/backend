@@ -334,6 +334,7 @@ func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 			psql.Quote(domain.ExternalResourceTable, "url"),
 			psql.Quote(domain.ExternalResourceTable, "cover_url"),
 			psql.Quote(domain.ExternalResourceTable, "type"),
+			psql.Quote(domain.ExternalResourceTable, "length"),
 			psql.Quote(domain.ExternalResourceTable, "created_at"),
 			psql.Quote(domain.ExternalResourceTable, "updated_at"),
 		),
@@ -363,6 +364,7 @@ func (r *TopicRepository) fetchExternalResourcesByTopicID(ctx context.Context, t
 			&externalResource.URL,
 			&externalResource.CoverURL,
 			&externalResource.Type,
+			&externalResource.Length,
 			&externalResource.CreatedAt,
 			&externalResource.UpdatedAt,
 		)
