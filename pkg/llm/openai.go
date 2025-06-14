@@ -114,7 +114,7 @@ func (o *openAiClient) Moderate(ctx context.Context, userPrompt string) (bool, e
 
 	response, err := o.client.Moderations(ctx, openai.ModerationRequest{
 		Input: userPrompt,
-		Model: "text-moderation-stable",
+		Model: "omni-moderation-latest",
 	})
 	if err != nil {
 		span.RecordError(err, trace.WithStackTrace(true))
