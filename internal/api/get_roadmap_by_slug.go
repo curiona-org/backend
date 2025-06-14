@@ -16,11 +16,16 @@ func (a *API) GetRoadmapBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+	input := io.GetRoadmapInput{
+		Slug: slug,
+	}
+
 	auth := auth.FromContext(ctx)
-	output, err := a.application.GetRoadmapBySlug(r.Context(), io.GetRoadmapInput{
-		AccountID: auth.AccountID,
-		Slug:      slug,
-	})
+	if auth != nil {
+		input.AccountID = auth.AccountID
+	}
+
+	output, err := a.application.GetRoadmapBySlug(r.Context(), input)
 	if err != nil {
 		a.handleError(w, r, err)
 		return

@@ -71,7 +71,16 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 		CreatedAt:    roadmap.CreatedAt,
 		UpdatedAt:    roadmap.UpdatedAt,
 		IsBookmarked: roadmap.IsBookmarked,
-		Progression: io.GetRoadmapOutputProgression{
+		PersonalizationOpts: io.GetRoadmapOutputPersonalizationOptions{
+			DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
+			TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
+			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
+			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
+		},
+	}
+
+	if input.AccountID != 0 {
+		output.Progression = io.GetRoadmapOutputProgression{
 			TotalTopics:          roadmap.Progression.TotalTopics,
 			TotalFinishedTopics:  roadmap.Progression.TotalFinishedTopics,
 			IsFinished:           roadmap.Progression.IsFinished,
@@ -79,8 +88,8 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 			CompletionPercentage: roadmap.Progression.CompletionPercentage(),
 			CreatedAt:            roadmap.Progression.CreatedAt,
 			UpdatedAt:            roadmap.Progression.UpdatedAt,
-		},
-		Rating: io.GetRoadmapOutputRating{
+		}
+		output.Rating = io.GetRoadmapOutputRating{
 			IsRated:                        !roadmap.Rating.IsZero(),
 			RoadmapID:                      roadmap.Rating.RoadmapID,
 			ProgressionTotalTopics:         roadmap.Rating.ProgressionTotalTopics,
@@ -89,18 +98,12 @@ func (app *application) GetRoadmapBySlug(ctx context.Context, input io.GetRoadma
 			Comment:                        roadmap.Rating.Comment,
 			CreatedAt:                      roadmap.Rating.CreatedAt,
 			UpdatedAt:                      roadmap.Rating.UpdatedAt,
-		},
-		Creator: io.GetRoadmapOutputCreator{
-			ID:     roadmap.Account.ID,
-			Name:   roadmap.Account.Profile.Name,
-			Avatar: roadmap.Account.Profile.Avatar,
-		},
-		PersonalizationOpts: io.GetRoadmapOutputPersonalizationOptions{
-			DailyTimeAvailability: interval.FromDuration(roadmap.PersonalizationOptions.DailyTimeAvailability),
-			TotalDuration:         interval.FromDuration(roadmap.PersonalizationOptions.TotalDuration),
-			SkillLevel:            roadmap.PersonalizationOptions.SkillLevel.String(),
-			AdditionalInfo:        roadmap.PersonalizationOptions.AdditionalInfo,
-		},
+		}
+	}
+	output.Creator = io.GetRoadmapOutputCreator{
+		ID:     roadmap.Account.ID,
+		Name:   roadmap.Account.Profile.Name,
+		Avatar: roadmap.Account.Profile.Avatar,
 	}
 
 	for _, topic := range roadmap.Topics {

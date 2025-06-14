@@ -98,6 +98,7 @@ func (a *API) SetupRoutes() {
 	a.router.Post("/auth/refresh", a.AuthRefresh)
 
 	a.router.Get("/roadmaps", a.ListCommunityRoadmaps)
+	a.router.Get("/roadmaps/{slug}", a.GetRoadmapBySlug)
 
 	// authenticated routes
 	a.router.Group(func(r chi.Router) {
@@ -109,7 +110,6 @@ func (a *API) SetupRoutes() {
 		r.Get("/profile/roadmaps/on-progress", a.ListUserInProgressRoadmaps)
 		r.Get("/profile/roadmaps/finished", a.ListUserFinishedRoadmaps)
 
-		r.Get("/roadmaps/{slug}", a.GetRoadmapBySlug)
 		r.Delete("/roadmaps/{slug}", a.DeleteUserRoadmap)
 
 		r.Post("/roadmaps/moderation", a.PromptModeration)
