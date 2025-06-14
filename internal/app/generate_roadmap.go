@@ -85,7 +85,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 	if generated.Flagged {
 		return io.GenerateRoadmapOutput{
 			Flagged: true,
-			Reason:  cerrors.ErrLLMFlaggedContentDetected.Message(),
+			Reason:  generated.FlaggedReason,
 		}, nil
 	}
 
@@ -131,10 +131,11 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 }
 
 type chatGeneratePromptPromptResult struct {
-	Flagged     bool                                  `json:"flagged"`
-	Title       string                                `json:"title"`
-	Description string                                `json:"description"`
-	Topics      []chatGeneratePromptPromptResultTopic `json:"topics"`
+	Flagged       bool                                  `json:"flagged"`
+	FlaggedReason string                                `json:"flagged_reason"`
+	Title         string                                `json:"title"`
+	Description   string                                `json:"description"`
+	Topics        []chatGeneratePromptPromptResultTopic `json:"topics"`
 }
 
 type chatGeneratePromptPromptResultTopic struct {
@@ -238,7 +239,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 		"Each topic and subtopic should have a search query that can be used to find more information on the topic online",
 		"Make sure the search query is relevant to the topic and provides accurate results as it will be used by the system to fetch books, youtube videos, and other resources.",
 		"If for example the topic of learning golang be \"Introduction\" make the search query \"Introduction Golang\".",
-		"When the user provides a topic that is potentially harmful or inappropriate, the system should flag the content and not generate a roadmap. (e.g., setting the `flagged` field to true in the response).",
+		"When the user provides a topic that is potentially harmful or inappropriate, the system should flag the content, provide an accurate & concise but brief & short reasoning why it's flagged and not generate the roadmap. (e.g., setting the `flagged` field to true in the response and providing a `flagged_reason` for example: \"Content contains harmful or inappropriate material. Please try a different topic.\")",
 	}
 
 	exampleFormat := chatGeneratePromptPromptResult{
@@ -269,9 +270,10 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 	}
 
 	exampleResult := chatGeneratePromptPromptResult{
-		Flagged:     false,
-		Title:       "Front End Development",
-		Description: "Step by step guide to learn  frontend development.",
+		Flagged:       false,
+		FlaggedReason: "",
+		Title:         "Front End Development",
+		Description:   "Step by step guide to learn  frontend development.",
 		Topics: []chatGeneratePromptPromptResultTopic{
 			{
 				Title:       "What Is Front End Dev?",

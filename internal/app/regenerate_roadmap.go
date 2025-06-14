@@ -90,7 +90,7 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 	if generated.Flagged {
 		return io.RegenerateRoadmapOutput{
 			Flagged: true,
-			Reason:  cerrors.ErrLLMFlaggedContentDetected.Message(),
+			Reason:  generated.FlaggedReason,
 		}, nil
 	}
 
@@ -136,10 +136,11 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 }
 
 type chatRegeneratePromptPromptResult struct {
-	Flagged     bool                                    `json:"flagged"`
-	Title       string                                  `json:"title"`
-	Description string                                  `json:"description"`
-	Topics      []chatRegeneratePromptPromptResultTopic `json:"topics"`
+	Flagged       bool                                    `json:"flagged"`
+	FlaggedReason string                                  `json:"flagged_reason"`
+	Title         string                                  `json:"title"`
+	Description   string                                  `json:"description"`
+	Topics        []chatRegeneratePromptPromptResultTopic `json:"topics"`
 }
 
 type chatRegeneratePromptPromptResultTopic struct {
@@ -225,10 +226,11 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 	log := logger.FromContext(ctx)
 
 	baseRoadmapPrompt := chatRegeneratePromptPromptResult{
-		Flagged:     false,
-		Title:       baseRoadmap.Title,
-		Description: baseRoadmap.Description,
-		Topics:      make([]chatRegeneratePromptPromptResultTopic, 0, len(baseRoadmap.Topics)),
+		Flagged:       false,
+		FlaggedReason: "",
+		Title:         baseRoadmap.Title,
+		Description:   baseRoadmap.Description,
+		Topics:        make([]chatRegeneratePromptPromptResultTopic, 0, len(baseRoadmap.Topics)),
 	}
 
 	for _, topic := range baseRoadmap.Topics {
@@ -266,7 +268,7 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 	sb.WriteString("INPUT:\n")
 	sb.WriteString("1. Base roadmap (JSON): The existing roadmap structure the user wants to modify\n")
 	sb.WriteString("2. User's reason for regeneration: Difficulty mismatch, time constraints, etc.\n")
-	sb.WriteString("3. If the user provided reason contains any sensitive or inappropriate content, it should set flagged into true and not generate a new roadmap.\n")
+	sb.WriteString("3. If the user provided reason contains any sensitive or inappropriate content, it should set flagged into true, provide an accurate & concise but brief & short reasoning why it's flagged and not generate a new roadmap.\n")
 	sb.WriteString("4. Personalization options:\n")
 	sb.WriteString("   - Daily Time Availability (e.g., 15 min, 30 min, 1 hour)\n")
 	sb.WriteString("   - Total Duration (e.g., 1 week, 3 months)\n")
