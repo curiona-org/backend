@@ -131,7 +131,41 @@ func (o *openAiClient) Moderate(ctx context.Context, userPrompt string) (bool, e
 	span.SetAttributes(
 		attribute.String("id", response.ID),
 		attribute.String("model", response.Model),
+		attribute.String("prompt", userPrompt),
 		attribute.Bool("flagged", result.Flagged),
+
+		attribute.Bool("category.harassment", result.Categories.Harassment),
+		attribute.Float64("category.score.harassment", float64(result.CategoryScores.Harassment)),
+
+		attribute.Bool("category.harassment_threatening", result.Categories.HarassmentThreatening),
+		attribute.Float64("category.score.harassment_threatening", float64(result.CategoryScores.HarassmentThreatening)),
+
+		attribute.Bool("category.hate", result.Categories.Hate),
+		attribute.Float64("category.score.hate", float64(result.CategoryScores.Hate)),
+
+		attribute.Bool("category.hate_threatening", result.Categories.HateThreatening),
+		attribute.Float64("category.score.hate_threatening", float64(result.CategoryScores.HateThreatening)),
+
+		attribute.Bool("category.self_harm", result.Categories.SelfHarm),
+		attribute.Float64("category.score.self_harm", float64(result.CategoryScores.SelfHarm)),
+
+		attribute.Bool("category.self_harm_instructions", result.Categories.SelfHarmInstructions),
+		attribute.Float64("category.score.self_harm_instructions", float64(result.CategoryScores.SelfHarmInstructions)),
+
+		attribute.Bool("category.self_harm_threatening", result.Categories.SelfHarmIntent),
+		attribute.Float64("category.score.self_harm_threatening", float64(result.CategoryScores.SelfHarmIntent)),
+
+		attribute.Bool("category.sexual", result.Categories.Sexual),
+		attribute.Float64("category.score.sexual", float64(result.CategoryScores.Sexual)),
+
+		attribute.Bool("category.sexual_minors", result.Categories.SexualMinors),
+		attribute.Float64("category.score.sexual_minors", float64(result.CategoryScores.SexualMinors)),
+
+		attribute.Bool("category.violence", result.Categories.Violence),
+		attribute.Float64("category.score.violence", float64(result.CategoryScores.Violence)),
+
+		attribute.Bool("category.violence_graphic", result.Categories.ViolenceGraphic),
+		attribute.Float64("category.score.violence_graphic", float64(result.CategoryScores.ViolenceGraphic)),
 	)
 
 	return result.Flagged, nil
