@@ -87,6 +87,13 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 		return io.RegenerateRoadmapOutput{}, err
 	}
 
+	if generated.Flagged {
+		return io.RegenerateRoadmapOutput{
+			Flagged: true,
+			Reason:  cerrors.ErrLLMFlaggedContentDetected.Message(),
+		}, nil
+	}
+
 	roadmap := domain.NewRoadmap(input.AccountID, generated.Title, generated.Description)
 
 	for _, topic := range generated.Topics {
@@ -129,6 +136,7 @@ func (app *application) RegenerateRoadmap(ctx context.Context, input io.Regenera
 }
 
 type chatRegeneratePromptPromptResult struct {
+	Flagged     bool                                    `json:"flagged"`
 	Title       string                                  `json:"title"`
 	Description string                                  `json:"description"`
 	Topics      []chatRegeneratePromptPromptResultTopic `json:"topics"`
@@ -217,6 +225,7 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 	log := logger.FromContext(ctx)
 
 	baseRoadmapPrompt := chatRegeneratePromptPromptResult{
+		Flagged:     false,
 		Title:       baseRoadmap.Title,
 		Description: baseRoadmap.Description,
 		Topics:      make([]chatRegeneratePromptPromptResultTopic, 0, len(baseRoadmap.Topics)),
@@ -257,7 +266,8 @@ func (app *application) makeRegenerateRoadmapSystemPrompt(ctx context.Context, b
 	sb.WriteString("INPUT:\n")
 	sb.WriteString("1. Base roadmap (JSON): The existing roadmap structure the user wants to modify\n")
 	sb.WriteString("2. User's reason for regeneration: Difficulty mismatch, time constraints, etc.\n")
-	sb.WriteString("3. Personalization options:\n")
+	sb.WriteString("3. If the user provided reason contains any sensitive or inappropriate content, it should set flagged into true and not generate a new roadmap.\n")
+	sb.WriteString("4. Personalization options:\n")
 	sb.WriteString("   - Daily Time Availability (e.g., 15 min, 30 min, 1 hour)\n")
 	sb.WriteString("   - Total Duration (e.g., 1 week, 3 months)\n")
 	sb.WriteString("   - Skill Level (Beginner, Intermediate, Advanced)\n")

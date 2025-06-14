@@ -38,5 +38,11 @@ func (a *API) RegenerateRoadmap(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if output.Flagged {
+		// TODO: should be a different status code, but for now we use 200 OK
+		a.render.OK(w, "Flagged content detected", nil)
+		return
+	}
+
 	a.render.OK(w, "Roadmap generated successfully", output)
 }

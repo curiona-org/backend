@@ -80,6 +80,15 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 		return io.GenerateRoadmapOutput{}, err
 	}
 
+	// If the moderation API considered the generated content not harmful, but the completion API
+	// flagged it, we still return the flagged response.
+	if generated.Flagged {
+		return io.GenerateRoadmapOutput{
+			Flagged: true,
+			Reason:  cerrors.ErrLLMFlaggedContentDetected.Message(),
+		}, nil
+	}
+
 	roadmap := domain.NewRoadmap(input.AccountID, generated.Title, generated.Description)
 
 	for _, topic := range generated.Topics {
@@ -122,6 +131,7 @@ func (app *application) GenerateRoadmap(ctx context.Context, input io.GenerateRo
 }
 
 type chatGeneratePromptPromptResult struct {
+	Flagged     bool                                  `json:"flagged"`
 	Title       string                                `json:"title"`
 	Description string                                `json:"description"`
 	Topics      []chatGeneratePromptPromptResultTopic `json:"topics"`
@@ -228,6 +238,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 		"Each topic and subtopic should have a search query that can be used to find more information on the topic online",
 		"Make sure the search query is relevant to the topic and provides accurate results as it will be used by the system to fetch books, youtube videos, and other resources.",
 		"If for example the topic of learning golang be \"Introduction\" make the search query \"Introduction Golang\".",
+		"When the user provides a topic that is potentially harmful or inappropriate, the system should flag the content and not generate a roadmap. (e.g., setting the `flagged` field to true in the response).",
 	}
 
 	exampleFormat := chatGeneratePromptPromptResult{
@@ -258,6 +269,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 	}
 
 	exampleResult := chatGeneratePromptPromptResult{
+		Flagged:     false,
 		Title:       "Front End Development",
 		Description: "Step by step guide to learn  frontend development.",
 		Topics: []chatGeneratePromptPromptResultTopic{
