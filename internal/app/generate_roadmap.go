@@ -252,7 +252,7 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 	sb.WriteString("\n")
 	sb.WriteString("INAPPROPRIATE CONTENT GUIDELINES:\n")
 	sb.WriteString("1. The system should flag the content if it contains any inappropriate content, in the following categories:\n")
-	sb.WriteString("   - Violence or Harmful Activities: Topics that promote violence, self-harm, or illegal activities.\n")
+	sb.WriteString("   - Violence or Harmful Activities: Topics that promote violence, self-harm, or illegal activities. Media such as games, movies, or books that contains violence, gore, or other harmful content is allowed, but the topic itself should not promote or glorify such content.\n")
 	sb.WriteString("   - Hate Speech or Discrimination: Topics that promote hate speech, discrimination, or intolerance against individuals or groups.\n")
 	sb.WriteString("   - Adult Content: Topics that contain explicit or adult content, including sexually explicit material and or exploitation of minors.\n")
 	sb.WriteString("   - Self Harm: Topics that promote self with intent or threat to self with intent.\n")
