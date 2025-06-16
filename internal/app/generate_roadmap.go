@@ -219,32 +219,55 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 
 	log := logger.FromContext(ctx)
 
-	promptUserPersonalizationOptions := []string{
-		"Daily Time Availability: How much time the user can dedicate daily (e.g., 15 minutes, 30 minutes, 1 hour).",
-		"Total Duration: The overall duration of the roadmap (e.g., 1 week, 3 months).",
-		"Skill Level: The user's experience level (e.g., Beginner, Intermediate, Advanced).",
-		"Additional Info: Any other user-provided goals or preferences. This is Optional for the user.",
-	}
+	sb.WriteString("You are an expert in creating structured learning roadmaps. Your task is to generate a detailed, well-structured roadmap in JSON format based on user input, adhering to the specified guidelines and format.\n")
 
-	promptSystemGuidelines := []string{
-		"Go into detail about the main topic to provide a comprehensive overview of the subject.",
-		"Each topic should have a title, a brief description to explain the focus of that section, and a pro tip to help the user understand the topic better.",
-		"Subtopics should be related to the main topic and provide more detailed information on specific aspects of the subject.",
-		"Each description should be clear and informative. It should be long enough to explain the topic but concise enough to maintain the user's interest.",
-		"Pro tips should be practical and relevant to the topic, providing additional insights or shortcuts to help the user learn more effectively.",
-		"Ensure that a topic is broken down into manageable subtopics to help users understand the subject better whenever possible.",
-		"A topic can also not have any subtopics if it is a standalone subject.",
-		"Use only English language for the roadmap.",
-		fmt.Sprintf("The amount of topics must not be more %d topics and subtopics must not be more than %d.", domain.RoadmapMaximumTopics, domain.RoadmapMaximumSubtopics),
-		"Each topic and subtopic should have a search query that can be used to find more information on the topic online",
-		"Make sure the search query is relevant to the topic and provides accurate results as it will be used by the system to fetch books, youtube videos, and other resources.",
-		"If for example the topic of learning golang be \"Introduction\" make the search query \"Introduction Golang\".",
-		"When the user provides a topic that is potentially harmful or inappropriate, the system should flag the content, provide an accurate & concise but brief & short reasoning why it's flagged and not generate the roadmap. (e.g., setting the `flagged` field to true in the response and providing a `flagged_reason` for example: \"Content contains harmful or inappropriate material. Please try a different topic.\")",
-	}
+	sb.WriteString("\n")
+	sb.WriteString("INPUT:\n")
+	sb.WriteString("1. Include a title and description of the main topic to introduce the subject.\n")
+	sb.WriteString("2. Break down the topic into topics and subtopics, each with a title and description to explain the focus of the section.\n")
+	sb.WriteString("3. Use a maximum of 2 levels of depth for subtopics. Topics can contain subtopics, but subtopics cannot have further nested levels.\n")
+	sb.WriteString("4. Be tailored based on user-provided personalization options:\n")
+	sb.WriteString("   - Daily Time Availability: How much time the user can dedicate daily (e.g., 15 minutes, 30 minutes, 1 hour).\n")
+	sb.WriteString("   - Total Duration: The overall duration of the roadmap (e.g., 1 week, 3 months).\n")
+	sb.WriteString("   - Skill Level: The user's experience level (e.g., Beginner, Intermediate, Advanced).\n")
+	sb.WriteString("   - Additional Info: Any other user-provided goals or preferences. This is Optional for the user.\n")
+
+	sb.WriteString("\n")
+	sb.WriteString("REQUIREMENTS:\n")
+	sb.WriteString("1. Go into detail about the main topic to provide a comprehensive overview of the subject.\n")
+	sb.WriteString("2. Each topic should have a title, a brief description to explain the focus of that section, and a pro tip to help the user understand the topic better.\n")
+	sb.WriteString("3. Subtopics should be related to the main topic and provide more detailed information on specific aspects of the subject.\n")
+	sb.WriteString("4. Descriptions should be clear and informative.\n")
+	sb.WriteString("5. Pro tips should be practical and relevant to the topic, providing additional insights or shortcuts to help the user learn more effectively.\n")
+	sb.WriteString("6. Ensure that a topic is broken down into manageable subtopics to help users understand the subject better whenever possible.\n")
+	sb.WriteString("7. A topic can also not have any subtopics if it is a standalone subject.\n")
+	sb.WriteString("8. Use only English language for the roadmap.\n")
+	sb.WriteString(fmt.Sprintf("9. Limit to maximum %d topics; each with up to %d subtopics\n", domain.RoadmapMaximumTopics, domain.RoadmapMaximumSubtopics))
+	sb.WriteString("10. Each topic and subtopic should have a search query that can be used to find more information on the topic online\n")
+	sb.WriteString("11. Make sure the search query is relevant to the topic and provides accurate results as it will be used by the system to fetch books, youtube videos, and other resources.\n")
+	sb.WriteString("12. If for example the topic of learning golang be \"Introduction\" make the search query something like \"Introduction Golang\".\n")
+	sb.WriteString("13. Return only raw JSON, with no markdown or quotes\n")
+
+	sb.WriteString("\n")
+	sb.WriteString("INAPPROPRIATE CONTENT GUIDELINES:\n")
+	sb.WriteString("1. The system should flag the content if it contains any inappropriate content, in the following categories:\n")
+	sb.WriteString("   - Violence or Harmful Activities: Topics that promote violence, self-harm, or illegal activities.\n")
+	sb.WriteString("   - Hate Speech or Discrimination: Topics that promote hate speech, discrimination, or intolerance against individuals or groups.\n")
+	sb.WriteString("   - Adult Content: Topics that contain explicit or adult content, including sexually explicit material and or exploitation of minors.\n")
+	sb.WriteString("   - Self Harm: Topics that promote self with intent or threat to self with intent.\n")
+	sb.WriteString("   - Illegal Activities: Topics that promote illegal activities, such as drug manufacturing, hacking (e.g., how to hack a bank), or other criminal activities.\n")
+	sb.WriteString("2. If the topic is historical, political, or educational in nature, it should not be flagged\n")
+	sb.WriteString("3. If the topic is flagged, the system should flag the content and return a reason for the flagging.\n")
+
+	sb.WriteString("\n")
+	sb.WriteString("FORMAT:\n")
+	sb.WriteString("The roadmap must adhere to this format while reflecting the user's provided topic and personalization preferences. Do not use markdown symbols such as the triple backticks or quotes, you must only respond with the raw json itself.\n")
 
 	exampleFormat := chatGeneratePromptPromptResult{
-		Title:       "Example Topic",
-		Description: "An extensive overview of the topic to set the stage for learning.",
+		Flagged:       false,
+		FlaggedReason: "",
+		Title:         "Example Topic",
+		Description:   "An extensive overview of the topic to set the stage for learning.",
 		Topics: []chatGeneratePromptPromptResultTopic{
 			{
 				Title:       "Main Topic",
@@ -268,108 +291,6 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 			},
 		},
 	}
-
-	exampleResult := chatGeneratePromptPromptResult{
-		Flagged:       false,
-		FlaggedReason: "",
-		Title:         "Front End Development",
-		Description:   "Step by step guide to learn  frontend development.",
-		Topics: []chatGeneratePromptPromptResultTopic{
-			{
-				Title:       "What Is Front End Dev?",
-				Description: "Front end development is the practice of producing HTML, CSS, and JavaScript for a website or web application so a user can see and interact with them directly. It involves the design of the site, the layout, the colors, the fonts, and so on.",
-				ProTips:     "Focus on the basics of HTML, CSS, and JavaScript first.",
-				SearchQuery: "Front End Development",
-				Subtopics: []chatGeneratePromptPromptResultSubtopic{
-					{
-						Title:       "HTML",
-						Description: "HTML is the standard markup language for creating web pages and web applications. It provides the basic structure of sites, which is enhanced and modified by other technologies like CSS and JavaScript.",
-						ProTips:     "Try to understand the semantic structure of HTML.",
-						SearchQuery: "HTML",
-					},
-					{
-						Title:       "CSS",
-						Description: "CSS is a style sheet language used for describing the presentation of a document written in HTML. It controls the layout of multiple web pages all at once.",
-						ProTips:     "Learn about Flexbox and Grid for layout.",
-						SearchQuery: "CSS",
-					},
-					{
-						Title:       "JavaScript",
-						Description: "JavaScript is a programming language that enables you to interact with elements on a webpage. It is used for creating dynamic and interactive web pages.",
-						ProTips:     "Start with the basics of JavaScript syntax and DOM manipulation.",
-						SearchQuery: "JavaScript",
-					},
-					{
-						Title:       "Responsive Design",
-						Description: "Responsive design is an approach to web design that makes web pages render well on a variety of devices and window or screen sizes.",
-						ProTips:     "Learn about media queries and flexible grid layouts.",
-						SearchQuery: "Responsive Design in Web Development",
-					},
-				},
-			},
-			{
-				Title:       "JavaScript Frameworks and Libraries",
-				Description: "JavaScript frameworks and libraries are pre-written JavaScript code that helps you build interactive web applications. They provide ready-to-use functions and components that you can use in your code.",
-				ProTips:     "Familiarize yourself with the most popular frameworks and libraries.",
-				SearchQuery: "JavaScript Frameworks and Libraries",
-				Subtopics: []chatGeneratePromptPromptResultSubtopic{
-					{
-						Title:       "React",
-						Description: "React is a JavaScript library for building user interfaces. It is maintained by Facebook and a community of individual developers and companies.",
-						ProTips:     "Learn about components and state management.",
-						SearchQuery: "React JavaScript Framework",
-					},
-					{
-						Title:       "Vue.js",
-						Description: "Vue.js is a progressive JavaScript framework used to build interactive web interfaces. It is designed from the ground up to be incrementally adoptable.",
-						ProTips:     "Understand the Vue instance and the Vue CLI.",
-						SearchQuery: "Vue.js Framework",
-					},
-					{
-						Title:       "Angular",
-						Description: "Angular is a platform and framework for building single-page client applications using HTML and TypeScript. It is maintained by Google.",
-						ProTips:     "Learn about components, modules, and services.",
-						SearchQuery: "Angular JavaScript Framework",
-					},
-					{
-						Title:       "Svelte",
-						Description: "Svelte is a radical new approach to building user interfaces. It shifts the work of rendering from the browser to the compile step, resulting in faster load times and a better user experience.",
-						ProTips:     "Understand the Svelte compiler and reactivity.",
-						SearchQuery: "Svelte JavaScript Framework",
-					},
-					{
-						Title:       "Node.js",
-						Description: "Node.js is an open-source, cross-platform, JavaScript runtime environment that executes JavaScript code outside a web browser. It is used to build scalable network applications.",
-						ProTips:     "Learn about the event loop and non-blocking I/O.",
-						SearchQuery: "Node.js",
-					},
-				},
-			},
-		},
-	}
-
-	sb.WriteString(`You are an expert in creating structured learning roadmaps for a learning application. The roadmaps you generate are designed to provide users with a clear and organized path for self-learning, not as a course or detailed content provider. The roadmap will:
-1. Include a title and description of the main topic to introduce the subject.
-2. Break down the topic into topics and subtopics, each with a title and description to explain the focus of the section.
-3. Use a maximum of 2 levels of depth for subtopics. Topics can contain subtopics, but subtopics cannot have further nested levels.
-4. Be tailored based on user-provided personalization options:
-`)
-
-	for _, userPersonalizationOpt := range promptUserPersonalizationOptions {
-		sb.WriteString(" - ")
-		sb.WriteString(userPersonalizationOpt)
-		sb.WriteString("\n")
-	}
-
-	sb.WriteString("# Guidelines:\n")
-	for _, guideline := range promptSystemGuidelines {
-		sb.WriteString(" - ")
-		sb.WriteString(guideline)
-		sb.WriteString("\n")
-	}
-
-	sb.WriteString("# Example Format:\n")
-
 	exampleFormatJSON, err := json.MarshalIndent(exampleFormat, "", "    ")
 	if err != nil {
 		log.Error().Err(err).Msg("failed to marshal example format")
@@ -377,28 +298,6 @@ func (app *application) makeGenerateRoadmapSystemPrompt(ctx context.Context) str
 	}
 
 	sb.Write(exampleFormatJSON)
-
-	sb.WriteString("\n")
-	sb.WriteString("The roadmap must adhere to this format while reflecting the user's provided topic and personalization preferences. Do not use markdown symbols such as the triple backticks or quotes, you must only respond with the raw json itself.")
-	sb.WriteString("\n")
-
-	sb.WriteString("# A Real Case Example:\n")
-
-	sb.WriteString("### Input:\n")
-	sb.WriteString("- Topic: Front End Development\n")
-	sb.WriteString("- Daily Time Availability: 1 hour/day\n")
-	sb.WriteString("- Total Duration: 1 month\n")
-	sb.WriteString("- Skill Level: beginner\n")
-
-	sb.WriteString("\n### Output:\n\n")
-
-	exampleResultJSON, err := json.MarshalIndent(exampleResult, "", "    ")
-	if err != nil {
-		log.Error().Err(err).Msg("failed to marshal example format")
-		return ""
-	}
-
-	sb.Write(exampleResultJSON)
 
 	return sb.String()
 }
