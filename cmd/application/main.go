@@ -16,7 +16,6 @@ import (
 	"github.com/curiona-org/backend/internal/provider/option"
 	"github.com/curiona-org/backend/internal/repository"
 	"github.com/curiona-org/backend/internal/worker"
-	"github.com/curiona-org/backend/pkg/cache"
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/sync/errgroup"
 )
@@ -31,8 +30,8 @@ func run(ctx context.Context) {
 	provider, err := provider.New(
 		option.WithLLM(),
 		option.WithPostgresDB(ctx),
-		option.WithCache(ctx, cache.TypeRedis),
-		option.WithQueue(),
+		// option.WithCache(ctx, cache.TypeRedis),
+		// option.WithQueue(),
 		option.WithYoutubeClient(),
 		option.WithGoogleBooksClient(),
 		option.WithTracing(ctx),
@@ -45,13 +44,15 @@ func run(ctx context.Context) {
 	log.Info().Msg("Bootstrapping Curiona backend application...")
 	postgresRepository := repository.NewPostgresRepository(provider.DB, provider.Cache)
 
-	worker := worker.NewAsynq(
-		provider.Queue,
-		provider.QueueServer,
-		postgresRepository,
-		provider.GoogleBooks,
-		provider.Youtube,
-	)
+	// worker := worker.NewAsynq(
+	// 	provider.Queue,
+	// 	provider.QueueServer,
+	// 	postgresRepository,
+	// 	provider.GoogleBooks,
+	// 	provider.Youtube,
+	// )
+
+	worker := worker.NewNoop()
 
 	auth := auth.NewManager(
 		&auth.ManagerConfig{
