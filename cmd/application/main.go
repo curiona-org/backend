@@ -16,6 +16,7 @@ import (
 	"github.com/curiona-org/backend/internal/provider/option"
 	"github.com/curiona-org/backend/internal/repository"
 	"github.com/curiona-org/backend/internal/worker"
+	"github.com/curiona-org/backend/pkg/cache"
 	_ "github.com/joho/godotenv/autoload"
 	"golang.org/x/sync/errgroup"
 )
@@ -30,7 +31,7 @@ func run(ctx context.Context) {
 	provider, err := provider.New(
 		option.WithLLM(),
 		option.WithPostgresDB(ctx),
-		// option.WithCache(ctx, cache.TypeRedis),
+		option.WithCache(ctx, cache.TypeNoop),
 		// option.WithQueue(),
 		option.WithYoutubeClient(),
 		option.WithGoogleBooksClient(),
