@@ -78,6 +78,9 @@ CREATE TABLE IF NOT EXISTS topics (
     external_search_query TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
+    CONSTRAINT fk_topics_account FOREIGN KEY (
+        account_id
+    ) REFERENCES accounts (id) ON DELETE CASCADE,
     CONSTRAINT fk_topics FOREIGN KEY (roadmap_id) REFERENCES roadmaps (
         id
     ) ON DELETE CASCADE,
