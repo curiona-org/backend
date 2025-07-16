@@ -1373,6 +1373,35 @@ func (r *RoadmapRepository) CountAccountFinishedRoadmaps(ctx context.Context, ac
 	return count, nil
 }
 
+func (r *RoadmapRepository) CountAccountFinishedOwnedRoadmaps(ctx context.Context, accountID int) (uint64, error) {
+	query, args := psql.Select(
+		sm.Columns(psql.F("COUNT", "*")),
+		sm.From(domain.RoadmapTable),
+		sm.LeftJoin(domain.RoadmapProgressionTable).OnEQ(
+			psql.Quote(domain.RoadmapProgressionTable, "roadmap_id"),
+			psql.Quote(domain.RoadmapTable, "id"),
+		),
+		sm.Where(psql.And(
+			psql.Quote(domain.RoadmapTable, "account_id").EQ(psql.Arg(accountID)),
+			psql.Quote(domain.RoadmapProgressionTable, "is_finished").EQ(psql.S("true")),
+			psql.Quote(domain.RoadmapTable, "deleted_at").IsNull(),
+		)),
+	).MustBuild(ctx)
+
+	ctx, span := spanWithSelectQuery(ctx, r.tracer, "(*RoadmapRepository.CountAccountFinishedOwnedRoadmaps)", query)
+	defer span.End()
+
+	var count uint64
+	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		span.SetStatus(codes.Error, "failed to count finished owned roadmaps by account ID")
+		span.RecordError(err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (r *RoadmapRepository) CountAccountInProgressRoadmaps(ctx context.Context, accountID int) (uint64, error) {
 	query, args := psql.Select(
 		sm.Columns(psql.F("COUNT", "*")),
