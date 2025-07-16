@@ -156,8 +156,10 @@ func (a *API) SetupMiddlewares() {
 			http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost,
 			http.MethodDelete, http.MethodHead, http.MethodOptions,
 		},
-		AllowCredentials: true,
-		AllowedHeaders:   []string{"Accept", "Origin", "Authorization", "Content-Type", "X-CSRF-Token", "X-Requested-With", "withCredentials"},
+		AllowCredentials:   true,
+		AllowedHeaders:     []string{"Accept", "Origin", "Authorization", "Content-Type", "X-CSRF-Token", "X-Requested-With", "withCredentials"},
+		OptionsPassthrough: false,
+		MaxAge:             300,
 	}))
 	a.router.Use(a.secureHeadersMiddleware)
 	a.router.Use(a.catchAuthorizationIfExists)
